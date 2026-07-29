@@ -73,9 +73,14 @@ game-portal/
 
 ### Alternative: CLI deploy
 
+> Use this exact command for Cloudflare Pages deployments.
+
 ```bash
 npx wrangler pages deploy .
 ```
+
+Do not use `npx wrangler deploy` in this repo. That command deploys a Worker,
+not a Pages project with `functions/` enabled.
 
 `wrangler.toml` is only relevant for this path (or for local dev below) —
 the dashboard upload method doesn't read it at all.

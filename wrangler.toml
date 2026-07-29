@@ -5,12 +5,10 @@
 # CLI deploy: npx wrangler pages deploy .
 # Local dev with Functions running (required to test /api/games locally,
 # a plain static file server will NOT run functions/): npx wrangler pages dev .
+#
+# Important: Do NOT use `npx wrangler deploy` for this Pages project.
+# That command deploys a Worker and does not deploy Pages Functions correctly.
 
 name = "games"
 compatibility_date = "2026-07-28"
-
 pages_build_output_dir = "."
-
-[assets]
-directory = "."
-not_found_handling = "single-page-application"
