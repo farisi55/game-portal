@@ -25,7 +25,23 @@ async function init() {
     const res = await fetch(`${CONFIG.GAMES_API_ENDPOINT}?num=${CONFIG.DEFAULT_GAME_COUNT}`);
     if (!res.ok) throw new Error(`API responded with ${res.status}`);
 
-    const games = await res.json();
+    const contentType = (res.headers.get('content-type') || '').toLowerCase();
+    let games;
+
+    if (contentType.includes('application/json')) {
+      games = await res.json();
+    } else {
+      // Server returned something other than JSON (likely an HTML error page).
+      const body = await res.text();
+      // Try a defensive JSON.parse in case the server mis-set Content-Type.
+      try {
+        games = JSON.parse(body);
+      } catch (parseErr) {
+        console.error('Non-JSON response from games API:', { status: res.status, contentType, bodySnippet: body.slice(0, 200) });
+        throw new Error(`Expected JSON but received ${contentType || 'unknown'} (status ${res.status})`);
+      }
+    }
+
     if (!Array.isArray(games) || games.length === 0) throw new Error('Catalog came back empty');
 
     state.games = games;
