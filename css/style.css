@@ -221,6 +221,22 @@ main {
   text-transform: uppercase;
 }
 
+.high-score-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: rgba(53, 228, 224, 0.14);
+  border: 1px solid rgba(53, 228, 224, 0.25);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
 .game-grid {
   max-width: 1280px;
   margin: 0 auto;

@@ -6,6 +6,11 @@
 <title>Loading… — Arcade</title>
 <meta name="description" content="Play instantly in your browser — no downloads, no sign-up.">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0e0b1a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Arcade">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -32,6 +37,7 @@
       <span class="game-card__tag" id="game-category"></span>
     </div>
     <div class="player-actions">
+      <span id="high-score" class="high-score-pill">High Score: 0</span>
       <button type="button" class="btn btn--ghost" id="fullscreen-btn">&#10530; Full Screen</button>
       <button type="button" class="btn btn--primary" id="share-btn">Share</button>
       <span class="share-feedback" id="share-feedback" hidden></span>
@@ -65,5 +71,6 @@
 </footer>
 
 <script type="module" src="js/player.js"></script>
+<script src="js/pwa.js"></script>
 </body>
 </html>

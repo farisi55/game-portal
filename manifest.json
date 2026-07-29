@@ -1,0 +1,19 @@
+{
+  "name": "Arcade Portal",
+  "short_name": "Arcade",
+  "id": "./",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0e0b1a",
+  "theme_color": "#0e0b1a",
+  "description": "Play browser games and keep your local high score",
+  "icons": [
+    {
+      "src": "favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
