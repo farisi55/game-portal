@@ -6,6 +6,6 @@
 # Local dev with Functions running (required to test /api/games locally,
 # a plain static file server will NOT run functions/): npx wrangler pages dev .
 
-name = "game-portal"
+name = "games"
 pages_build_output_dir = "."
 compatibility_date = "2026-07-28"
