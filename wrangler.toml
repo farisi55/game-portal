@@ -7,5 +7,8 @@
 # a plain static file server will NOT run functions/): npx wrangler pages dev .
 
 name = "games"
-pages_build_output_dir = "."
 compatibility_date = "2026-07-28"
+
+[assets]
+directory = "./dist"
+not_found_handling = "single-page-application"
