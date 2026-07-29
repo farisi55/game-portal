@@ -1,14 +1,18 @@
 # Optional — only needed if you deploy via the Wrangler CLI instead of the
-# Cloudflare Pages dashboard's drag-and-drop upload. Not required for a
-# dashboard direct upload deployment.
+# Cloudflare dashboard's static asset builder. This repo deploys as a
+# Cloudflare Worker with static assets, so the correct command is:
 #
-# CLI deploy: npx wrangler pages deploy .
-# Local dev with Functions running (required to test /api/games locally,
-# a plain static file server will NOT run functions/): npx wrangler pages dev .
+#   npx wrangler deploy
 #
-# Important: Do NOT use `npx wrangler deploy` for this Pages project.
-# That command deploys a Worker and does not deploy Pages Functions correctly.
+# The old Pages-specific command `npx wrangler pages deploy .` is not used
+# by this build configuration.
 
 name = "games"
+main = "./src/index.js"
 compatibility_date = "2026-07-28"
-pages_build_output_dir = "."
+
+[assets]
+header = "Content-Type: text/html; charset=utf-8"
+directory = "."
+not_found_handling = "single-page-application"
+run_worker_first = [ "/api/*" ]
