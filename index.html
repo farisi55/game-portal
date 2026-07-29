@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Arcade — Free Online Games</title>
+<meta name="description" content="Play hundreds of free browser games instantly — no downloads, no sign-up. Racing, action, puzzle, and arcade classics, updated automatically.">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&family=Space+Mono:wght@400;700&family=Monoton&display=swap" rel="stylesheet">
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="js/tailwind-config.js"></script>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="chase-strip" aria-hidden="true"></div>
+  <div class="header-inner">
+    <a href="index.html" class="wordmark">ARCADE</a>
+    <div class="search-wrap">
+      <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+        <circle cx="11" cy="11" r="7"/>
+        <path d="m21 21-4.3-4.3"/>
+      </svg>
+      <input id="search-input" class="search-input" type="search" placeholder="Search games…" aria-label="Search games">
+    </div>
+  </div>
+  <nav class="category-bar" id="category-bar" role="tablist" aria-label="Filter by category"></nav>
+</header>
+
+<main>
+  <p class="catalog-meta"><span id="game-count">0</span> games loaded</p>
+  <div class="game-grid" id="game-grid"></div>
+  <div class="status-block" id="grid-status" hidden></div>
+</main>
+
+<footer class="site-footer">
+  <p>ARCADE — powered by <a href="https://gamemonetize.com" target="_blank" rel="noopener">GameMonetize</a>. Catalog refreshes automatically.</p>
+</footer>
+
+<script type="module" src="js/catalog.js"></script>
+</body>
+</html>

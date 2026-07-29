@@ -1,0 +1,24 @@
+# ============================================================================
+# ads.txt — Authorized Digital Sellers (IAB standard)
+# ============================================================================
+# This file MUST live at your root domain: https://<your-domain>/ads.txt
+# GameMonetize checks this exact path to verify site ownership before
+# serving monetized ads — this is what clears the "Missing Ads.txt Snippet"
+# warning in your GameMonetize dashboard. It will NOT accept the file from
+# a subdomain, so don't move this under /ads/ or similar.
+#
+# HOW TO FILL THIS IN:
+#   1. Log in to your GameMonetize dashboard: https://gamemonetize.com/
+#   2. Go to your Site / Ad Zone settings for this domain.
+#   3. Copy the ads.txt snippet shown there (it will look like the standard
+#      IAB format: <SSP domain>, <Publisher ID>, <DIRECT|RESELLER>[, <Cert ID>]).
+#   4. Paste it below, replacing the example line.
+#   5. Redeploy this Cloudflare Pages project so the new file goes live.
+#
+# EXAMPLE ONLY — replace with your real line(s) from the dashboard:
+# gamemonetize.com, pub-0000000000000000, DIRECT
+# ============================================================================
+
+#GameMonetize.com
+google.com, pub-5519830896693885, DIRECT, f08c47fec0942fa0
+google.com, pub-4764333688337558, DIRECT, f08c47fec0942fa0

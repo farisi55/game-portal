@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Loading… — Arcade</title>
+<meta name="description" content="Play instantly in your browser — no downloads, no sign-up.">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&family=Space+Mono:wght@400;700&family=Monoton&display=swap" rel="stylesheet">
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="js/tailwind-config.js"></script>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="chase-strip" aria-hidden="true"></div>
+  <div class="header-inner">
+    <a href="index.html" class="wordmark">ARCADE</a>
+    <a href="index.html" class="btn btn--ghost ml-auto">&larr; Back to Catalog</a>
+  </div>
+</header>
+
+<main>
+  <div class="player-bar">
+    <div class="player-heading">
+      <h1 id="game-title">Loading…</h1>
+      <span class="game-card__tag" id="game-category"></span>
+    </div>
+    <div class="player-actions">
+      <button type="button" class="btn btn--ghost" id="fullscreen-btn">&#10530; Full Screen</button>
+      <button type="button" class="btn btn--primary" id="share-btn">Share</button>
+      <span class="share-feedback" id="share-feedback" hidden></span>
+    </div>
+  </div>
+
+  <div class="frame-shell">
+    <div class="frame-bezel">
+      <div class="frame-wrap" id="frame-wrap">
+        <iframe
+          id="game-frame"
+          src=""
+          allow="autoplay; fullscreen; focus-without-user-activation; monetization"
+          allowfullscreen
+          loading="eager"></iframe>
+      </div>
+    </div>
+  </div>
+
+  <div class="status-block" id="player-status" hidden></div>
+
+  <section class="related-section">
+    <h2>Related Games</h2>
+    <div class="related-grid" id="related-grid"></div>
+    <p class="status-subtitle" id="related-status" hidden></p>
+  </section>
+</main>
+
+<footer class="site-footer">
+  <p>ARCADE — powered by <a href="https://gamemonetize.com" target="_blank" rel="noopener">GameMonetize</a>.</p>
+</footer>
+
+<script type="module" src="js/player.js"></script>
+</body>
+</html>

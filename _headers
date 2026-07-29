@@ -1,0 +1,20 @@
+# ============================================================================
+# Cloudflare Pages _headers
+# Docs: https://developers.cloudflare.com/pages/configuration/headers/
+#
+# The Content-Security-Policy below is the piece that matters most for this
+# project: without an explicit `frame-src` allowance, modern browsers block
+# the GameMonetize <iframe> on game.html by default. Domains are scoped to
+# exactly what the feed serves today (verified against the live feed while
+# building this project):
+#   - game embeds  -> html5.gamemonetize.co
+#   - thumbnails   -> img.gamemonetize.com
+# A wildcard subdomain is included for both host families as a safety net
+# in case a future catalog entry uses a different subdomain.
+# ============================================================================
+
+/*
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: interest-cohort=()
+  Content-Security-Policy: default-src 'self'; script-src 'self' https://cdn.tailwindcss.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https: data:; connect-src 'self'; frame-src https://html5.gamemonetize.co https://*.gamemonetize.co https://gamemonetize.com https://*.gamemonetize.com; object-src 'none'; base-uri 'self'; frame-ancestors 'self'
