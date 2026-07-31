@@ -37,9 +37,19 @@ function registerServiceWorker() {
 function wireScoreMessages() {
   window.addEventListener('message', (event) => {
     const data = event.data;
-    if (!data || data.type !== 'arcade-score') return;
+    if (!data || typeof data !== 'object') return;
 
-    writeHighScore(data.score);
+    // Our own locally-hosted games (e.g. games/kicau-mania) post this shape.
+    if (data.type === 'arcade-score') {
+      writeHighScore(data.score);
+      return;
+    }
+
+    // GamePix's embedded games post this shape natively — see
+    // https://docs.gamepix.com/docs ("Handling Events").
+    if (data.type === 'update_score' && typeof data.score !== 'undefined') {
+      writeHighScore(data.score);
+    }
   });
 }
 

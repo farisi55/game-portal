@@ -1,5 +1,5 @@
 import { CONFIG } from './config.js';
-import { escapeHtml, buildPlayUrl, isAllowedEmbedUrl, readSessionGames } from './utils.js';
+import { escapeHtml, buildPlayUrl, isAllowedEmbedUrl, readSessionGames, fetchGameCatalog } from './utils.js';
 
 const params = new URLSearchParams(window.location.search);
 const gameId = params.get('id');
@@ -117,9 +117,7 @@ async function loadRelatedGames() {
 
   if (!games) {
     try {
-      const res = await fetch(`${CONFIG.GAMES_API_ENDPOINT}?num=${CONFIG.DEFAULT_GAME_COUNT}`);
-      if (!res.ok) throw new Error(`API responded with ${res.status}`);
-      games = await res.json();
+      games = await fetchGameCatalog(CONFIG.GAMES_API_ENDPOINT, CONFIG.DEFAULT_GAME_COUNT, CONFIG.LOCAL_GAMES);
     } catch (err) {
       console.error('Failed to load related games:', err);
       els.relatedStatus.hidden = false;

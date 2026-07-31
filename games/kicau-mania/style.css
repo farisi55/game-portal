@@ -1,0 +1,194 @@
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #142016;
+  font-family: 'Segoe UI', Roboto, -apple-system, sans-serif;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+#game-container {
+  position: relative;
+  width: 100%;
+  height: 100dvh;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+#game-canvas {
+  display: block;
+  touch-action: none;
+  background: #bfe7f0;
+  border-radius: 4px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+}
+
+#hud {
+  position: fixed;
+  top: 18px;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 5;
+}
+
+#hud-score {
+  font-size: 42px;
+  font-weight: 800;
+  color: #fff;
+  text-shadow: 0 2px 0 #2c3e1f, 0 4px 10px rgba(0, 0, 0, 0.4);
+  font-variant-numeric: tabular-nums;
+}
+
+.screen {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  text-align: center;
+  padding: 24px;
+  background: linear-gradient(160deg, rgba(20, 32, 22, 0.92), rgba(40, 58, 30, 0.92));
+  color: #f4efe0;
+}
+
+/* KRUSIAL: .screen men-set display:flex secara tidak bersyarat. Karena
+   spesifisitas .screen sama dengan [hidden] milik browser tapi berada
+   lebih akhir di cascade, tanpa baris ini SEMUA layar (loading/start/
+   gameover) tetap tampil bersamaan walau atribut hidden dipasang
+   — inilah sebab beberapa layar terlihat bertumpuk transparan. */
+.screen[hidden] {
+  display: none;
+}
+
+.brand {
+  font-size: 40px;
+  font-weight: 900;
+  letter-spacing: 2px;
+  color: #f0cd66;
+  text-shadow: 0 3px 0 #7a5c17;
+  margin: 0 0 4px;
+}
+
+.brand--small {
+  font-size: 28px;
+}
+
+.subtitle {
+  margin: 0 0 18px;
+  font-size: 16px;
+  color: #d8e6cd;
+}
+
+.hint {
+  margin: 0;
+  font-size: 15px;
+  color: #e8e2cf;
+  opacity: 0.9;
+}
+
+.hint--small {
+  font-size: 12.5px;
+  opacity: 0.7;
+  margin-top: 2px;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  margin: 14px 0;
+  border: 4px solid rgba(240, 205, 102, 0.25);
+  border-top-color: #f0cd66;
+  border-radius: 50%;
+  animation: spin 0.9s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.score-row {
+  display: flex;
+  gap: 16px;
+  margin: 14px 0 22px;
+}
+
+.score-box {
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(240, 205, 102, 0.35);
+  border-radius: 12px;
+  padding: 10px 22px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 84px;
+}
+
+.score-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #cdbf8f;
+  margin-bottom: 4px;
+}
+
+.score-value {
+  font-size: 26px;
+  font-weight: 800;
+  color: #fff;
+  font-variant-numeric: tabular-nums;
+}
+
+.new-record {
+  color: #ff9f43;
+  font-weight: 800;
+  font-size: 15px;
+  letter-spacing: 1px;
+  margin: 0;
+  animation: pulse 1s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.08); }
+}
+
+.btn-retry {
+  appearance: none;
+  border: none;
+  border-radius: 999px;
+  padding: 14px 42px;
+  font-size: 17px;
+  font-weight: 700;
+  color: #2c2007;
+  background: linear-gradient(180deg, #f5d876, #e0af35);
+  box-shadow: 0 6px 0 #a5791f, 0 10px 20px rgba(0, 0, 0, 0.35);
+  cursor: pointer;
+}
+
+.btn-retry:active {
+  transform: translateY(4px);
+  box-shadow: 0 2px 0 #a5791f, 0 6px 14px rgba(0, 0, 0, 0.3);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spinner { animation: none; }
+  .new-record { animation: none; }
+}

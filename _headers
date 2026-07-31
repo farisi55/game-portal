@@ -1,20 +1,22 @@
 # ============================================================================
-# Cloudflare Pages _headers
+# Cloudflare Pages / Workers static-assets _headers
 # Docs: https://developers.cloudflare.com/pages/configuration/headers/
+# (Same syntax works for the [assets] block in a Worker deployment.)
 #
 # The Content-Security-Policy below is the piece that matters most for this
 # project: without an explicit `frame-src` allowance, modern browsers block
-# the GameMonetize <iframe> on game.html by default. Domains are scoped to
-# exactly what the feed serves today (verified against the live feed while
-# building this project):
-#   - game embeds  -> html5.gamemonetize.co
-#   - thumbnails   -> img.gamemonetize.com
-# A wildcard subdomain is included for both host families as a safety net
-# in case a future catalog entry uses a different subdomain.
+# game iframes on game.html by default. Domains are scoped to exactly what
+# each feed serves today (verified against the live feeds / official docs
+# while building this project):
+#   - GameMonetize embeds -> html5.gamemonetize.co   thumbnails -> img.gamemonetize.com
+#   - GamePix embeds      -> play.gamepix.com         thumbnails -> img.gamepix.com
+#   - our own games (games/kicau-mania/…) -> 'self'
+# A wildcard subdomain is included per host family as a safety net in case a
+# future catalog entry uses a different subdomain.
 # ============================================================================
 
 /*
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: interest-cohort=()
-  Content-Security-Policy: default-src 'self'; script-src 'self' https://cdn.tailwindcss.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https: data:; connect-src 'self'; frame-src https://html5.gamemonetize.co https://*.gamemonetize.co https://gamemonetize.com https://*.gamemonetize.com; object-src 'none'; base-uri 'self'; frame-ancestors 'self'
+  Content-Security-Policy: default-src 'self'; script-src 'self' https://cdn.tailwindcss.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https: data:; connect-src 'self'; frame-src 'self' https://html5.gamemonetize.co https://*.gamemonetize.co https://gamemonetize.com https://*.gamemonetize.com https://play.gamepix.com https://*.gamepix.com; object-src 'none'; base-uri 'self'; frame-ancestors 'self'

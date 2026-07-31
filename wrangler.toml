@@ -1,18 +1,19 @@
-# Optional — only needed if you deploy via the Wrangler CLI instead of the
-# Cloudflare dashboard's static asset builder. This repo deploys as a
-# Cloudflare Worker with static assets, so the correct command is:
+# Required for this project's deployment model. Unlike a pure static Pages
+# site (which can be drag-and-dropped via the dashboard with no config file
+# at all), a Cloudflare Worker deployment needs this file to know its entry
+# point, compatibility date, and static-assets directory. Deploy with:
 #
 #   npx wrangler deploy
 #
-# The old Pages-specific command `npx wrangler pages deploy .` is not used
-# by this build configuration.
+# The old Pages-specific command `npx wrangler pages deploy .` does not
+# apply to this build configuration.
 
 name = "games"
 main = "./src/index.js"
 compatibility_date = "2026-07-28"
 
 [assets]
-header = "Content-Type: text/html; charset=utf-8"
 directory = "."
+binding = "ASSETS"
 not_found_handling = "single-page-application"
 run_worker_first = [ "/api/*" ]

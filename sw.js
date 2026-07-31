@@ -1,4 +1,4 @@
-const CACHE_NAME = 'arcade-portal-v1';
+const CACHE_NAME = 'arcade-portal-v2';
 const APP_SHELL = [
   './',
   './index.html',
@@ -10,7 +10,11 @@ const APP_SHELL = [
   './js/utils.js',
   './js/catalog.js',
   './js/player.js',
-  './js/pwa.js'
+  './js/pwa.js',
+  './games/kicau-mania/index.html',
+  './games/kicau-mania/style.css',
+  './games/kicau-mania/game.js',
+  './games/kicau-mania/thumb.svg'
 ];
 
 self.addEventListener('install', (event) => {

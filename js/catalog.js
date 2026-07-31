@@ -1,5 +1,5 @@
 import { CONFIG } from './config.js';
-import { escapeHtml, debounce, buildPlayUrl, writeSessionGames } from './utils.js';
+import { escapeHtml, debounce, buildPlayUrl, writeSessionGames, fetchGameCatalog } from './utils.js';
 
 const state = {
   games: [],
@@ -22,27 +22,8 @@ async function init() {
   renderSkeleton(12);
 
   try {
-    const res = await fetch(`${CONFIG.GAMES_API_ENDPOINT}?num=${CONFIG.DEFAULT_GAME_COUNT}`);
-    if (!res.ok) throw new Error(`API responded with ${res.status}`);
-
-    const contentType = (res.headers.get('content-type') || '').toLowerCase();
-    let games;
-
-    if (contentType.includes('application/json')) {
-      games = await res.json();
-    } else {
-      // Server returned something other than JSON (likely an HTML error page).
-      const body = await res.text();
-      // Try a defensive JSON.parse in case the server mis-set Content-Type.
-      try {
-        games = JSON.parse(body);
-      } catch (parseErr) {
-        console.error('Non-JSON response from games API:', { status: res.status, contentType, bodySnippet: body.slice(0, 200) });
-        throw new Error(`Expected JSON but received ${contentType || 'unknown'} (status ${res.status})`);
-      }
-    }
-
-    if (!Array.isArray(games) || games.length === 0) throw new Error('Catalog came back empty');
+    const games = await fetchGameCatalog(CONFIG.GAMES_API_ENDPOINT, CONFIG.DEFAULT_GAME_COUNT, CONFIG.LOCAL_GAMES);
+    if (games.length === 0) throw new Error('Catalog came back empty');
 
     state.games = games;
     state.categories = ['All', ...uniqueCategories(games)];
@@ -103,11 +84,15 @@ function renderGrid() {
 
 function cardTemplate(game, index) {
   const playUrl = buildPlayUrl(game);
+  const sourceBadge = game.source
+    ? `<span class="game-card__source">${escapeHtml(game.source)}</span>`
+    : '';
   return `
     <a href="${playUrl}" class="game-card" style="--stagger:${index % 12}">
       <div class="game-card__thumb-wrap">
         <img class="game-card__thumb" src="${escapeHtml(game.thumb)}" alt="${escapeHtml(game.title)}" loading="lazy" width="512" height="384">
         <span class="game-card__play">&#9654; Play</span>
+        ${sourceBadge}
       </div>
       <div class="game-card__body">
         <p class="game-card__title">${escapeHtml(game.title)}</p>

@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 384">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#bfe7f0"/>
+      <stop offset="100%" stop-color="#eaf6e6"/>
+    </linearGradient>
+    <linearGradient id="bamboo" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#b98f22"/>
+      <stop offset="45%" stop-color="#ecc75c"/>
+      <stop offset="100%" stop-color="#a5791f"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="512" height="384" fill="url(#sky)"/>
+
+  <!-- pegunungan & pepohonan jauh -->
+  <path d="M0,260 Q80,210 160,260 T320,260 T480,260 L512,260 L512,384 L0,384 Z" fill="#9fc2ad"/>
+  <circle cx="90" cy="255" r="34" fill="#488a4d"/>
+  <circle cx="130" cy="262" r="26" fill="#3f7d45"/>
+  <rect x="86" y="255" width="8" height="30" fill="#5c3d1e"/>
+
+  <!-- tanah -->
+  <rect x="0" y="330" width="512" height="54" fill="#8a5a2e"/>
+  <rect x="0" y="330" width="512" height="14" fill="#7ec850"/>
+
+  <!-- tiang bambu gantangan -->
+  <rect x="420" y="60" width="34" height="270" fill="url(#bamboo)"/>
+  <rect x="420" y="60" width="34" height="6" fill="#79571a" opacity="0.75"/>
+  <rect x="420" y="150" width="34" height="6" fill="#79571a" opacity="0.75"/>
+  <rect x="420" y="240" width="34" height="6" fill="#79571a" opacity="0.75"/>
+  <rect x="450" y="96" width="30" height="9" rx="3" fill="#8a5a2e"/>
+  <circle cx="482" cy="100.5" r="5.5" fill="#6b4321"/>
+
+  <!-- burung murai batu -->
+  <g transform="translate(150,150) scale(2.6)">
+    <path d="M18,22 L2,10 L10,22 L2,34 L18,26 Z" fill="#100f0d"/>
+    <path d="M18,23 L6,16 L11,23 L6,30 L18,25 Z" fill="#f4f1e8"/>
+    <ellipse cx="30" cy="24" rx="16" ry="13" fill="#131211"/>
+    <ellipse cx="23" cy="15" rx="5.5" ry="4.2" fill="#f4f1e8"/>
+    <path d="M22,22 C30,16 42,18 40,24 C32,26 26,25 22,22 Z" fill="#1c1a18"/>
+    <ellipse cx="33" cy="30" rx="10" ry="8" fill="#c9601c"/>
+    <circle cx="38" cy="18" r="3.4" fill="#fff"/>
+    <circle cx="39" cy="18" r="1.7" fill="#141414"/>
+    <path d="M46,21 L55,23 L46,26 Z" fill="#e8a13a"/>
+  </g>
+</svg>

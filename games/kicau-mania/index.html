@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Kicau Mania — Flappy Bird Kontes Burung Berkicau</title>
+<meta name="description" content="Kepakkan sayap Murai Batu melewati tiang gantangan bambu sebanyak mungkin. Flappy Bird bertema kontes burung berkicau Indonesia.">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div id="game-container">
+  <canvas id="game-canvas"></canvas>
+
+  <div id="hud">
+    <span id="hud-score">0</span>
+  </div>
+
+  <div id="loading-screen" class="screen">
+    <p class="brand">KICAU MANIA</p>
+    <div class="spinner" aria-hidden="true"></div>
+    <p class="hint">Memuat arena lomba…</p>
+  </div>
+
+  <div id="start-screen" class="screen" hidden>
+    <p class="brand">KICAU MANIA</p>
+    <p class="subtitle">Kontes Terbang Burung Berkicau</p>
+    <p class="hint">Ketuk atau tekan Spasi untuk terbang</p>
+    <p class="hint hint--small">Lewati tiang gantangan sebanyak mungkin</p>
+  </div>
+
+  <div id="gameover-screen" class="screen" hidden>
+    <p class="brand brand--small">GAME OVER</p>
+    <p id="new-record" class="new-record" hidden>REKOR BARU!</p>
+    <div class="score-row">
+      <div class="score-box">
+        <span class="score-label">Skor</span>
+        <span id="final-score" class="score-value">0</span>
+      </div>
+      <div class="score-box">
+        <span class="score-label">Rekor</span>
+        <span id="final-high" class="score-value">0</span>
+      </div>
+    </div>
+    <button type="button" id="retry-btn" class="btn-retry">Main Lagi</button>
+  </div>
+</div>
+
+<script src="game.js"></script>
+</body>
+</html>
