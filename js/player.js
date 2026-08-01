@@ -42,9 +42,22 @@ async function init() {
 
   els.iframe.src = embedUrl;
   els.iframe.title = title;
+  els.iframe.allow = computeIframeAllow(gameId);
 
   bindActions();
   loadRelatedGames();
+}
+
+function computeIframeAllow(id) {
+  if (typeof id !== 'string') {
+    return 'autoplay; fullscreen';
+  }
+
+  if (id.startsWith('gm-')) {
+    return 'autoplay; fullscreen; focus-without-user-activation; monetization';
+  }
+
+  return 'autoplay; fullscreen';
 }
 
 function showPlayerError() {
