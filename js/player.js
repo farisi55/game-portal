@@ -40,23 +40,26 @@ async function init() {
     els.frameWrap.classList.add('frame-wrap--portrait');
   }
 
+  els.iframe.allow = allowAttributeFor(gameId);
   els.iframe.src = embedUrl;
   els.iframe.title = title;
-  els.iframe.allow = computeIframeAllow(gameId);
 
   bindActions();
   loadRelatedGames();
 }
 
-function computeIframeAllow(id) {
-  if (typeof id !== 'string') {
-    return 'autoplay; fullscreen';
-  }
-
-  if (id.startsWith('gm-')) {
+/**
+ * GameMonetize's SDK specifically calls for `monetization` and
+ * `focus-without-user-activation` in the iframe's `allow` attribute.
+ * Neither GamePix nor our own local games use or expect those — leaving
+ * them on unconditionally just produces "unrecognized feature" console
+ * warnings for every non-GameMonetize game, so the permission set is
+ * chosen per source instead of being one string for everything.
+ */
+function allowAttributeFor(id) {
+  if (String(id).startsWith('gm-')) {
     return 'autoplay; fullscreen; focus-without-user-activation; monetization';
   }
-
   return 'autoplay; fullscreen';
 }
 

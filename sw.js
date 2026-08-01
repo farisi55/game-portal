@@ -1,4 +1,4 @@
-const CACHE_NAME = 'arcade-portal-v2';
+const CACHE_NAME = 'arcade-portal-v3';
 const APP_SHELL = [
   './',
   './index.html',
@@ -56,18 +56,26 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // Stale-while-revalidate: answer from cache immediately if we have it
+  // (fast, and works offline), but ALWAYS also fetch a fresh copy in the
+  // background and update the cache for next time. Plain cache-first meant
+  // an updated file (e.g. js/config.js after adding a new game) could stay
+  // stuck stale in a returning visitor's cache indefinitely, since nothing
+  // ever re-triggers the install step unless sw.js's own bytes change —
+  // this makes every update self-correct on the very next load instead.
   event.respondWith(
     caches.match(request).then((cached) => {
-      if (cached) return cached;
-      return fetch(request).then((response) => {
-        if (!response || response.type !== 'basic' || response.status !== 200) {
+      const network = fetch(request)
+        .then((response) => {
+          if (response && response.status === 200 && response.type === 'basic') {
+            const copy = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
+          }
           return response;
-        }
+        })
+        .catch(() => cached);
 
-        const copy = response.clone();
-        caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
-        return response;
-      });
+      return cached || network;
     })
   );
 });
