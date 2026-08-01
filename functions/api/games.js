@@ -128,12 +128,33 @@ function decodeEntities(str) {
 }
 
 async function fetchGamePix() {
-  const feedUrl = `${GAMEPIX_FEED_BASE}?sid=${GAMEPIX_SID}&pagination=${GAMEPIX_PAGINATION}&page=1&order=quality`;
-  const upstream = await fetch(feedUrl, { headers: { Accept: 'application/json' } });
-  if (!upstream.ok) throw new Error(`GamePix feed responded with ${upstream.status}`);
+  const feedUrl = `${GAMEPIX_FEED_BASE}?sid=${GAMEPIX_SID}&pagination=${GAMEPIX_PAGINATION}&page=1`;
+  const upstream = await fetch(feedUrl, {
+    headers: {
+      Accept: 'application/json',
+      'User-Agent': 'Mozilla/5.0 (compatible; ArcadePortal/1.0)',
+    },
+  });
 
-  const data = await upstream.json();
-  if (!data || !Array.isArray(data.items)) throw new Error('GamePix feed response missing an items array');
+  if (!upstream.ok) {
+    const bodySnippet = await upstream.text().catch(() => '');
+    console.error('GamePix feed non-OK response:', upstream.status, bodySnippet.slice(0, 300));
+    throw new Error(`GamePix feed responded with ${upstream.status}`);
+  }
+
+  const rawText = await upstream.text();
+  let data;
+  try {
+    data = JSON.parse(rawText);
+  } catch (err) {
+    console.error('GamePix feed returned non-JSON body:', rawText.slice(0, 300));
+    throw new Error('GamePix feed response was not valid JSON');
+  }
+
+  if (!data || !Array.isArray(data.items)) {
+    console.error('GamePix feed JSON missing items array:', JSON.stringify(data).slice(0, 300));
+    throw new Error('GamePix feed response missing an items array');
+  }
 
   const games = data.items
     .filter((item) => item && item.id && item.title && item.url)
