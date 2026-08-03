@@ -83,38 +83,52 @@ function buildBirdSVG(wing) {
 
 // --- Tiang Bambu Gantangan: pengganti pipa hijau. Satu tekstur badan bambu
 // (bisa diulang vertikal) + satu "cap" berisi palang gantangan horizontal.
+// Body dan cap dirancang dalam satu sistem koordinat yang sama: 60 unit
+// pertama pada keduanya mengacu ke lebar tiang yang sama (rim cap x=4..56,
+// pusat di x=30 — sama seperti rect badan x=8..52, pusat juga x=30). Cap
+// hanya menambah unit ekstra di kanan untuk palang gantangan. drawPipe()
+// memakai dua konstanta ini untuk menyamakan skala per-unit keduanya saat
+// digambar, supaya sisi tiang cap dan badan selalu presisi menyatu — lihat
+// catatan di drawPipe().
+const BAMBOO_BODY_VIEWBOX_W = 60;
+const BAMBOO_CAP_VIEWBOX_W = 76;
+
 function buildBambooBodySVG() {
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 120">
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${BAMBOO_BODY_VIEWBOX_W} 120">
     <defs>
       <linearGradient id="bb" x1="0" y1="0" x2="1" y2="0">
-        <stop offset="0%" stop-color="#b98f22"/>
-        <stop offset="45%" stop-color="#ecc75c"/>
-        <stop offset="100%" stop-color="#a5791f"/>
+        <stop offset="0%" stop-color="#6b9b2e"/>
+        <stop offset="45%" stop-color="#a8d66b"/>
+        <stop offset="100%" stop-color="#557f22"/>
       </linearGradient>
     </defs>
     <rect x="8" y="0" width="44" height="120" fill="url(#bb)"/>
-    <rect x="8" y="0" width="44" height="7" fill="#79571a" opacity="0.75"/>
-    <rect x="8" y="38" width="44" height="7" fill="#79571a" opacity="0.75"/>
-    <rect x="8" y="76" width="44" height="7" fill="#79571a" opacity="0.75"/>
-    <rect x="8" y="113" width="44" height="7" fill="#79571a" opacity="0.75"/>
+    <rect x="8" y="0" width="44" height="7" fill="#3f5c18" opacity="0.75"/>
+    <rect x="8" y="38" width="44" height="7" fill="#3f5c18" opacity="0.75"/>
+    <rect x="8" y="76" width="44" height="7" fill="#3f5c18" opacity="0.75"/>
+    <rect x="8" y="113" width="44" height="7" fill="#3f5c18" opacity="0.75"/>
     <rect x="12" y="0" width="4" height="120" fill="#fff" opacity="0.18"/>
   </svg>`;
 }
 
+// Rim sengaja dibuat SETINGGI PENUH viewBox (y=0..46, tanpa rx/sudut
+// membulat) supaya tidak ada margin transparan di sisi yang menyambung ke
+// badan, dan tidak ada sudut membulat yang bentrok dengan sudut siku badan
+// — dua hal ini yang sebelumnya membuat terlihat ada jeda di sambungannya.
 function buildBambooCapSVG() {
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 90 46">
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${BAMBOO_CAP_VIEWBOX_W} 46">
     <defs>
       <linearGradient id="bc" x1="0" y1="0" x2="1" y2="0">
-        <stop offset="0%" stop-color="#c49a28"/>
-        <stop offset="50%" stop-color="#f0cd66"/>
-        <stop offset="100%" stop-color="#ad8021"/>
+        <stop offset="0%" stop-color="#77a83a"/>
+        <stop offset="50%" stop-color="#b3dd7f"/>
+        <stop offset="100%" stop-color="#4d7420"/>
       </linearGradient>
     </defs>
-    <rect x="2" y="8" width="54" height="30" rx="6" fill="url(#bc)"/>
-    <rect x="2" y="8" width="54" height="30" rx="6" fill="none" stroke="#7a5c17" stroke-width="1.5" opacity="0.6"/>
-    <rect x="52" y="18" width="32" height="9" rx="3" fill="#8a5a2e"/>
-    <circle cx="86" cy="22.5" r="5.5" fill="#6b4321"/>
-    <path d="M52,18 L58,12 L64,18 Z" fill="#6b4321" opacity="0.7"/>
+    <rect x="4" y="0" width="52" height="46" fill="url(#bc)"/>
+    <rect x="4" y="0" width="52" height="46" fill="none" stroke="#3f5c18" stroke-width="1.5" opacity="0.6"/>
+    <rect x="56" y="18" width="15" height="9" rx="3" fill="#8a5a2e"/>
+    <circle cx="73" cy="22.5" r="5.2" fill="#6b4321"/>
+    <path d="M56,18 L61,12 L66,18 Z" fill="#6b4321" opacity="0.7"/>
   </svg>`;
 }
 
@@ -533,6 +547,14 @@ function drawPipe(p) {
   const bottomH = groundY - bottomY;
   const capH = 34;
 
+  // Cap dan badan berbagi skala per-unit yang sama (turunan dari lebar
+  // gambar badan / lebar viewBox-nya), supaya rim pada cap presisi menyatu
+  // dengan tepi badan di bawah/atasnya — sebelumnya cap digambar dengan
+  // lebar tujuan independen (PIPE_W+12) yang tidak sebanding dengan lebar
+  // viewBox aslinya, sehingga rim-nya bergeser dari sumbu tiang.
+  const scale = CONFIG.PIPE_W / BAMBOO_BODY_VIEWBOX_W;
+  const capDrawW = BAMBOO_CAP_VIEWBOX_W * scale;
+
   // Tiang atas (menggantung dari langit-langit turun ke gap)
   let y = 0;
   while (y < topH - capH) {
@@ -540,13 +562,13 @@ function drawPipe(p) {
     y += 80;
   }
   ctx.save();
-  ctx.translate(p.x + CONFIG.PIPE_W / 2, topH);
+  ctx.translate(p.x, topH);
   ctx.scale(1, -1);
-  ctx.drawImage(assets.bambooCap, -CONFIG.PIPE_W / 2 - 6, 0, CONFIG.PIPE_W + 12, capH);
+  ctx.drawImage(assets.bambooCap, 0, 0, capDrawW, capH);
   ctx.restore();
 
   // Tiang bawah (dari gap turun ke tanah)
-  ctx.drawImage(assets.bambooCap, p.x - 6, bottomY, CONFIG.PIPE_W + 12, capH);
+  ctx.drawImage(assets.bambooCap, p.x, bottomY, capDrawW, capH);
   y = bottomY + capH;
   while (y < groundY) {
     ctx.drawImage(assets.bambooBody, p.x, y, CONFIG.PIPE_W, Math.min(80, groundY - y));
