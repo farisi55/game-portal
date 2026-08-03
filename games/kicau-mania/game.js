@@ -269,6 +269,86 @@ const AudioFX = {
 };
 
 /* ---------------------------------------------------------------------------
+   3b. MUSIK LATAR — bukan file audio (.mp3/.mid) yang diimpor, melainkan
+   "partitur" (nama not + durasi) yang ditulis langsung di JS dan dimainkan
+   lewat oscillator — mirip semangat MIDI: yang disimpan adalah instruksi
+   nada, bukan gelombang suara hasil rekaman. Dijadwalkan presisi memakai
+   jam AudioContext sendiri (bukan setTimeout) supaya tidak ada jeda/geser
+   antar not walau frame rate game naik-turun.
+--------------------------------------------------------------------------- */
+const NOTE_SEMITONE = { C: 0, 'C#': 1, D: 2, 'D#': 3, E: 4, F: 5, 'F#': 6, G: 7, 'G#': 8, A: 9, 'A#': 10, B: 11 };
+
+function noteToFrequency(note) {
+  const match = /^([A-G]#?)(\d)$/.exec(note);
+  if (!match) return 440;
+  const [, name, octaveStr] = match;
+  const semitoneFromA4 = (parseInt(octaveStr, 10) - 4) * 12 + (NOTE_SEMITONE[name] - NOTE_SEMITONE.A);
+  return 440 * Math.pow(2, semitoneFromA4 / 12);
+}
+
+const MUSIC_BPM = 140;
+const BEAT = 60 / MUSIC_BPM;
+const EIGHTH = BEAT / 2;
+
+// Melodi pentatonik ceria (C D E G A) — tangga nada yang "aman", tidak ada
+// interval sumbang, cocok untuk tema kicauan burung dan enak diulang-ulang
+// sebagai musik latar tanpa terasa mengganggu.
+const MELODY = [
+  { note: 'C5', dur: EIGHTH }, { note: 'E5', dur: EIGHTH }, { note: 'G5', dur: EIGHTH }, { note: 'E5', dur: EIGHTH },
+  { note: 'D5', dur: EIGHTH }, { note: 'E5', dur: EIGHTH }, { note: 'D5', dur: EIGHTH }, { note: 'C5', dur: EIGHTH },
+  { note: 'E5', dur: EIGHTH }, { note: 'G5', dur: EIGHTH }, { note: 'A5', dur: EIGHTH }, { note: 'G5', dur: EIGHTH },
+  { note: 'E5', dur: EIGHTH }, { note: 'D5', dur: EIGHTH }, { note: 'C5', dur: EIGHTH }, { note: 'C5', dur: BEAT },
+];
+
+const MusicFX = {
+  playing: false,
+  noteIndex: 0,
+  nextNoteTime: 0,
+  scheduleAheadTime: 0.15, // detik — jadwalkan not yang jatuh dalam 150ms ke depan
+
+  start() {
+    if (this.playing) return;
+    const ctx = AudioFX.ensureCtx();
+    if (!ctx) return;
+    this.playing = true;
+    this.noteIndex = 0;
+    this.nextNoteTime = ctx.currentTime + 0.05;
+  },
+
+  scheduleNote(freq, startTime, duration) {
+    const ctx = AudioFX.ctx;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'triangle';
+    osc.frequency.value = freq;
+    // Amplop volume sederhana (naik cepat, turun halus) supaya tiap not
+    // terdengar seperti nada musik, bukan sekadar bunyi "beep" datar.
+    gain.gain.setValueAtTime(0.0001, startTime);
+    gain.gain.exponentialRampToValueAtTime(0.11, startTime + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.0001, startTime + duration * 0.9);
+    osc.connect(gain).connect(ctx.destination);
+    osc.start(startTime);
+    osc.stop(startTime + duration);
+  },
+
+  // Dipanggil tiap frame dari game loop. Pola "lookahead scheduler" ini
+  // adalah cara yang direkomendasikan Web Audio API untuk musik yang presisi
+  // — menjadwalkan not sedikit di depan jam audio, bukan memutar satu-satu
+  // lewat setTimeout yang gampang meleset.
+  tick() {
+    if (!this.playing || AudioFX.muted) return;
+    const ctx = AudioFX.ctx;
+    if (!ctx) return;
+    while (this.nextNoteTime < ctx.currentTime + this.scheduleAheadTime) {
+      const step = MELODY[this.noteIndex % MELODY.length];
+      this.scheduleNote(noteToFrequency(step.note), this.nextNoteTime, step.dur * 0.92);
+      this.nextNoteTime += step.dur;
+      this.noteIndex++;
+    }
+  },
+};
+
+/* ---------------------------------------------------------------------------
    4. STATE
 --------------------------------------------------------------------------- */
 const state = {
@@ -337,6 +417,7 @@ window.addEventListener('orientationchange', resizeCanvas);
    6. INPUT
 --------------------------------------------------------------------------- */
 function flap() {
+  MusicFX.start();
   if (state.mode === 'ready') {
     startPlaying();
   }
@@ -620,6 +701,7 @@ function loop(ts) {
   try {
     if (state.mode === 'playing') update(dtMs);
     draw();
+    MusicFX.tick();
   } catch (err) {
     // Satu frame yang gagal tidak boleh mematikan seluruh loop secara diam-diam.
     console.error('[KicauMania] Error saat update/draw:', err);
