@@ -224,9 +224,32 @@ function preloadAssets(callback) {
    3. AUDIO — efek suara pendek lewat Web Audio API (oscillator), tanpa file
    audio eksternal. Di-mute otomatis saat tab/iframe disembunyikan.
 --------------------------------------------------------------------------- */
+const SOUND_PREF_KEY = 'kicauMania_soundMuted';
+
+function loadSoundPreference() {
+  try {
+    return localStorage.getItem(SOUND_PREF_KEY) === 'true';
+  } catch {
+    return false;
+  }
+}
+
+function saveSoundPreference(muted) {
+  try {
+    localStorage.setItem(SOUND_PREF_KEY, String(muted));
+  } catch {
+    // localStorage bisa gagal (mode privat) — tidak fatal, preferensi cukup berlaku untuk sesi ini.
+  }
+}
+
 const AudioFX = {
   ctx: null,
-  muted: false,
+  userMuted: false, // preferensi eksplisit dari tombol, tersimpan di localStorage
+  tabHidden: false, // status sementara saat tab/iframe tersembunyi
+
+  get muted() {
+    return this.userMuted || this.tabHidden;
+  },
 
   ensureCtx() {
     if (!this.ctx) {
@@ -234,8 +257,28 @@ const AudioFX = {
       if (!AC) return null;
       this.ctx = new AC();
     }
-    if (this.ctx.state === 'suspended') this.ctx.resume();
+    if (!this.muted && this.ctx.state === 'suspended') this.ctx.resume();
     return this.ctx;
+  },
+
+  applyMuteState() {
+    if (!this.ctx) return;
+    if (this.muted) {
+      if (this.ctx.state === 'running') this.ctx.suspend();
+    } else if (this.ctx.state === 'suspended') {
+      this.ctx.resume();
+    }
+  },
+
+  setUserMuted(muted) {
+    this.userMuted = muted;
+    saveSoundPreference(muted);
+    this.applyMuteState();
+  },
+
+  setTabHidden(hidden) {
+    this.tabHidden = hidden;
+    this.applyMuteState();
   },
 
   tone(freq, duration, type, gainStart) {
@@ -253,19 +296,9 @@ const AudioFX = {
     osc.stop(ctx.currentTime + duration);
   },
 
-  flap() { this.tone(520, 0.09, 'square', 0.15); },
-  score() { this.tone(880, 0.12, 'sine', 0.18); },
+  flap() { this.tone(340, 0.09, 'square', 0.15); },
+  score() { this.tone(950, 0.12, 'sine', 0.18); },
   hit() { this.tone(120, 0.25, 'sawtooth', 0.2); },
-
-  mute() {
-    this.muted = true;
-    if (this.ctx && this.ctx.state === 'running') this.ctx.suspend();
-  },
-
-  unmute() {
-    this.muted = false;
-    if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume();
-  },
 };
 
 /* ---------------------------------------------------------------------------
@@ -728,20 +761,48 @@ document.addEventListener('visibilitychange', () => {
   if (document.hidden) {
     if (state.mode === 'playing') state.mode = 'paused';
     stopLoop();
-    AudioFX.mute();
+    AudioFX.setTabHidden(true);
   } else {
-    AudioFX.unmute();
+    AudioFX.setTabHidden(false);
     if (state.mode === 'paused') state.mode = 'playing';
     startLoop();
   }
 });
 
 /* ---------------------------------------------------------------------------
-   11. INIT
+   11. SOUND TOGGLE
+--------------------------------------------------------------------------- */
+const soundToggleBtn = document.getElementById('sound-toggle');
+const soundWavesIcon = document.getElementById('sound-waves');
+const soundMuteIcon = document.getElementById('sound-mute-x');
+
+function updateSoundToggleUI(muted) {
+  soundWavesIcon.hidden = muted;
+  soundMuteIcon.hidden = !muted;
+  soundToggleBtn.setAttribute('aria-pressed', String(muted));
+  soundToggleBtn.setAttribute('aria-label', muted ? 'Aktifkan suara' : 'Matikan suara');
+}
+
+soundToggleBtn.addEventListener('click', () => {
+  // Kalau ini interaksi pertama pemain (mis. mereka menekan tombol ini
+  // sebelum sempat terbang), tetap pastikan AudioContext & musik latar
+  // ter-inisialisasi dengan benar, bukan cuma togel status mute-nya.
+  AudioFX.ensureCtx();
+  MusicFX.start();
+
+  const nextMuted = !AudioFX.userMuted;
+  AudioFX.setUserMuted(nextMuted);
+  updateSoundToggleUI(nextMuted);
+});
+
+/* ---------------------------------------------------------------------------
+   12. INIT
 --------------------------------------------------------------------------- */
 function init() {
   resizeCanvas();
   state.highScore = loadHighScore();
+  AudioFX.userMuted = loadSoundPreference();
+  updateSoundToggleUI(AudioFX.userMuted);
 
   preloadAssets(() => {
     goToStartScreen();

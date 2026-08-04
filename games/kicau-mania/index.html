@@ -16,6 +16,14 @@
     <span id="hud-score">0</span>
   </div>
 
+  <button type="button" id="sound-toggle" class="sound-toggle" aria-label="Matikan suara" aria-pressed="false">
+    <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+      <path d="M4 9v6h4l5 5V4L8 9H4z" fill="currentColor"/>
+      <path id="sound-waves" d="M15.5 8.5a5 5 0 0 1 0 7M18.2 6a8.5 8.5 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+      <path id="sound-mute-x" d="M16 8l5.5 8M21.5 8 16 16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" hidden></path>
+    </svg>
+  </button>
+
   <div id="loading-screen" class="screen">
     <p class="brand">KICAU MANIA</p>
     <div class="spinner" aria-hidden="true"></div>
