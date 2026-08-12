@@ -57,7 +57,7 @@ export default {
       return handlePlayRoute(request, url, env, ctx);
     }
     if (url.pathname === '/sitemap.xml') {
-      return handleSitemap(url, ctx);
+      return handleSitemap(url, env, ctx);
     }
 
     return env.ASSETS.fetch(request);
@@ -149,7 +149,7 @@ async function handlePlayRoute(request, url, env, ctx) {
   if (!gameId) return assetResponse;
 
   const num = clampNum(url.searchParams.get('num'), GM_DEFAULT_NUM, GM_MAX_NUM);
-  const { games } = await getCombinedGames(num, ctx);
+  const { games } = await getCombinedGames(num, env, ctx);
   const allGames = [...LOCAL_GAMES, ...(games || [])];
   const game = allGames.find((g) => String(g.id) === gameId);
 
@@ -235,8 +235,8 @@ function slugify(text) {
 // to first crawl the catalog grid's client-rendered links.
 // ----------------------------------------------------------------------------
 
-async function handleSitemap(url, ctx) {
-  const { games } = await getCombinedGames(GM_DEFAULT_NUM, ctx);
+async function handleSitemap(url, env, ctx) {
+  const { games } = await getCombinedGames(GM_DEFAULT_NUM, env, ctx);
   const allGames = [...LOCAL_GAMES, ...(games || [])];
 
   const urlEntries = [
