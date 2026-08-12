@@ -143,8 +143,10 @@ async function handlePlayRoute(request, url, env, ctx) {
   const segments = url.pathname.split('/').filter(Boolean); // ['play', '<id>', '<slug>']
   const gameId = segments[1] ? decodeURIComponent(segments[1]) : null;
 
-  const assetRequest = new Request(new URL('/game.html', url.origin), request);
-  const assetResponse = await env.ASSETS.fetch(assetRequest);
+  // Cloudflare Workers Assets' default html_handling canonicalizes
+  // /game.html to /game with a 307. Fetch the canonical path directly so
+  // HTMLRewriter receives the actual shell HTML instead of a redirect.
+  const assetResponse = await env.ASSETS.fetch(new Request('https://assets.local/game', request));
 
   if (!gameId) return assetResponse;
 

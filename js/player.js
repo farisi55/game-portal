@@ -99,7 +99,7 @@ function showPlayerError() {
   els.playerStatus.innerHTML = `
     <p class="status-title">This game link looks invalid</p>
     <p class="status-subtitle">Head back to the catalog and pick a game to play.</p>
-    <a class="btn btn--primary" href="index.html">Back to Catalog</a>
+    <a class="btn btn--primary" href="/">Back to Catalog</a>
   `;
   els.frameWrap.hidden = true;
 }

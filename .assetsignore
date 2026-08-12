@@ -1,0 +1,7 @@
+.git/
+.wrangler/
+.claude/
+src/
+functions/
+README.md
+wrangler.toml
