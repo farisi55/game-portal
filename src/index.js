@@ -51,7 +51,7 @@ export default {
     const url = new URL(request.url);
 
     if (url.pathname === '/api/games') {
-      return handleApiGames(url, ctx);
+      return handleApiGames(url, env, ctx);
     }
     if (url.pathname.startsWith('/play/')) {
       return handlePlayRoute(request, url, env, ctx);
@@ -70,7 +70,7 @@ export default {
  * upstream requests for the same `num`. Returns the raw array — callers
  * decide how to present it (JSON response vs. HTML meta lookup).
  */
-async function getCombinedGames(num, ctx) {
+async function getCombinedGames(num, env, ctx) {
   const cache = caches.default;
   const cacheKey = new Request(`https://cache.internal/api/games?num=${num}`, { method: 'GET' });
   const cached = await cache.match(cacheKey);
@@ -109,9 +109,9 @@ async function getCombinedGames(num, ctx) {
   return { games: combined, response };
 }
 
-async function handleApiGames(url, ctx) {
+async function handleApiGames(url, env, ctx) {
   const num = clampNum(url.searchParams.get('num'), GM_DEFAULT_NUM, GM_MAX_NUM);
-  const { games, response, error } = await getCombinedGames(num, ctx);
+  const { games, response, error } = await getCombinedGames(num, env, ctx);
 
   if (!games) {
     return jsonResponse({ error: 'Both game feeds failed', ...error }, 502);
