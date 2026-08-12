@@ -34,18 +34,21 @@ init();
 
 async function init() {
   if (ssrGameId) {
+    let games;
     try {
-      const games = await fetchGameCatalog(CONFIG.GAMES_API_ENDPOINT, CONFIG.DEFAULT_GAME_COUNT, CONFIG.LOCAL_GAMES);
-      const game = games.find((g) => String(g.id) === String(ssrGameId));
-      if (game) {
-        embedUrl = game.url;
-        title = game.title;
-        category = game.category;
-        width = game.width;
-        height = game.height;
-      }
+      games = await fetchGameCatalog(CONFIG.GAMES_API_ENDPOINT, CONFIG.DEFAULT_GAME_COUNT, CONFIG.LOCAL_GAMES);
     } catch (err) {
       console.error('Failed to resolve game for /play/ route:', err);
+      games = CONFIG.LOCAL_GAMES;
+    }
+
+    const game = (games || []).find((g) => String(g.id) === String(ssrGameId));
+    if (game) {
+      embedUrl = game.url;
+      title = game.title;
+      category = game.category;
+      width = game.width;
+      height = game.height;
     }
   }
 

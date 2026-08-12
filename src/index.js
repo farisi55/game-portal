@@ -23,9 +23,7 @@ const GM_DEFAULT_NUM = 36;
 const GM_MAX_NUM = 200;
 
 const GAMEPIX_FEED_BASE = 'https://feeds.gamepix.com/v2/json';
-// Situs ID dari dashboard GamePix Anda. JANGAN diubah atau dihapus — dipakai
-// GamePix untuk melacak statistik tayangan/klik ke akun Anda.
-const GAMEPIX_SID = '30W77';
+const GAMEPIX_DEFAULT_SID = '985I2';
 const GAMEPIX_PAGINATION = 12;
 
 const CACHE_TTL_SECONDS = 1800; // 30 menit
@@ -85,7 +83,7 @@ async function getCombinedGames(num, ctx) {
   // catalog going blank.
   const [gmResult, gpResult] = await Promise.allSettled([
     fetchGameMonetize(num),
-    fetchGamePix(),
+    fetchGamePix(env),
   ]);
 
   const gmGames = gmResult.status === 'fulfilled' ? gmResult.value : [];
@@ -337,13 +335,14 @@ function decodeEntities(str) {
 // GamePix
 // ----------------------------------------------------------------------------
 
-async function fetchGamePix() {
+async function fetchGamePix(env) {
   // Exactly the URL pattern confirmed from your GamePix dashboard — no
   // extra query params guessed on top of it. An earlier version of this
   // file added `&order=quality`, inferred from the dashboard's "Games
   // Order By" label rather than confirmed documentation; removed since it
   // was never actually verified and could cause the request to be rejected.
-  const feedUrl = `${GAMEPIX_FEED_BASE}?sid=${GAMEPIX_SID}&pagination=${GAMEPIX_PAGINATION}&page=1`;
+  const feedSid = String(env.GAMEPIX_SID || GAMEPIX_DEFAULT_SID).trim();
+  const feedUrl = `${GAMEPIX_FEED_BASE}?sid=${encodeURIComponent(feedSid)}&pagination=${GAMEPIX_PAGINATION}&page=1`;
   const upstream = await fetch(feedUrl, {
     headers: {
       Accept: 'application/json',

@@ -24,7 +24,7 @@ const GM_DEFAULT_NUM = 36;
 const GM_MAX_NUM = 200;
 
 const GAMEPIX_FEED_BASE = 'https://feeds.gamepix.com/v2/json';
-const GAMEPIX_SID = '30W77'; // Situs ID dari dashboard GamePix Anda — jangan diubah/dihapus.
+const GAMEPIX_DEFAULT_SID = '985I2';
 const GAMEPIX_PAGINATION = 12;
 
 const CACHE_TTL_SECONDS = 1800;
@@ -41,7 +41,7 @@ export async function onRequestGet(context) {
 
   const [gmResult, gpResult] = await Promise.allSettled([
     fetchGameMonetize(num),
-    fetchGamePix(),
+    fetchGamePix(context.env),
   ]);
 
   const gmGames = gmResult.status === 'fulfilled' ? gmResult.value : [];
@@ -132,8 +132,9 @@ function decodeEntities(str) {
   return out;
 }
 
-async function fetchGamePix() {
-  const feedUrl = `${GAMEPIX_FEED_BASE}?sid=${GAMEPIX_SID}&pagination=${GAMEPIX_PAGINATION}&page=1`;
+async function fetchGamePix(env) {
+  const feedSid = String(env.GAMEPIX_SID || GAMEPIX_DEFAULT_SID).trim();
+  const feedUrl = `${GAMEPIX_FEED_BASE}?sid=${encodeURIComponent(feedSid)}&pagination=${GAMEPIX_PAGINATION}&page=1`;
   const upstream = await fetch(feedUrl, {
     headers: {
       Accept: 'application/json',
