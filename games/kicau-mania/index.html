@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>Kicau Mania — Flappy Bird Kontes Burung Berkicau</title>
-<meta name="description" content="Kepakkan sayap Murai Batu melewati tiang gantangan bambu sebanyak mungkin. Flappy Bird bertema kontes burung berkicau Indonesia.">
+<title>Kicau Mania — Flappy Bird Bird Singing Contest</title>
+<meta name="description" content="Flap your Murai Batu's wings past as many bamboo perches as you can. A Flappy Bird game themed around Indonesia's bird singing contests.">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -16,7 +16,7 @@
     <span id="hud-score">0</span>
   </div>
 
-  <button type="button" id="sound-toggle" class="sound-toggle" aria-label="Matikan suara" aria-pressed="false">
+  <button type="button" id="sound-toggle" class="sound-toggle" aria-label="Turn sound off" aria-pressed="false">
     <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
       <path d="M4 9v6h4l5 5V4L8 9H4z" fill="currentColor"/>
       <path id="sound-waves" d="M15.5 8.5a5 5 0 0 1 0 7M18.2 6a8.5 8.5 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
@@ -27,30 +27,30 @@
   <div id="loading-screen" class="screen">
     <p class="brand">KICAU MANIA</p>
     <div class="spinner" aria-hidden="true"></div>
-    <p class="hint">Memuat arena lomba…</p>
+    <p class="hint">Loading the arena…</p>
   </div>
 
   <div id="start-screen" class="screen" hidden>
     <p class="brand">KICAU MANIA</p>
-    <p class="subtitle">Kontes Terbang Burung Berkicau</p>
-    <p class="hint">Ketuk atau tekan Spasi untuk terbang</p>
-    <p class="hint hint--small">Lewati tiang gantangan sebanyak mungkin</p>
+    <p class="subtitle">Bird Singing Flight Contest</p>
+    <p class="hint">Tap or press Space to fly</p>
+    <p class="hint hint--small">Pass as many bamboo perches as you can</p>
   </div>
 
   <div id="gameover-screen" class="screen" hidden>
     <p class="brand brand--small">GAME OVER</p>
-    <p id="new-record" class="new-record" hidden>REKOR BARU!</p>
+    <p id="new-record" class="new-record" hidden>NEW RECORD!</p>
     <div class="score-row">
       <div class="score-box">
-        <span class="score-label">Skor</span>
+        <span class="score-label">Score</span>
         <span id="final-score" class="score-value">0</span>
       </div>
       <div class="score-box">
-        <span class="score-label">Rekor</span>
+        <span class="score-label">Best</span>
         <span id="final-high" class="score-value">0</span>
       </div>
     </div>
-    <button type="button" id="retry-btn" class="btn-retry">Main Lagi</button>
+    <button type="button" id="retry-btn" class="btn-retry">Play Again</button>
   </div>
 </div>
 

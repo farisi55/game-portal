@@ -2,12 +2,20 @@ import { CONFIG } from './config.js';
 import { escapeHtml, buildPlayUrl, isAllowedEmbedUrl, readSessionGames, fetchGameCatalog } from './utils.js';
 
 const params = new URLSearchParams(window.location.search);
-const gameId = params.get('id');
-const embedUrl = params.get('url');
-const title = params.get('title') || 'Game';
-const category = params.get('category') || '';
-const width = Number(params.get('w')) || null;
-const height = Number(params.get('h')) || null;
+
+// Arrived via the SEO-friendly /play/{id}/{slug} route: src/index.js already
+// server-injected the <title>/meta tags for this exact game and left the id
+// here so the client can resolve the rest (embed url, dimensions, etc.) from
+// the catalog. Falls back to the older ?id=&url=&title=... query-string
+// format for any links still using it.
+const ssrGameId = typeof window.__GIMBOOT_PLAY_ID__ !== 'undefined' ? window.__GIMBOOT_PLAY_ID__ : null;
+
+const gameId = ssrGameId || params.get('id');
+let embedUrl = params.get('url');
+let title = params.get('title') || 'Game';
+let category = params.get('category') || '';
+let width = Number(params.get('w')) || null;
+let height = Number(params.get('h')) || null;
 
 const els = {
   frameWrap: document.getElementById('frame-wrap'),
@@ -25,12 +33,32 @@ const els = {
 init();
 
 async function init() {
+  if (ssrGameId) {
+    try {
+      const games = await fetchGameCatalog(CONFIG.GAMES_API_ENDPOINT, CONFIG.DEFAULT_GAME_COUNT, CONFIG.LOCAL_GAMES);
+      const game = games.find((g) => String(g.id) === String(ssrGameId));
+      if (game) {
+        embedUrl = game.url;
+        title = game.title;
+        category = game.category;
+        width = game.width;
+        height = game.height;
+      }
+    } catch (err) {
+      console.error('Failed to resolve game for /play/ route:', err);
+    }
+  }
+
   if (!embedUrl || !isAllowedEmbedUrl(embedUrl, CONFIG.ALLOWED_EMBED_HOSTS)) {
     showPlayerError();
     return;
   }
 
-  document.title = `${title} — Arcade`;
+  // When arriving via /play/, the <title> was already set server-side with
+  // an SEO-optimized string — don't clobber it with a plainer client-side one.
+  if (!ssrGameId) {
+    document.title = `${title} — Gimboot`;
+  }
   els.title.textContent = title;
   els.category.textContent = category;
 
@@ -98,8 +126,8 @@ function updateFullscreenLabel() {
 
 async function shareGame() {
   const shareData = {
-    title: `${title} — Arcade`,
-    text: `Play ${title} on Arcade`,
+    title: `${title} — Gimboot`,
+    text: `Play ${title} on Gimboot`,
     url: window.location.href,
   };
 

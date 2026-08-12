@@ -14,8 +14,9 @@ tailwind.config = {
         gold: '#ffc542',
       },
       fontFamily: {
-        display: ['Space Grotesk', 'sans-serif'],
-        body: ['Inter', 'sans-serif'],
+        display: ['Plus Jakarta Sans', 'sans-serif'],
+        body: ['Plus Jakarta Sans', 'sans-serif'],
+        signature: ['Press Start 2P', 'cursive'],
         mono: ['Space Mono', 'monospace'],
       },
     },

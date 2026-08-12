@@ -28,7 +28,7 @@ function registerServiceWorker() {
   if (!('serviceWorker' in navigator)) return;
 
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js').catch(() => {
+    navigator.serviceWorker.register('/sw.js').catch(() => {
       // Ignore registration errors in local development.
     });
   });

@@ -780,7 +780,7 @@ function updateSoundToggleUI(muted) {
   soundWavesIcon.hidden = muted;
   soundMuteIcon.hidden = !muted;
   soundToggleBtn.setAttribute('aria-pressed', String(muted));
-  soundToggleBtn.setAttribute('aria-label', muted ? 'Aktifkan suara' : 'Matikan suara');
+  soundToggleBtn.setAttribute('aria-label', muted ? 'Turn sound on' : 'Turn sound off');
 }
 
 soundToggleBtn.addEventListener('click', () => {

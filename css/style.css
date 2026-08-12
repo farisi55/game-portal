@@ -1,5 +1,5 @@
 /* ============================================================================
-   ARCADE — design tokens
+   GIMBOOT — design tokens
    Palette and rationale are documented in README.md ("Design system").
    ============================================================================ */
 
@@ -19,10 +19,10 @@
   --radius-md: 14px;
   --radius-lg: 22px;
 
-  --font-display: 'Space Grotesk', sans-serif;
-  --font-body: 'Inter', sans-serif;
+  --font-display: 'Plus Jakarta Sans', sans-serif;
+  --font-body: 'Plus Jakarta Sans', sans-serif;
   --font-mono: 'Space Mono', monospace;
-  --font-signature: 'Monoton', cursive;
+  --font-signature: 'Press Start 2P', cursive;
 }
 
 * {
@@ -119,15 +119,43 @@ img {
   flex-wrap: wrap;
 }
 
+.brand-lockup {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.brand-icon {
+  flex: none;
+  display: block;
+  filter: drop-shadow(0 0 6px rgba(53, 228, 224, 0.35));
+}
+
+.brand-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
 .wordmark {
   font-family: var(--font-signature);
-  font-size: 28px;
+  font-size: 18px;
   line-height: 1;
-  letter-spacing: 1px;
+  letter-spacing: 0.5px;
   background: linear-gradient(90deg, var(--cyan), var(--magenta));
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
+  white-space: nowrap;
+}
+
+.tagline {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: var(--text-muted);
   white-space: nowrap;
 }
 
@@ -569,7 +597,10 @@ main {
     padding: 14px 16px;
   }
   .wordmark {
-    font-size: 22px;
+    font-size: 13px;
+  }
+  .tagline {
+    display: none;
   }
   .category-bar,
   .game-grid,

@@ -28,31 +28,43 @@ export function debounce(fn, wait = 250) {
 }
 
 /** Builds the game.html query string used to identify and embed a game. */
-export function buildPlayUrl(game) {
-  const params = new URLSearchParams({
-    id: game.id ?? '',
-    url: game.url ?? '',
-    title: game.title ?? '',
-    thumb: game.thumb ?? '',
-    category: game.category ?? '',
-    w: game.width ?? '',
-    h: game.height ?? '',
-  });
-  return `game.html?${params.toString()}`;
+/** Turns a game title into a URL-friendly slug, e.g. "Moto X3M!" -> "moto-x3m". */
+export function slugify(text) {
+  return String(text ?? '')
+    .toLowerCase()
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 60) || 'game';
 }
 
 /**
- * True for a same-origin relative path under games/ (our own locally-hosted
- * games, e.g. games/kicau-mania/index.html). Rejects protocol-relative
- * ("//host/...") and anything with a scheme ("https:", "javascript:", "data:"
- * etc.) before treating a string as a safe relative path — a relative path
- * can never resolve to a different origin, so it can't be used to frame an
- * arbitrary external site the way an absolute URL could.
+ * Builds the canonical, SEO-friendly URL for a game: /play/{id}/{slug}.
+ * Only the {id} segment is actually read on the way back in (see player.js
+ * and src/index.js) — the slug exists purely so the URL itself is
+ * descriptive for search engines and people sharing links; it's never
+ * parsed for lookup, so it can never go stale in a way that breaks anything.
+ */
+export function buildPlayUrl(game) {
+  const id = encodeURIComponent(game.id ?? '');
+  const slug = encodeURIComponent(slugify(game.title));
+  return `/play/${id}/${slug}`;
+}
+
+/**
+ * True for a same-origin path under games/ (our own locally-hosted games,
+ * e.g. /games/kicau-mania/index.html), with or without a leading slash.
+ * Rejects protocol-relative ("//host/...") and anything with a scheme
+ * ("https:", "javascript:", "data:" etc.) before treating a string as a
+ * safe local path — such a path can never resolve to a different origin,
+ * so it can't be used to frame an arbitrary external site the way an
+ * absolute URL could.
  */
 function isLocalGamePath(rawUrl) {
   if (typeof rawUrl !== 'string' || rawUrl.startsWith('//')) return false;
   if (/^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(rawUrl)) return false;
-  return rawUrl.startsWith('games/');
+  return rawUrl.startsWith('games/') || rawUrl.startsWith('/games/');
 }
 
 /**

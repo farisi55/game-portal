@@ -29,25 +29,56 @@ const GAMEPIX_SID = '30W77';
 const GAMEPIX_PAGINATION = 12;
 
 const CACHE_TTL_SECONDS = 1800; // 30 menit
+const SITE_NAME = 'Gimboot';
+
+// Game(s) we host ourselves. Mirrors js/config.js's LOCAL_GAMES exactly —
+// duplicated here (rather than imported) because this Worker script and the
+// browser-side ES modules don't share a build step to import from one
+// source. Keep the two in sync if you add another first-party game.
+const LOCAL_GAMES = [
+  {
+    id: 'local-kicau-mania',
+    title: 'Kicau Mania',
+    category: 'Arcade',
+    url: '/games/kicau-mania/index.html',
+    thumb: '/games/kicau-mania/thumb.svg',
+    width: 360,
+    height: 640,
+    source: 'Original',
+  },
+];
 
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
+
     if (url.pathname === '/api/games') {
       return handleApiGames(url, ctx);
+    }
+    if (url.pathname.startsWith('/play/')) {
+      return handlePlayRoute(request, url, env, ctx);
+    }
+    if (url.pathname === '/sitemap.xml') {
+      return handleSitemap(url, ctx);
     }
 
     return env.ASSETS.fetch(request);
   },
 };
 
-async function handleApiGames(url, ctx) {
-  const num = clampNum(url.searchParams.get('num'), GM_DEFAULT_NUM, GM_MAX_NUM);
-
+/**
+ * Fetches + merges both catalogs (GameMonetize + GamePix), cached at the
+ * edge under one shared key so /api/games and /play/* never issue redundant
+ * upstream requests for the same `num`. Returns the raw array — callers
+ * decide how to present it (JSON response vs. HTML meta lookup).
+ */
+async function getCombinedGames(num, ctx) {
   const cache = caches.default;
   const cacheKey = new Request(`https://cache.internal/api/games?num=${num}`, { method: 'GET' });
   const cached = await cache.match(cacheKey);
-  if (cached) return cached;
+  if (cached) {
+    return { games: await cached.clone().json(), response: cached };
+  }
 
   // Each source is fetched independently — if one feed is down or errors,
   // the other's games still make it to the player instead of the whole
@@ -70,19 +101,22 @@ async function handleApiGames(url, ctx) {
   const combined = [...gmGames, ...gpGames];
 
   if (combined.length === 0) {
-    return jsonResponse(
-      {
-        error: 'Both game feeds failed',
-        gameMonetize: gmResult.status,
-        gamePix: gpResult.status,
-      },
-      502
-    );
+    return { games: null, error: { gameMonetize: gmResult.status, gamePix: gpResult.status } };
   }
 
   const response = jsonResponse(combined, 200, CACHE_TTL_SECONDS);
   if (ctx && typeof ctx.waitUntil === 'function') {
     ctx.waitUntil(cache.put(cacheKey, response.clone()));
+  }
+  return { games: combined, response };
+}
+
+async function handleApiGames(url, ctx) {
+  const num = clampNum(url.searchParams.get('num'), GM_DEFAULT_NUM, GM_MAX_NUM);
+  const { games, response, error } = await getCombinedGames(num, ctx);
+
+  if (!games) {
+    return jsonResponse({ error: 'Both game feeds failed', ...error }, 502);
   }
   return response;
 }
@@ -91,6 +125,138 @@ function clampNum(rawNum, fallback, max) {
   const n = parseInt(rawNum, 10);
   if (!Number.isFinite(n) || n <= 0) return fallback;
   return Math.min(n, max);
+}
+
+// ----------------------------------------------------------------------------
+// Programmatic SEO: /play/{id}/{slug}
+//
+// Only the {id} segment is read — {slug} exists purely so the URL itself is
+// descriptive (a ranking signal, and clearer when shared) and is otherwise
+// ignored, so it can never go stale or cause a lookup to fail. The actual
+// game.html asset is fetched as-is and then transformed in place with
+// Cloudflare's native HTMLRewriter (a streaming parser, not fragile string
+// splicing) to set a per-game <title>, meta description, and Open Graph /
+// Twitter Card tags before it ever reaches the browser or a crawler — so
+// each of these thousands of URLs is a genuinely distinct, indexable page
+// from one shared codebase.
+// ----------------------------------------------------------------------------
+
+async function handlePlayRoute(request, url, env, ctx) {
+  const segments = url.pathname.split('/').filter(Boolean); // ['play', '<id>', '<slug>']
+  const gameId = segments[1] ? decodeURIComponent(segments[1]) : null;
+
+  const assetRequest = new Request(new URL('/game.html', url.origin), request);
+  const assetResponse = await env.ASSETS.fetch(assetRequest);
+
+  if (!gameId) return assetResponse;
+
+  const num = clampNum(url.searchParams.get('num'), GM_DEFAULT_NUM, GM_MAX_NUM);
+  const { games } = await getCombinedGames(num, ctx);
+  const allGames = [...LOCAL_GAMES, ...(games || [])];
+  const game = allGames.find((g) => String(g.id) === gameId);
+
+  // Unknown id (bad/old link, or upstream hiccup) — serve the page as-is;
+  // the client-side player.js will show its own "invalid link" state.
+  if (!game) return assetResponse;
+
+  const seoTitle = `Play ${game.title} Free, No Download - ${SITE_NAME}`;
+  const seoDescription = `Play ${game.title} free online at ${SITE_NAME}. ${game.category} game, no install — just play, have fun, right in your browser.`;
+  const canonicalUrl = `${url.origin}/play/${encodeURIComponent(game.id)}/${slugify(game.title)}`;
+  const imageUrl = absoluteUrl(game.thumb, url.origin);
+
+  const headExtra = `
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="${escapeHtmlAttr(SITE_NAME)}">
+<meta property="og:title" content="${escapeHtmlAttr(seoTitle)}">
+<meta property="og:description" content="${escapeHtmlAttr(seoDescription)}">
+<meta property="og:image" content="${escapeHtmlAttr(imageUrl)}">
+<meta property="og:url" content="${escapeHtmlAttr(canonicalUrl)}">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="${escapeHtmlAttr(seoTitle)}">
+<meta name="twitter:description" content="${escapeHtmlAttr(seoDescription)}">
+<meta name="twitter:image" content="${escapeHtmlAttr(imageUrl)}">
+<link rel="canonical" href="${escapeHtmlAttr(canonicalUrl)}">
+<script>window.__GIMBOOT_PLAY_ID__ = ${JSON.stringify(String(game.id)).replace(/</g, '\\u003c')};</script>
+`;
+
+  return new HTMLRewriter()
+    .on('title', new SetTextContent(seoTitle))
+    .on('meta[name="description"]', new SetAttribute('content', seoDescription))
+    .on('head', new AppendHtml(headExtra))
+    .transform(assetResponse);
+}
+
+class SetTextContent {
+  constructor(text) { this.text = text; }
+  element(element) { element.setInnerContent(this.text); }
+}
+
+class SetAttribute {
+  constructor(name, value) { this.name = name; this.value = value; }
+  element(element) { element.setAttribute(this.name, this.value); }
+}
+
+class AppendHtml {
+  constructor(html) { this.html = html; }
+  element(element) { element.append(this.html, { html: true }); }
+}
+
+function absoluteUrl(maybeRelative, origin) {
+  if (!maybeRelative) return '';
+  try {
+    return new URL(maybeRelative, origin).toString();
+  } catch {
+    return maybeRelative;
+  }
+}
+
+function escapeHtmlAttr(str) {
+  return String(str ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+/** Mirrors js/utils.js's slugify exactly — keep the two in sync. */
+function slugify(text) {
+  return (
+    String(text ?? '')
+      .toLowerCase()
+      .normalize('NFKD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .slice(0, 60) || 'game'
+  );
+}
+
+// ----------------------------------------------------------------------------
+// Sitemap — lets search engines discover every /play/ URL without needing
+// to first crawl the catalog grid's client-rendered links.
+// ----------------------------------------------------------------------------
+
+async function handleSitemap(url, ctx) {
+  const { games } = await getCombinedGames(GM_DEFAULT_NUM, ctx);
+  const allGames = [...LOCAL_GAMES, ...(games || [])];
+
+  const urlEntries = [
+    `<url><loc>${escapeHtmlAttr(url.origin)}/</loc><changefreq>daily</changefreq></url>`,
+    ...allGames.map((g) => {
+      const loc = `${url.origin}/play/${encodeURIComponent(g.id)}/${slugify(g.title)}`;
+      return `<url><loc>${escapeHtmlAttr(loc)}</loc><changefreq>weekly</changefreq></url>`;
+    }),
+  ];
+
+  const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urlEntries.join('\n')}\n</urlset>`;
+
+  return new Response(xml, {
+    headers: {
+      'Content-Type': 'application/xml; charset=utf-8',
+      'Cache-Control': `public, max-age=${CACHE_TTL_SECONDS}`,
+    },
+  });
 }
 
 // ----------------------------------------------------------------------------
@@ -181,7 +347,7 @@ async function fetchGamePix() {
   const upstream = await fetch(feedUrl, {
     headers: {
       Accept: 'application/json',
-      'User-Agent': 'Mozilla/5.0 (compatible; ArcadePortal/1.0)',
+      'User-Agent': 'Mozilla/5.0 (compatible; GimbootPortal/1.0)',
     },
   });
 

@@ -3,25 +3,37 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Loading… — Arcade</title>
-<meta name="description" content="Play instantly in your browser — no downloads, no sign-up.">
-<link rel="icon" type="image/svg+xml" href="favicon.svg">
-<link rel="manifest" href="manifest.json">
+<title>Loading… — Gimboot</title>
+<meta name="description" content="Play instantly in your browser — no downloads, no sign-up. No install, just play, have fun.">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="manifest" href="/manifest.json">
 <meta name="theme-color" content="#0e0b1a">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Arcade">
+<meta name="apple-mobile-web-app-title" content="Gimboot">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
-<link rel="stylesheet" href="css/style.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Press+Start+2P&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="/js/tailwind-config.js"></script>
+<link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
 
 <header class="site-header">
   <div class="chase-strip" aria-hidden="true"></div>
   <div class="header-inner">
-    <a href="index.html" class="wordmark">ARCADE</a>
-    <a href="index.html" class="btn btn--ghost ml-auto">&larr; Back to Catalog</a>
+    <a href="/" class="brand-lockup">
+      <img src="/favicon.svg" alt="" class="brand-icon" width="28" height="28">
+      <span class="brand-text">
+        <span class="wordmark">GIMBOOT</span>
+        <span class="tagline">No Install, Just Play, Have Fun</span>
+      </span>
+    </a>
+    <a href="/" class="btn btn--ghost ml-auto">&larr; Back to Catalog</a>
   </div>
 </header>
 
@@ -62,10 +74,10 @@
 </main>
 
 <footer class="site-footer">
-  <p>ARCADE — powered by <a href="https://gamemonetize.com" target="_blank" rel="noopener">GameMonetize</a>.</p>
+  <p>Gimboot — no install, just play, have fun. Powered by <a href="https://gamemonetize.com" target="_blank" rel="noopener">GameMonetize</a> &amp; <a href="https://gamepix.com" target="_blank" rel="noopener">GamePix</a>.</p>
 </footer>
 
-<script type="module" src="js/player.js"></script>
-<script src="js/pwa.js"></script>
+<script type="module" src="/js/player.js"></script>
+<script src="/js/pwa.js"></script>
 </body>
 </html>

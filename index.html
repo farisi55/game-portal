@@ -3,24 +3,44 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Arcade — Free Online Games</title>
-<meta name="description" content="Play hundreds of free browser games instantly — no downloads, no sign-up. Racing, action, puzzle, and arcade classics, updated automatically.">
-<link rel="icon" type="image/svg+xml" href="favicon.svg">
-<link rel="manifest" href="manifest.json">
+<title>Gimboot — No Install, Just Play, Have Fun</title>
+<meta name="description" content="Gimboot: hundreds of free browser games, ready in a tap. No install, just play, have fun — racing, action, puzzle, and arcade classics, updated automatically.">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="manifest" href="/manifest.json">
 <meta name="theme-color" content="#0e0b1a">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Arcade">
+<meta name="apple-mobile-web-app-title" content="Gimboot">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
-<link rel="stylesheet" href="css/style.css">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Gimboot">
+<meta property="og:title" content="Gimboot — No Install, Just Play, Have Fun">
+<meta property="og:description" content="Hundreds of free browser games, ready in a tap. No install, just play, have fun.">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Gimboot — No Install, Just Play, Have Fun">
+<meta name="twitter:description" content="Hundreds of free browser games, ready in a tap. No install, just play, have fun.">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Press+Start+2P&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="/js/tailwind-config.js"></script>
+<link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
 
 <header class="site-header">
   <div class="chase-strip" aria-hidden="true"></div>
   <div class="header-inner">
-    <a href="index.html" class="wordmark">ARCADE</a>
+    <a href="/" class="brand-lockup">
+      <img src="/favicon.svg" alt="" class="brand-icon" width="28" height="28">
+      <span class="brand-text">
+        <span class="wordmark">GIMBOOT</span>
+        <span class="tagline">No Install, Just Play, Have Fun</span>
+      </span>
+    </a>
     <div class="search-wrap">
       <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
         <circle cx="11" cy="11" r="7"/>
@@ -42,10 +62,10 @@
 </main>
 
 <footer class="site-footer">
-  <p>ARCADE — powered by <a href="https://gamemonetize.com" target="_blank" rel="noopener">GameMonetize</a>. Catalog refreshes automatically.</p>
+  <p>Gimboot — no install, just play, have fun. Powered by <a href="https://gamemonetize.com" target="_blank" rel="noopener">GameMonetize</a> &amp; <a href="https://gamepix.com" target="_blank" rel="noopener">GamePix</a>. Catalog refreshes automatically.</p>
 </footer>
 
-<script type="module" src="js/catalog.js"></script>
-<script src="js/pwa.js"></script>
+<script type="module" src="/js/catalog.js"></script>
+<script src="/js/pwa.js"></script>
 </body>
 </html>

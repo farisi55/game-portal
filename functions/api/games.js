@@ -12,6 +12,11 @@
 //
 // Logic is otherwise identical to src/index.js: fetch GameMonetize + GamePix
 // in parallel, normalize both into one shape, merge, cache at the edge.
+//
+// NOT mirrored here: the /play/{id}/{slug} SEO route and /sitemap.xml added
+// to src/index.js — that's a meaningful amount of extra logic (HTMLRewriter-
+// based meta injection) not worth duplicating into a file that, per the
+// note above, doesn't appear to actually run under this deployment model.
 // ============================================================================
 
 const GM_FEED_BASE = 'https://gamemonetize.com/feed.php';
@@ -132,7 +137,7 @@ async function fetchGamePix() {
   const upstream = await fetch(feedUrl, {
     headers: {
       Accept: 'application/json',
-      'User-Agent': 'Mozilla/5.0 (compatible; ArcadePortal/1.0)',
+      'User-Agent': 'Mozilla/5.0 (compatible; GimbootPortal/1.0)',
     },
   });
 

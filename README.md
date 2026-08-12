@@ -1,203 +1,187 @@
-# Arcade — Multi-Source Game Portal (MVP)
+# Gimboot — Multi-Source Game Portal
 
-A static, no-build-tool game portal in the vein of CrazyGames. Vanilla
-HTML5 + Tailwind (CDN) + modern vanilla JS (ES modules) on the frontend.
-Games come from three places: GameMonetize's catalog, GamePix's catalog,
-and games we host ourselves (currently: Kicau Mania). Installable as a
-PWA with offline support for the shell.
+**No install, just play, have fun.** A static, no-build-tool game portal in
+the vein of CrazyGames. Vanilla HTML5 + Tailwind (CDN) + modern vanilla JS
+(ES modules) on the frontend. Games come from three places: GameMonetize's
+catalog, GamePix's catalog, and games hosted directly (currently: Kicau
+Mania). Installable as a PWA, with per-game SEO landing pages generated
+programmatically from the live catalog.
 
 ## How it's wired together
 
 ```
 Browser
-  ├─ GET /                → index.html   (catalog: grid, search, category filter)
-  ├─ GET /game.html?...   → game.html    (player: iframe, fullscreen, share, related)
-  ├─ GET /api/games       → src/index.js (Cloudflare Worker — see below)
-  │                             │
-  │                             ├─ fetch → gamemonetize.com/feed.php  (server-side, parsed from RSS/XML)
-  │                             ├─ fetch → feeds.gamepix.com/v2/json  (server-side, already JSON)
-  │                             ├─ normalize both into one common shape, merge
-  │                             └─ cache the merged result at the edge (Cache API, 30 min)
+  ├─ GET /                         → index.html   (catalog: grid, search, category filter)
+  ├─ GET /play/{id}/{slug}         → src/index.js  (SEO landing page — see below)
+  ├─ GET /game.html?...            → game.html     (legacy query-param player, kept for old links)
+  ├─ GET /api/games                → src/index.js  (Cloudflare Worker)
+  ├─ GET /sitemap.xml              → src/index.js  (every /play/ URL, for crawlers)
+  │                                       │
+  │                                       ├─ fetch → gamemonetize.com/feed.php  (server-side, parsed from RSS/XML)
+  │                                       ├─ fetch → feeds.gamepix.com/v2/json  (server-side, already JSON)
+  │                                       ├─ normalize both into one common shape, merge
+  │                                       └─ cache the merged result at the edge (Cache API, 30 min)
   │
   ├─ <iframe src="https://html5.gamemonetize.co/...">   (a GameMonetize game)
   ├─ <iframe src="https://play.gamepix.com/.../embed">   (a GamePix game)
-  └─ <iframe src="games/kicau-mania/index.html">         (a game we host ourselves)
+  └─ <iframe src="/games/kicau-mania/index.html">         (a game hosted directly)
 ```
 
-`js/config.js` → `LOCAL_GAMES` is prepended to whatever `/api/games`
-returns (in both `catalog.js` and `player.js`, via the shared
-`fetchGameCatalog()` helper in `js/utils.js`) — so first-party games
-never touch the network fetch at all, and can't drift out of sync between
-the catalog grid and the "related games" list on the player page.
+## Programmatic SEO: `/play/{id}/{slug}`
 
-**Why merge server-side instead of two client-side fetches?**
+Every game gets its own real, crawlable URL — e.g.
+`gimboot.com/play/gp-O6650/moto-x3m` — without hand-writing a single page.
 
-1. GameMonetize's feed replies with **RSS/XML even when called with
-   `&format=json`** — confirmed by fetching it directly. `src/index.js`
-   parses that once, server-side, and always hands the frontend clean,
-   flat JSON regardless of what either upstream actually returns.
-2. GamePix's feed is genuine JSON (the [JSON Feed](https://jsonfeed.org)
-   spec) but has a completely different field layout (`banner_image`,
-   `namespace`, `orientation`, …). Normalizing both to the same shape
-   server-side means the frontend never has two code paths.
-3. Server-to-server fetches are never subject to browser CORS.
-4. If GameMonetize or GamePix goes down independently, `Promise.allSettled`
-   means the OTHER source's games still reach the player — the catalog
-   degrades gracefully instead of going blank.
+**How it works:** `src/index.js` fetches the existing `game.html` asset
+as-is, then transforms it in place with Cloudflare's native
+**HTMLRewriter** (a streaming HTML parser, not string splicing) before the
+response ever reaches a browser or crawler:
 
-IDs from each source are prefixed (`gm-…`, `gp-…`) so they can never
-collide with each other or with `local-…` first-party IDs.
+- `<title>` → `Play {game title} Free, No Download - Gimboot`
+- `<meta name="description">` → a per-game description mentioning its category
+- Open Graph + Twitter Card tags appended (`og:title`, `og:image` from the
+  game's thumbnail, `og:url`, etc.) — so links shared on social/chat apps
+  show a real preview, not a generic one
+- A `<link rel="canonical">` pointing at the same URL
+- A tiny inline `<script>window.__GIMBOOT_PLAY_ID__ = "...";</script>` —
+  the one bit of state the page needs to tell `js/player.js` which game to
+  actually load
+
+**Only the `{id}` segment is ever read.** `{slug}` exists purely so the URL
+is descriptive for search engines and people sharing links — it's never
+parsed for lookup, so a stale or mismatched slug can never break anything.
+`js/utils.js` → `buildPlayUrl()` and `slugify()` generate these URLs
+client-side (used by every card in the catalog and every "related game"
+link); `src/index.js` has an intentionally-duplicated `slugify()` that
+produces byte-identical output (verified with matching test cases across
+punctuation, accents, and empty titles) so a game's canonical URL is
+consistent everywhere it's linked from.
+
+**`/sitemap.xml`** lists every current game's `/play/` URL plus the
+homepage, generated live from the same merged catalog — submit it in
+Google Search Console / Bing Webmaster Tools so the ~50 (and growing)
+game pages get discovered without needing to be crawled through the
+client-rendered grid first.
+
+**Old links still work.** `game.html?id=...&url=...` (the original
+query-param format) is still fully supported by `js/player.js` as a
+fallback — new links just don't use it anymore.
+
+### Why this needed absolute paths everywhere
+
+`/play/gp-O6650/moto-x3m` is two path segments deep, `/` is zero. A
+relative asset reference like `href="css/style.css"` resolves differently
+at each depth — it would have 404'd for every `/play/` page. Every asset
+reference in `index.html`, `game.html`, `js/config.js` (the local game's
+`url`/`thumb`), and `js/pwa.js`'s service-worker registration now uses a
+root-relative path (`/css/style.css`) instead, so the exact same markup
+works identically no matter how deep the URL is. `games/kicau-mania/`'s
+own internal references are untouched — it's always loaded via iframe at
+its own path, unaffected by the parent page's URL depth.
+
+## The Gimboot rebrand
+
+- **Wordmark & tagline** — "GIMBOOT" in Press Start 2P (a genuine pixel
+  game font), "No Install, Just Play, Have Fun" underneath in Space Mono.
+  Both replace fonts (Space Grotesk, Inter, Monoton) that, on inspection,
+  **were never actually loading** — there was no Google Fonts `<link>` in
+  either HTML file, so the whole site had been silently rendering in
+  system-default fonts. Fixed as part of this change; verified by
+  rendering the page in an actual headless browser before and after.
+- **Icon** — a pixel-art joystick (cyan-to-magenta gradient, gold button),
+  hand-built as a 24×24 SVG grid and rendered to a PNG during development
+  to check it before shipping. Used as `favicon.svg`, plus generated
+  `icon-192.png` / `icon-512.png` (including a `maskable` variant) so
+  "Add to Home Screen" has a real icon on platforms that don't render SVG
+  manifest icons.
+- **Footer** — credits both GameMonetize and GamePix, matches the tagline.
 
 ## Deployment model: Worker with static assets (not Pages)
 
-This repo deploys as a **Cloudflare Worker with static assets**, not
-Cloudflare Pages:
-
 ```bash
-npx wrangler deploy          # deploy
-npx wrangler dev              # local dev — runs src/index.js AND serves assets
+npx wrangler deploy    # deploy
+npx wrangler dev        # local dev — runs src/index.js AND serves assets
 ```
 
-`wrangler.toml` → `main = "./src/index.js"`, and the `[assets]` block
-points at `.` (the whole project root) with `run_worker_first = ["/api/*"]`,
-meaning every path EXCEPT `/api/*` is served directly as a static file
-without invoking the Worker script at all, and `/api/*` always runs
-`src/index.js` first.
+`wrangler.toml` → `main = "./src/index.js"`, `[assets] directory = "."`,
+`run_worker_first = ["/api/*", "/play/*", "/sitemap.xml"]` — every other
+path is served directly as a static file without invoking the Worker.
 
-`functions/api/games.js` is kept in the repo and kept logically in sync
-with `src/index.js`, but as far as we can tell it is **not actually used**
-by this deployment model — the `functions/` directory convention is
-Pages-specific, and this project deploys as a Worker. Safe to delete if
-you'd rather maintain one copy; kept for now in case you ever switch back
-to a Pages deployment instead.
-
-### Two fixes made to wrangler.toml while integrating this update
-
-- Added `binding = "ASSETS"` — `src/index.js` calls `env.ASSETS.fetch(request)`
-  for every non-API path, and without an explicit binding name that's
-  `undefined`, which would have made every single page on the site fail.
-- Removed a `header = "Content-Type: text/html; charset=utf-8"` line —
-  this isn't a documented `[assets]` key in Cloudflare's config schema.
-  Custom headers belong in `_headers` (see below), which this project
-  already has and which IS correctly picked up for static-asset responses
-  under the Worker-with-assets model (confirmed against current Cloudflare
-  docs) — it just doesn't apply to `/api/games`'s own response, which sets
-  its headers directly in code instead, which is the documented pattern
-  for Worker-generated responses.
+`functions/api/games.js` is kept logically in sync for `/api/games` but,
+as before, doesn't appear to be used by this deployment model (the
+`functions/` convention is Pages-specific) — and does **not** include the
+new `/play/` or sitemap logic, which wasn't worth duplicating into a file
+that likely never runs.
 
 ## Project structure
 
 ```
-game-portal/
+gimboot/
 ├── index.html                Catalog page
-├── game.html                  Player page
-├── manifest.json               PWA manifest
-├── sw.js                        Service worker — offline app shell + runtime cache
-├── ads.txt                     GameMonetize verification — paste your snippet in
-├── _headers                    Security headers + CSP (applies to static asset responses)
-├── wrangler.toml                 Worker + static-assets config — `npx wrangler deploy`
-├── favicon.svg
+├── game.html                  Legacy query-param player (still supported)
+├── manifest.json               PWA manifest — name "Gimboot", pixel icons
+├── sw.js                        Service worker — offline app shell + stale-while-revalidate
+├── favicon.svg                 Pixel-art joystick icon
+├── icon-192.png / icon-512.png  Raster icons for home-screen install
+├── ads.txt                     GameMonetize verification
+├── _headers                    Security headers + CSP
+├── wrangler.toml                 Worker + static-assets config, routes /play/ + /api/ to the Worker
 ├── README.md
 ├── css/
-│   └── style.css               Design tokens + all component styles
+│   └── style.css               Design tokens (now Plus Jakarta Sans / Press Start 2P / Space Mono) + components
 ├── js/
-│   ├── config.js                 Tunable constants + LOCAL_GAMES + embed allowlist
-│   ├── utils.js                   escapeHtml, debounce, URL validation, fetchGameCatalog
-│   ├── tailwind-config.js         Tailwind theme extension (external, keeps CSP clean)
+│   ├── config.js                 Tunable constants, LOCAL_GAMES (absolute paths), embed allowlist
+│   ├── utils.js                   escapeHtml, debounce, slugify, buildPlayUrl (/play/ URLs), fetchGameCatalog
+│   ├── tailwind-config.js         Tailwind theme extension, matches the new font tokens
 │   ├── catalog.js                 Fetch, render grid, filter, search
-│   ├── player.js                   Parse params, validate embed host, iframe, related
-│   └── pwa.js                      Service worker registration + cross-game high-score sync
+│   ├── player.js                   Resolves game data from /play/'s injected id OR legacy query params
+│   └── pwa.js                      Service worker registration (now root-relative) + cross-game high score
 ├── games/
-│   └── kicau-mania/               First-party game (own index.html/style.css/game.js)
+│   └── kicau-mania/               First-party game — all in-game text now in English
 ├── src/
-│   └── index.js                  Worker: fetch+normalize+merge both feeds, serve /api/games
+│   └── index.js                  Worker: /api/games, /play/{id}/{slug} (HTMLRewriter SEO injection), /sitemap.xml
 └── functions/
     └── api/
-        └── games.js              Same logic, kept in sync — see deployment note above
+        └── games.js              Kept in sync for /api/games only — see note above
 ```
-
-## Cross-game high score
-
-`js/pwa.js` listens for `postMessage` from ANY embedded iframe and keeps a
-single high score in `localStorage` (`arcade-high-score-v1`), shown on
-both `index.html` and `game.html`:
-
-- Our own games post `{ type: 'arcade-score', score }` — see
-  `reportScoreToParent()` in `games/kicau-mania/game.js`. Any future
-  first-party game should do the same.
-- GamePix's embedded games post this natively as
-  `{ type: 'update_score', score }` — no extra work needed on our side,
-  `js/pwa.js` already listens for both shapes.
-- GameMonetize's games don't post scores out of the iframe in the same
-  way, so they don't feed this counter.
-
-This is a portal-wide number, not a per-game one — that was already the
-existing design before this change, so it's preserved as-is rather than
-redesigned into per-game high scores.
 
 ## Turning on GameMonetize monetization: ads.txt
 
-`ads.txt` is a template with instructions inside it. Ads won't serve
-correctly until you paste your real snippet from your GameMonetize
-dashboard (Site/Ad Zone settings) in, replacing the example line, then
-redeploy. GameMonetize checks `https://<your-domain>/ads.txt` at the
-root specifically.
-
-GamePix's tracking is handled entirely through the `sid` parameter baked
-into the feed URL in `src/index.js` — nothing else to configure there.
+Unchanged from before — paste your real snippet from the GameMonetize
+dashboard into `ads.txt`, replacing the example line, then redeploy.
+GameMonetize checks `https://<your-domain>/ads.txt` at the root.
 
 ## Customization
 
+- **SEO title/description template** — `handlePlayRoute()` in
+  `src/index.js` (the `seoTitle` / `seoDescription` strings).
 - **GameMonetize catalog size** — `js/config.js` → `DEFAULT_GAME_COUNT`.
-  `src/index.js` clamps requests at 200.
-- **GamePix page size / sid** — `GAMEPIX_PAGINATION` / `GAMEPIX_SID` at the
-  top of `src/index.js` (and `functions/api/games.js` if you keep it in
-  sync). **Don't change or remove `GAMEPIX_SID`** — GamePix uses it to
-  attribute stats to your account.
+- **GamePix page size / sid** — `GAMEPIX_PAGINATION` / `GAMEPIX_SID` at
+  the top of `src/index.js`. **Don't change or remove `GAMEPIX_SID`.**
 - **Adding another first-party game** — drop it under `games/<name>/`,
-  add an entry to `LOCAL_GAMES` in `js/config.js` (id prefixed `local-`,
-  `url` pointing at the game's relative path), and have its own game.js
-  post `{ type: 'arcade-score', score }` to `window.parent` on game over
-  if you want it to feed the shared high score.
-- **Colors / type** — CSS custom properties at the top of `css/style.css`.
-- **Cache duration** — `CACHE_TTL_SECONDS` in `src/index.js`.
+  add an entry to **both** `LOCAL_GAMES` in `js/config.js` (client) and
+  `src/index.js` (server — needed so its `/play/` page gets real meta
+  tags too; the two are intentionally duplicated, not imported from one
+  file, since the Worker and the browser ES modules don't share a build
+  step). Use an absolute `/games/<name>/...` path for `url`/`thumb`.
+- **Colors** — CSS custom properties at the top of `css/style.css`.
+  Typography — the three `--font-*` tokens just below them.
 
 ## Security notes
 
-- **Embed allowlist** — `game.html` takes `url` as a query parameter.
-  `isAllowedEmbedUrl()` in `js/utils.js` allows two things and refuses
-  everything else before it's ever assigned to the iframe's `src`: (a)
-  absolute `https://` URLs whose hostname is on the GameMonetize/GamePix
-  allowlist, or (b) a same-origin relative path under `games/` — which,
-  by how relative URL resolution works, can never point at a different
-  origin no matter how it's crafted, so it's safe to allow without a
-  hostname check.
-- **XSS from feed content** — every string from either feed goes through
-  `escapeHtml()` before touching `innerHTML`. Both feeds are third-party
-  content and treated as untrusted input.
-- **CSP** — see `_headers`. `frame-src` includes `'self'` (for our own
-  games) plus the exact GameMonetize and GamePix domains, nothing broader.
-
-## Design system, briefly
-
-Dark violet base (`#0e0b1a`) with three accents pulled from arcade-cabinet
-vocabulary: cyan and magenta (dual-player color coding) plus gold (marquee
-bulb color, used for primary actions and first-party-game badges). The
-header's animated dot strip references marquee chase lighting; the game
-player's frame is styled as a bolted cabinet bezel. `prefers-reduced-motion`
-disables the chase animation and card transitions.
-
-## A business note, since ad content isn't fully in your control
-
-Both GameMonetize and GamePix are general-purpose ad/game networks — their
-catalogs can include casual casino/gambling-style titles. If this portal
-is going out under a halal-oriented brand, check each dashboard for
-category/genre exclusion controls before launch.
+Unchanged from before: `isAllowedEmbedUrl()` in `js/utils.js` allows only
+(a) absolute `https://` URLs on the GameMonetize/GamePix allowlist, or (b)
+a same-origin path under `/games/` — every feed string is escaped before
+touching `innerHTML`, and the `/play/` route's injected `<script>` value
+is both `JSON.stringify`-escaped and has `<` neutralized so a pathological
+feed value can't break out of the tag.
 
 ## Possible next steps
 
-- Pagination or infinite scroll for a bigger combined catalog.
-- A provider filter (All / GameMonetize / GamePix / Our Games) alongside
-  the existing category filter — the `source` field added for the badge
-  is already there to build this on top of.
-- More first-party games under `games/` as you build them.
+- Ping Google/Bing with the sitemap URL after your first deploy so
+  indexing starts sooner rather than waiting for organic discovery.
+- A provider filter (All / GameMonetize / GamePix / Original) — the
+  `source` field used for the "Original" badge is already there to build
+  on top of.
+- More first-party games under `games/` — remember the two-place
+  `LOCAL_GAMES` update above.

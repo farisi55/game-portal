@@ -1,10 +1,12 @@
-const CACHE_NAME = 'arcade-portal-v3';
+const CACHE_NAME = 'gimboot-portal-v1';
 const APP_SHELL = [
   './',
   './index.html',
   './game.html',
   './manifest.json',
   './favicon.svg',
+  './icon-192.png',
+  './icon-512.png',
   './css/style.css',
   './js/config.js',
   './js/utils.js',
