@@ -187,8 +187,8 @@ async function handlePlayRoute(request, url, env, ctx) {
 }
 
 class SetTextContent {
-  constructor(text) { this.text = text; }
-  element(element) { element.setInnerContent(this.text); }
+  constructor(content) { this.content = content; }
+  element(element) { element.setInnerContent(this.content); }
 }
 
 class SetAttribute {
