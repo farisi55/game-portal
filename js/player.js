@@ -9,8 +9,13 @@ const params = new URLSearchParams(window.location.search);
 // the catalog. Falls back to the older ?id=&url=&title=... query-string
 // format for any links still using it.
 const ssrGameId = typeof window.__GIMBOOT_PLAY_ID__ !== 'undefined' ? window.__GIMBOOT_PLAY_ID__ : null;
+const ssrGame = window.__GIMBOOT_PLAY_GAME__ && typeof window.__GIMBOOT_PLAY_GAME__ === 'object'
+  ? window.__GIMBOOT_PLAY_GAME__
+  : null;
+const pathGameId = readPlayIdFromPathname(window.location.pathname);
+const playRouteGameId = ssrGameId || pathGameId;
 
-const gameId = ssrGameId || params.get('id');
+const gameId = playRouteGameId || params.get('id');
 let embedUrl = params.get('url');
 let title = params.get('title') || 'Game';
 let category = params.get('category') || '';
@@ -33,16 +38,21 @@ const els = {
 init();
 
 async function init() {
-  if (ssrGameId) {
-    let games;
-    try {
-      games = await fetchGameCatalog(CONFIG.GAMES_API_ENDPOINT, CONFIG.DEFAULT_GAME_COUNT, CONFIG.LOCAL_GAMES);
-    } catch (err) {
-      console.error('Failed to resolve game for /play/ route:', err);
-      games = CONFIG.LOCAL_GAMES;
+  if (playRouteGameId) {
+    let game = ssrGame && String(ssrGame.id) === String(playRouteGameId) ? ssrGame : null;
+
+    if (!game) {
+      let games;
+      try {
+        games = await fetchGameCatalog(CONFIG.GAMES_API_ENDPOINT, CONFIG.DEFAULT_GAME_COUNT, CONFIG.LOCAL_GAMES);
+      } catch (err) {
+        console.error('Failed to resolve game for /play/ route:', err);
+        games = CONFIG.LOCAL_GAMES;
+      }
+
+      game = (games || []).find((g) => String(g.id) === String(playRouteGameId));
     }
 
-    const game = (games || []).find((g) => String(g.id) === String(ssrGameId));
     if (game) {
       embedUrl = game.url;
       title = game.title;
@@ -59,7 +69,7 @@ async function init() {
 
   // When arriving via /play/, the <title> was already set server-side with
   // an SEO-optimized string — don't clobber it with a plainer client-side one.
-  if (!ssrGameId) {
+  if (!playRouteGameId) {
     document.title = `${title} — Gimboot`;
   }
   els.title.textContent = title;
@@ -77,6 +87,16 @@ async function init() {
 
   bindActions();
   loadRelatedGames();
+}
+
+function readPlayIdFromPathname(pathname) {
+  const segments = String(pathname || '').split('/').filter(Boolean);
+  if (segments[0] !== 'play' || !segments[1]) return null;
+  try {
+    return decodeURIComponent(segments[1]);
+  } catch {
+    return null;
+  }
 }
 
 /**

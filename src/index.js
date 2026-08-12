@@ -155,9 +155,15 @@ async function handlePlayRoute(request, url, env, ctx) {
   const allGames = [...LOCAL_GAMES, ...(games || [])];
   const game = allGames.find((g) => String(g.id) === gameId);
 
-  // Unknown id (bad/old link, or upstream hiccup) — serve the page as-is;
-  // the client-side player.js will show its own "invalid link" state.
-  if (!game) return assetResponse;
+  // Preserve the id even when the feed lookup misses. The client can retry
+  // the catalog lookup from the URL, which lets a cached or temporarily
+  // incomplete server-side catalog recover without losing the play identity.
+  if (!game) {
+    const playIdScript = `<script>window.__GIMBOOT_PLAY_ID__ = ${JSON.stringify(gameId).replace(/</g, '\\u003c')};</script>`;
+    return new HTMLRewriter()
+      .on('head', new AppendHtml(playIdScript))
+      .transform(assetResponse);
+  }
 
   const seoTitle = `Play ${game.title} Free, No Download - ${SITE_NAME}`;
   const seoDescription = `Play ${game.title} free online at ${SITE_NAME}. ${game.category} game, no install — just play, have fun, right in your browser.`;
@@ -176,7 +182,10 @@ async function handlePlayRoute(request, url, env, ctx) {
 <meta name="twitter:description" content="${escapeHtmlAttr(seoDescription)}">
 <meta name="twitter:image" content="${escapeHtmlAttr(imageUrl)}">
 <link rel="canonical" href="${escapeHtmlAttr(canonicalUrl)}">
-<script>window.__GIMBOOT_PLAY_ID__ = ${JSON.stringify(String(game.id)).replace(/</g, '\\u003c')};</script>
+<script>
+window.__GIMBOOT_PLAY_ID__ = ${JSON.stringify(String(game.id)).replace(/</g, '\\u003c')};
+window.__GIMBOOT_PLAY_GAME__ = ${JSON.stringify(game).replace(/</g, '\\u003c')};
+</script>
 `;
 
   return new HTMLRewriter()
