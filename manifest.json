@@ -1,9 +1,9 @@
 {
   "name": "Gimboot — No Install, Just Play, Have Fun",
   "short_name": "Gimboot",
-  "id": "/",
-  "start_url": "/",
-  "scope": "/",
+  "id": "https://gimboot.com/",
+  "start_url": "https://gimboot.com/",
+  "scope": "https://gimboot.com/",
   "display": "standalone",
   "background_color": "#0e0b1a",
   "theme_color": "#0e0b1a",
@@ -33,7 +33,13 @@
       "src": "/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ]
 }
