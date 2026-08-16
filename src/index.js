@@ -165,9 +165,9 @@ async function handlePlayRoute(request, url, env, ctx) {
   // the catalog lookup from the URL, which lets a cached or temporarily
   // incomplete server-side catalog recover without losing the play identity.
   if (!game) {
-    const playIdScript = `<script>window.__GIMBOOT_PLAY_ID__ = ${JSON.stringify(gameId).replace(/</g, '\\u003c')};</script>`;
+    const playIdMeta = `<meta name="gimboot-play-id" content="${escapeHtmlAttr(gameId)}">`;
     return new HTMLRewriter()
-      .on('head', new AppendHtml(playIdScript))
+      .on('head', new AppendHtml(playIdMeta))
       .transform(assetResponse);
   }
 
@@ -188,10 +188,12 @@ async function handlePlayRoute(request, url, env, ctx) {
 <meta name="twitter:description" content="${escapeHtmlAttr(seoDescription)}">
 <meta name="twitter:image" content="${escapeHtmlAttr(imageUrl)}">
 <link rel="canonical" href="${escapeHtmlAttr(canonicalUrl)}">
-<script>
-window.__GIMBOOT_PLAY_ID__ = ${JSON.stringify(String(game.id)).replace(/</g, '\\u003c')};
-window.__GIMBOOT_PLAY_GAME__ = ${JSON.stringify(game).replace(/</g, '\\u003c')};
-</script>
+<meta name="gimboot-play-id" content="${escapeHtmlAttr(game.id)}">
+<meta name="gimboot-play-url" content="${escapeHtmlAttr(game.url)}">
+<meta name="gimboot-play-title" content="${escapeHtmlAttr(game.title)}">
+<meta name="gimboot-play-category" content="${escapeHtmlAttr(game.category)}">
+<meta name="gimboot-play-width" content="${escapeHtmlAttr(game.width ?? '')}">
+<meta name="gimboot-play-height" content="${escapeHtmlAttr(game.height ?? '')}">
 `;
 
   return new HTMLRewriter()

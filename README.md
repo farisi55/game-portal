@@ -43,9 +43,9 @@ response ever reaches a browser or crawler:
   game's thumbnail, `og:url`, etc.) — so links shared on social/chat apps
   show a real preview, not a generic one
 - A `<link rel="canonical">` pointing at the same URL
-- A tiny inline `<script>window.__GIMBOOT_PLAY_ID__ = "...";</script>` —
-  the one bit of state the page needs to tell `js/player.js` which game to
-  actually load
+- A small set of `meta` tags containing the resolved game data — the page
+  stays compatible with the strict CSP while `js/player.js` can load the
+  correct game without another lookup for the primary embed
 
 **Only the `{id}` segment is ever read.** `{slug}` exists purely so the URL
 is descriptive for search engines and people sharing links — it's never
@@ -172,9 +172,9 @@ GameMonetize checks `https://<your-domain>/ads.txt` at the root.
 Unchanged from before: `isAllowedEmbedUrl()` in `js/utils.js` allows only
 (a) absolute `https://` URLs on the GameMonetize/GamePix allowlist, or (b)
 a same-origin path under `/games/` — every feed string is escaped before
-touching `innerHTML`, and the `/play/` route's injected `<script>` value
-is both `JSON.stringify`-escaped and has `<` neutralized so a pathological
-feed value can't break out of the tag.
+touching `innerHTML`, and the `/play/` route's injected meta attributes are
+escaped before they reach HTML so a pathological feed value cannot break out
+of an attribute.
 
 ## Possible next steps
 

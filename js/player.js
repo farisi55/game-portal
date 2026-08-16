@@ -4,14 +4,10 @@ import { escapeHtml, buildPlayUrl, isAllowedEmbedUrl, readSessionGames, fetchGam
 const params = new URLSearchParams(window.location.search);
 
 // Arrived via the SEO-friendly /play/{id}/{slug} route: src/index.js already
-// server-injected the <title>/meta tags for this exact game and left the id
-// here so the client can resolve the rest (embed url, dimensions, etc.) from
-// the catalog. Falls back to the older ?id=&url=&title=... query-string
-// format for any links still using it.
-const ssrGameId = typeof window.__GIMBOOT_PLAY_ID__ !== 'undefined' ? window.__GIMBOOT_PLAY_ID__ : null;
-const ssrGame = window.__GIMBOOT_PLAY_GAME__ && typeof window.__GIMBOOT_PLAY_GAME__ === 'object'
-  ? window.__GIMBOOT_PLAY_GAME__
-  : null;
+// src/index.js adds the resolved game as meta tags so the page stays within
+// the site's strict CSP. Falls back to the older ?id=&url=&title=... format.
+const ssrGameId = readMetaContent('gimboot-play-id');
+const ssrGame = readServerGame();
 const pathGameId = readPlayIdFromPathname(window.location.pathname);
 const playRouteGameId = ssrGameId || pathGameId;
 
@@ -97,6 +93,31 @@ function readPlayIdFromPathname(pathname) {
   } catch {
     return null;
   }
+}
+
+function readMetaContent(name) {
+  const meta = document.querySelector(`meta[name="${name}"]`);
+  return meta ? meta.getAttribute('content') || null : null;
+}
+
+function readMetaNumber(name) {
+  const value = Number(readMetaContent(name));
+  return Number.isFinite(value) && value > 0 ? value : null;
+}
+
+function readServerGame() {
+  const id = readMetaContent('gimboot-play-id');
+  const url = readMetaContent('gimboot-play-url');
+  if (!id || !url) return null;
+
+  return {
+    id,
+    url,
+    title: readMetaContent('gimboot-play-title') || 'Game',
+    category: readMetaContent('gimboot-play-category') || '',
+    width: readMetaNumber('gimboot-play-width'),
+    height: readMetaNumber('gimboot-play-height'),
+  };
 }
 
 /**
