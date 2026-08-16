@@ -1,10 +1,8 @@
-const CACHE_NAME = 'gimboot-portal-v1';
+const CACHE_NAME = 'gimboot-portal-v2';
 const APP_SHELL = [
   '/',
-  '/index.html',
-  '/game.html',
+  '/game',
   '/manifest.json',
-  '/favicon.svg',
   '/icon-192.png',
   '/icon-512.png',
   '/css/style.css',
@@ -12,11 +10,7 @@ const APP_SHELL = [
   '/js/utils.js',
   '/js/catalog.js',
   '/js/player.js',
-  '/js/pwa.js',
-  '/games/kicau-mania/index.html',
-  '/games/kicau-mania/style.css',
-  '/games/kicau-mania/game.js',
-  '/games/kicau-mania/thumb.svg'
+  '/js/pwa.js'
 ];
 
 self.addEventListener('install', (event) => {
@@ -54,7 +48,7 @@ self.addEventListener('fetch', (event) => {
   }
 
   if (request.mode === 'navigate') {
-    event.respondWith(fetch(request).catch(() => caches.match('/index.html')));
+    event.respondWith(fetch(request).catch(() => caches.match('/')));
     return;
   }
 

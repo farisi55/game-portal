@@ -131,9 +131,11 @@ img {
   width: 64px;
   height: 64px;
   aspect-ratio: 1;
-  object-fit: cover;
+  object-fit: contain;
   border-radius: 18px;
-  filter: drop-shadow(0 0 6px rgba(53, 228, 224, 0.35));
+  background: rgba(17, 12, 27, 0.4);
+  padding: 4px;
+  filter: drop-shadow(0 0 8px rgba(53, 228, 224, 0.45));
 }
 
 .brand-text {

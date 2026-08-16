@@ -50,6 +50,12 @@ export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
 
+    if (url.protocol === 'http:') {
+      const httpsUrl = new URL(url);
+      httpsUrl.protocol = 'https:';
+      return Response.redirect(httpsUrl.toString(), 301);
+    }
+
     if (url.pathname === '/api/games') {
       return handleApiGames(url, env, ctx);
     }
