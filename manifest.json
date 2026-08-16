@@ -8,6 +8,20 @@
   "background_color": "#0e0b1a",
   "theme_color": "#0e0b1a",
   "description": "Hundreds of free browser games. No install, just play, have fun.",
+  "screenshots": [
+  {
+    "src": "screenshot-desktop.png",
+    "sizes": "1254x1254",
+    "type": "image/png",
+    "form_factor": "wide"
+  },
+  {
+    "src": "screenshot-mobile.png",
+    "sizes": "1254x1254",
+    "type": "image/png",
+    "form_factor": "narrow" 
+  }
+],
   "icons": [
     {
       "src": "/favicon.svg",
@@ -17,19 +31,19 @@
     },
     {
       "src": "/icon-192.png",
-      "sizes": "192x192",
+      "sizes": "1254x1254",
       "type": "image/png",
       "purpose": "any"
     },
     {
       "src": "/icon-512.png",
-      "sizes": "512x512",
+      "sizes": "1254x1254",
       "type": "image/png",
       "purpose": "any"
     },
     {
       "src": "/icon-512.png",
-      "sizes": "512x512",
+      "sizes": "1254x1254",
       "type": "image/png",
       "purpose": "maskable"
     }
