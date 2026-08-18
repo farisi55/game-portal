@@ -198,6 +198,46 @@ img {
 }
 
 /* ============================================================================
+   Tab bar
+   ============================================================================ */
+
+.tab-bar {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 4px 24px 0;
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.tab-btn {
+  flex: none;
+  padding: 8px 16px;
+  border-radius: 999px;
+  border: 1px solid var(--surface-border);
+  background: var(--surface);
+  color: var(--text-muted);
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  transition: color 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+}
+
+.tab-btn:hover {
+  color: var(--text);
+  border-color: var(--cyan);
+}
+
+.tab-btn--active {
+  background: var(--cyan);
+  border-color: var(--cyan);
+  color: var(--ink);
+  font-weight: 700;
+}
+
+/* ============================================================================
    Category chips
    ============================================================================ */
 
@@ -282,6 +322,7 @@ main {
 }
 
 .game-card {
+  position: relative;
   display: block;
   background: var(--surface);
   border: 1px solid var(--surface-border);
@@ -309,6 +350,10 @@ main {
   border-color: var(--cyan);
   box-shadow: 0 0 0 1px var(--cyan), 0 16px 32px -18px rgba(53, 228, 224, 0.45),
     0 16px 32px -20px rgba(255, 61, 154, 0.35);
+}
+
+.game-card__link {
+  display: block;
 }
 
 .game-card__thumb-wrap {
@@ -365,6 +410,43 @@ main {
   text-transform: uppercase;
 }
 
+.game-card__actions {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: flex;
+  gap: 6px;
+  z-index: 2;
+}
+
+.game-card__fav,
+.game-card__share {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  border: 1px solid var(--surface-border);
+  background: rgba(14, 11, 26, 0.75);
+  color: var(--text);
+  font-size: 15px;
+  cursor: pointer;
+  transition: transform 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+  backdrop-filter: blur(4px);
+}
+
+.game-card__fav:hover,
+.game-card__share:hover {
+  transform: scale(1.1);
+  border-color: var(--cyan);
+}
+
+.game-card__fav--active {
+  color: var(--magenta);
+  border-color: var(--magenta);
+}
+
 .game-card__body {
   padding: 12px 14px 14px;
 }
@@ -407,6 +489,55 @@ main {
 
 .game-card--compact .game-card__body {
   padding: 10px 12px 12px;
+}
+
+/* ============================================================================
+   Load More
+   ============================================================================ */
+
+.load-more-wrap {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 24px 60px;
+  text-align: center;
+}
+
+.load-more-wrap[hidden] {
+  display: none;
+}
+
+.btn--load-more {
+  padding: 12px 40px;
+  font-size: 15px;
+}
+
+/* ============================================================================
+   Toast
+   ============================================================================ */
+
+.toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: var(--surface);
+  border: 1px solid var(--cyan);
+  color: var(--text);
+  padding: 12px 24px;
+  border-radius: 999px;
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 600;
+  box-shadow: 0 8px 24px -8px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(53, 228, 224, 0.2);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease, transform 0.25s ease;
+  z-index: 100;
+}
+
+.toast--show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
 }
 
 /* ============================================================================
@@ -691,9 +822,11 @@ main {
   .tagline {
     display: none;
   }
+  .tab-bar,
   .category-bar,
   .game-grid,
   .catalog-meta,
+  .load-more-wrap,
   .player-bar,
   .frame-shell,
   .game-info,

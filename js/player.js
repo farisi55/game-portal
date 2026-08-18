@@ -1,5 +1,6 @@
 import { CONFIG } from './config.js';
 import { escapeHtml, buildPlayUrl, isAllowedEmbedUrl, readSessionGames, fetchGameCatalog } from './utils.js';
+import { saveRecent } from './state.js';
 
 const params = new URLSearchParams(window.location.search);
 
@@ -93,7 +94,10 @@ async function init() {
   // Lazy load: don't set iframe src until the user clicks "Play Now".
   // This keeps the page fast and avoids loading the game script before
   // the user actually wants to play.
-  els.playBtn.addEventListener('click', loadGame);
+  els.playBtn.addEventListener('click', () => {
+    saveRecent({ id: gameId, title, category, url: embedUrl, thumb: readMetaContent('gimboot-play-image') || '' });
+    loadGame();
+  });
 
   bindActions();
   loadRelatedGames();
@@ -190,15 +194,15 @@ function updateFullscreenLabel() {
 }
 
 async function shareGame() {
-  const shareData = {
-    title: `${title} — Gimboot`,
-    text: `Play ${title} on Gimboot`,
-    url: window.location.href,
-  };
+  const shareUrl = `${window.location.origin}/share/${encodeURIComponent(gameId)}`;
 
   if (navigator.share) {
     try {
-      await navigator.share(shareData);
+      await navigator.share({
+        title: `${title} — Gimboot`,
+        text: `Play ${title} on Gimboot`,
+        url: shareUrl,
+      });
     } catch {
       // Person cancelled the native share sheet — nothing to do.
     }
@@ -206,8 +210,8 @@ async function shareGame() {
   }
 
   try {
-    await navigator.clipboard.writeText(window.location.href);
-    flashShareFeedback('Link copied');
+    await navigator.clipboard.writeText(shareUrl);
+    flashShareFeedback('Link copied!');
   } catch {
     flashShareFeedback('Copy the link from your address bar');
   }

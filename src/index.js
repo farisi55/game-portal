@@ -59,6 +59,12 @@ export default {
     if (url.pathname === '/api/games') {
       return handleApiGames(url, env, ctx);
     }
+    if (url.pathname === '/api/search') {
+      return handleApiSearch(url, env, ctx);
+    }
+    if (url.pathname.startsWith('/share/')) {
+      return handleShareRoute(request, url, env, ctx);
+    }
     if (url.pathname.startsWith('/play/')) {
       return handlePlayRoute(request, url, env, ctx);
     }
@@ -123,6 +129,132 @@ async function handleApiGames(url, env, ctx) {
     return jsonResponse({ error: 'Both game feeds failed', ...error }, 502);
   }
   return response;
+}
+
+// ----------------------------------------------------------------------------
+// /api/search?q={query} — Hybrid search fallback proxy.
+//
+// Queries the publisher feed for games matching the query string. Used by
+// the frontend when a local in-memory search returns zero matches.
+// ----------------------------------------------------------------------------
+
+async function handleApiSearch(url, env, ctx) {
+  const q = (url.searchParams.get('q') || '').trim();
+  if (!q) {
+    return jsonResponse({ error: 'Missing required query param "q"' }, 400);
+  }
+
+  // Edge cache keyed by query so repeated identical searches hit the cache.
+  const cache = caches.default;
+  const cacheKey = new Request(`https://cache.internal/api/search?q=${encodeURIComponent(q)}`, { method: 'GET' });
+  const cached = await cache.match(cacheKey);
+  if (cached) return cached;
+
+  try {
+    const num = clampNum(url.searchParams.get('num'), GM_DEFAULT_NUM, GM_MAX_NUM);
+    const { games } = await getCombinedGames(num, env, ctx);
+    const lowerQuery = q.toLowerCase();
+
+    const matches = (games || []).filter((g) =>
+      `${g.title} ${g.category}`.toLowerCase().includes(lowerQuery)
+    );
+
+    if (matches.length === 0) {
+      return jsonResponse([]);
+    }
+
+    const response = jsonResponse(matches, 200, 600);
+    if (ctx && typeof ctx.waitUntil === 'function') {
+      ctx.waitUntil(cache.put(cacheKey, response.clone()));
+    }
+    return response;
+  } catch (error) {
+    console.error('Search API failed:', error);
+    return jsonResponse({ error: 'Search failed' }, 502);
+  }
+}
+
+// ----------------------------------------------------------------------------
+// /share/{gameId} — Stateless Open Graph injection for social media bots.
+//
+// Completely stateless (no KV). Fetches the game catalog, finds the game by
+// ID, and returns raw HTML with OG/Twitter meta tags. Human users are
+// redirected to /game.html?id={gameId}.
+// ----------------------------------------------------------------------------
+
+async function handleShareRoute(request, url, env, ctx) {
+  const segments = url.pathname.split('/').filter(Boolean); // ['share', '<id>']
+  const gameId = segments[1] ? decodeURIComponent(segments[1]) : null;
+  if (!gameId) return Response.redirect(new URL('/', url), 302);
+
+  const targetUrl = `${url.origin}/game.html?id=${encodeURIComponent(gameId)}`;
+
+  try {
+    const num = clampNum(url.searchParams.get('num'), GM_DEFAULT_NUM, GM_MAX_NUM);
+    const { games } = await getCombinedGames(num, env, ctx);
+    const allGames = [...LOCAL_GAMES, ...(games || [])];
+    const game = allGames.find((g) => String(g.id) === gameId);
+
+    if (!game) {
+      return Response.redirect(new URL('/', url), 302);
+    }
+
+    const imageUrl = absoluteUrl(game.thumb, url.origin);
+    const description = `Play ${game.title} free online at ${SITE_NAME}. ${game.category} game, no install — just play, have fun, right in your browser.`;
+
+    const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Play ${escapeHtmlAttr(game.title)} on ${SITE_NAME}!</title>
+
+  <!-- Open Graph / Facebook / Threads -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="${escapeHtmlAttr(SITE_NAME)}">
+  <meta property="og:url" content="${escapeHtmlAttr(request.url)}">
+  <meta property="og:title" content="Play ${escapeHtmlAttr(game.title)} Instantly!">
+  <meta property="og:description" content="${escapeHtmlAttr(description)}">
+  <meta property="og:image" content="${escapeHtmlAttr(imageUrl)}">
+
+  <!-- Twitter / X -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="${escapeHtmlAttr(game.title)}">
+  <meta name="twitter:description" content="Play ${escapeHtmlAttr(game.title)} free online at ${escapeHtmlAttr(SITE_NAME)}.">
+  <meta name="twitter:image" content="${escapeHtmlAttr(imageUrl)}">
+
+  <!-- Redirect for human users (bots typically stop processing here) -->
+  <meta http-equiv="refresh" content="0; url=${escapeHtmlAttr(targetUrl)}">
+</head>
+<body>
+  <p>Loading game... <a href="${escapeHtmlAttr(targetUrl)}">Click here</a> if not automatically redirected.</p>
+  <script>
+    window.location.replace("${escapeJsString(targetUrl)}");
+  </script>
+</body>
+</html>`;
+
+    return new Response(html, {
+      headers: {
+        'Content-Type': 'text/html;charset=UTF-8',
+        'Cache-Control': 'public, max-age=86400',
+      },
+    });
+  } catch (error) {
+    console.error('Error fetching game data:', error);
+    return Response.redirect(new URL('/', url), 302);
+  }
+}
+
+/** Escapes a string for safe inclusion inside a double-quoted JS string. */
+function escapeJsString(str) {
+  return String(str ?? '')
+    .replace(/\\/g, '\\\\')
+    .replace(/"/g, '\\"')
+    .replace(/</g, '\\u003c')
+    .replace(/>/g, '\\u003e')
+    .replace(/\n/g, '\\n')
+    .replace(/\r/g, '\\r');
 }
 
 function clampNum(rawNum, fallback, max) {

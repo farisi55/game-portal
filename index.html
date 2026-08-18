@@ -60,6 +60,7 @@
       <input id="search-input" class="search-input" type="search" placeholder="Search games…" aria-label="Search games">
     </div>
   </div>
+  <nav class="tab-bar" id="tab-bar" role="tablist" aria-label="Browse games"></nav>
   <nav class="category-bar" id="category-bar" role="tablist" aria-label="Filter by category"></nav>
 </header>
 
@@ -70,6 +71,9 @@
   </div>
   <div class="game-grid" id="game-grid"></div>
   <div class="status-block" id="grid-status" hidden></div>
+  <div class="load-more-wrap" id="load-more-wrap" hidden>
+    <button type="button" class="btn btn--primary btn--load-more" id="btn-load-more">Load More</button>
+  </div>
 </main>
 
 <footer class="site-footer">
