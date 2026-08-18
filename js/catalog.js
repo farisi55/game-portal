@@ -30,7 +30,6 @@ const els = {
   grid: document.getElementById('game-grid'),
   status: document.getElementById('grid-status'),
   search: document.getElementById('search-input'),
-  categoryBar: document.getElementById('category-bar'),
   gameCount: document.getElementById('game-count'),
   tabBar: document.getElementById('tab-bar'),
   loadMoreBtn: document.getElementById('btn-load-more'),
@@ -51,7 +50,6 @@ async function init() {
     writeSessionGames(CONFIG.SESSION_CACHE_KEY, games);
 
     renderTabs();
-    renderCategoryChips();
     applyTab();
     bindEvents();
   } catch (err) {
@@ -74,9 +72,63 @@ function uniqueCategories(games) {
 
 function renderTabs() {
   els.tabBar.innerHTML = TABS.map((tab) => {
+    if (tab.id === 'more') return genreMenuTemplate();
     const isActive = tab.id === state.activeTab;
     return `<button type="button" class="tab-btn ${isActive ? 'tab-btn--active' : ''}" data-tab="${tab.id}" role="tab" aria-selected="${isActive}">${escapeHtml(tab.label)}</button>`;
   }).join('');
+}
+
+function genreMenuTemplate() {
+  return `
+    <div class="genre-menu">
+      <button type="button" class="tab-btn genre-menu__toggle" data-genre-toggle aria-haspopup="true" aria-expanded="false" aria-controls="genre-menu-panel">
+        More &gt;&gt;
+      </button>
+      <div id="genre-menu-panel" class="genre-menu__panel" data-genre-panel hidden>
+        <label class="genre-menu__label" for="genre-search">Search genre</label>
+        <input id="genre-search" class="genre-menu__search" type="search" placeholder="Search genre..." autocomplete="off">
+        <div class="genre-menu__list" data-genre-list role="listbox" aria-label="Game genres">
+          ${genreOptionsTemplate()}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function genreOptionsTemplate(query = '') {
+  const normalizedQuery = query.trim().toLowerCase();
+  const categories = ['All', ...state.categories.filter((category) => category !== 'All')]
+    .filter((category, index, list) => list.indexOf(category) === index)
+    .filter((category) => !normalizedQuery || category.toLowerCase().includes(normalizedQuery));
+
+  if (categories.length === 0) {
+    return '<p class="genre-menu__empty">No genres found</p>';
+  }
+
+  return categories
+    .map((category) => {
+      const selected = category === state.activeCategory;
+      return `<button type="button" class="genre-menu__option ${selected ? 'genre-menu__option--active' : ''}" data-genre="${escapeHtml(category)}" role="option" aria-selected="${selected}">${escapeHtml(category)}</button>`;
+    })
+    .join('');
+}
+
+function closeGenreMenu() {
+  const panel = els.tabBar.querySelector('[data-genre-panel]');
+  const toggle = els.tabBar.querySelector('[data-genre-toggle]');
+  if (!panel || !toggle) return;
+  panel.hidden = true;
+  toggle.setAttribute('aria-expanded', 'false');
+}
+
+function toggleGenreMenu() {
+  const panel = els.tabBar.querySelector('[data-genre-panel]');
+  const toggle = els.tabBar.querySelector('[data-genre-toggle]');
+  if (!panel || !toggle) return;
+
+  panel.hidden = !panel.hidden;
+  toggle.setAttribute('aria-expanded', String(!panel.hidden));
+  if (!panel.hidden) panel.querySelector('.genre-menu__search')?.focus();
 }
 
 function applyTab() {
@@ -109,11 +161,6 @@ function getTabGames() {
       return [...state.games]
         .filter((g) => !q || (g.title || '').toLowerCase().includes(q))
         .sort((a, b) => trendingScore(b) - trendingScore(a));
-    case 'more':
-      // More = everything, grouped by category.
-      return [...state.games]
-        .filter((g) => !q || (g.title || '').toLowerCase().includes(q))
-        .sort((a, b) => (a.category || '').localeCompare(b.category || ''));
     default:
       return state.games.filter((g) => {
         const matchesCategory = state.activeCategory === 'All' || g.category === state.activeCategory;
@@ -211,7 +258,7 @@ async function loadMoreGames() {
     state.categories = ['All', ...uniqueCategories(state.games)];
     writeSessionGames(CONFIG.SESSION_CACHE_KEY, state.games);
 
-    renderCategoryChips();
+    renderTabs();
     state.filteredGames = getTabGames();
     state.currentIndex = 0;
     els.gameCount.textContent = String(state.filteredGames.length);
@@ -397,20 +444,40 @@ function flashToast(message) {
 function bindEvents() {
   // Tab clicks
   els.tabBar.addEventListener('click', (e) => {
+    const genreToggle = e.target.closest('[data-genre-toggle]');
+    if (genreToggle) {
+      toggleGenreMenu();
+      return;
+    }
+
+    const genreOption = e.target.closest('[data-genre]');
+    if (genreOption) {
+      state.activeCategory = genreOption.dataset.genre;
+      state.activeTab = 'all';
+      closeGenreMenu();
+      renderTabs();
+      applyTab();
+      return;
+    }
+
     const btn = e.target.closest('.tab-btn');
     if (!btn) return;
     state.activeTab = btn.dataset.tab;
+    if (state.activeTab === 'all') state.activeCategory = 'All';
+    closeGenreMenu();
     renderTabs();
     applyTab();
   });
 
-  // Category chips
-  els.categoryBar.addEventListener('click', (e) => {
-    const btn = e.target.closest('.chip');
-    if (!btn) return;
-    state.activeCategory = btn.dataset.category;
-    renderCategoryChips();
-    applyTab();
+  // Search genres inside the More dropdown.
+  els.tabBar.addEventListener('input', (e) => {
+    if (!e.target.matches('#genre-search')) return;
+    const list = els.tabBar.querySelector('[data-genre-list]');
+    if (list) list.innerHTML = genreOptionsTemplate(e.target.value);
+  });
+
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.genre-menu')) closeGenreMenu();
   });
 
   // Search
@@ -461,13 +528,4 @@ function bindEvents() {
 
 function findGameById(id) {
   return state.games.find((g) => String(g.id) === String(id));
-}
-
-function renderCategoryChips() {
-  els.categoryBar.innerHTML = state.categories
-    .map((cat) => {
-      const isActive = cat === state.activeCategory;
-      return `<button type="button" class="chip ${isActive ? 'chip--active' : ''}" data-category="${escapeHtml(cat)}" role="tab" aria-selected="${isActive}">${escapeHtml(cat)}</button>`;
-    })
-    .join('');
 }
