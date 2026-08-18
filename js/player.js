@@ -104,7 +104,8 @@ async function init() {
 }
 
 function loadGame() {
-  if (els.iframe.src) return; // already loaded
+  if (els.iframe.dataset.loaded === 'true') return; // already loaded
+  els.iframe.dataset.loaded = 'true';
   els.iframe.src = embedUrl;
   els.iframe.hidden = false;
   els.placeholder.hidden = true;
