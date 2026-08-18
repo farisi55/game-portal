@@ -303,7 +303,13 @@ async function searchOnline() {
 // ----------------------------------------------------------------------------
 
 async function shareGame(gameId) {
-  const shareUrl = `${window.location.origin}/share/${encodeURIComponent(gameId)}`;
+  const game = findGameById(gameId);
+  if (!game) {
+    flashToast('Game link is unavailable. Please refresh the catalog.');
+    return;
+  }
+
+  const shareUrl = new URL(buildPlayUrl(game), window.location.origin).toString();
 
   try {
     await navigator.clipboard.writeText(shareUrl);

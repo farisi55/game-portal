@@ -195,7 +195,10 @@ function updateFullscreenLabel() {
 }
 
 async function shareGame() {
-  const shareUrl = `${window.location.origin}/share/${encodeURIComponent(gameId)}`;
+  const shareUrl = new URL(
+    buildPlayUrl({ id: gameId, title }),
+    window.location.origin
+  ).toString();
 
   if (navigator.share) {
     try {

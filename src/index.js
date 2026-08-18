@@ -179,15 +179,13 @@ async function handleApiSearch(url, env, ctx) {
 //
 // Completely stateless (no KV). Fetches the game catalog, finds the game by
 // ID, and returns raw HTML with OG/Twitter meta tags. Human users are
-// redirected to /game.html?id={gameId}.
+// redirected to the canonical /play/{gameId}/{slug} URL.
 // ----------------------------------------------------------------------------
 
 async function handleShareRoute(request, url, env, ctx) {
   const segments = url.pathname.split('/').filter(Boolean); // ['share', '<id>']
   const gameId = segments[1] ? decodeURIComponent(segments[1]) : null;
   if (!gameId) return Response.redirect(new URL('/', url), 302);
-
-  const targetUrl = `${url.origin}/game.html?id=${encodeURIComponent(gameId)}`;
 
   try {
     const num = clampNum(url.searchParams.get('num'), GM_DEFAULT_NUM, GM_MAX_NUM);
@@ -198,6 +196,8 @@ async function handleShareRoute(request, url, env, ctx) {
     if (!game) {
       return Response.redirect(new URL('/', url), 302);
     }
+
+    const targetUrl = `${url.origin}/play/${encodeURIComponent(game.id)}/${slugify(game.title)}`;
 
     const imageUrl = absoluteUrl(game.thumb, url.origin);
     const description = `Play ${game.title} free online at ${SITE_NAME}. ${game.category} game, no install — just play, have fun, right in your browser.`;
@@ -212,7 +212,7 @@ async function handleShareRoute(request, url, env, ctx) {
   <!-- Open Graph / Facebook / Threads -->
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="${escapeHtmlAttr(SITE_NAME)}">
-  <meta property="og:url" content="${escapeHtmlAttr(request.url)}">
+  <meta property="og:url" content="${escapeHtmlAttr(targetUrl)}">
   <meta property="og:title" content="Play ${escapeHtmlAttr(game.title)} Instantly!">
   <meta property="og:description" content="${escapeHtmlAttr(description)}">
   <meta property="og:image" content="${escapeHtmlAttr(imageUrl)}">
@@ -228,9 +228,6 @@ async function handleShareRoute(request, url, env, ctx) {
 </head>
 <body>
   <p>Loading game... <a href="${escapeHtmlAttr(targetUrl)}">Click here</a> if not automatically redirected.</p>
-  <script>
-    window.location.replace("${escapeJsString(targetUrl)}");
-  </script>
 </body>
 </html>`;
 
@@ -244,17 +241,6 @@ async function handleShareRoute(request, url, env, ctx) {
     console.error('Error fetching game data:', error);
     return Response.redirect(new URL('/', url), 302);
   }
-}
-
-/** Escapes a string for safe inclusion inside a double-quoted JS string. */
-function escapeJsString(str) {
-  return String(str ?? '')
-    .replace(/\\/g, '\\\\')
-    .replace(/"/g, '\\"')
-    .replace(/</g, '\\u003c')
-    .replace(/>/g, '\\u003e')
-    .replace(/\n/g, '\\n')
-    .replace(/\r/g, '\\r');
 }
 
 function clampNum(rawNum, fallback, max) {

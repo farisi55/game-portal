@@ -3,7 +3,8 @@
 //
 // Completely stateless (no KV). Fetches the game catalog from the publisher
 // API, finds the game by ID, and returns a raw HTML page with Open Graph /
-// Twitter Card meta tags. Real human users are redirected to /game.html?id=.
+// Twitter Card meta tags. Real human users are redirected to the canonical
+// /play/{gameId}/{slug} URL.
 // ============================================================================
 
 const GM_FEED_BASE = 'https://gamemonetize.com/feed.php';
@@ -20,8 +21,6 @@ export async function onRequestGet(context) {
   const { request, params } = context;
   const gameId = params.id;
   const requestUrl = new URL(request.url);
-  const targetUrl = `${requestUrl.origin}/game.html?id=${encodeURIComponent(gameId)}`;
-
   try {
     const games = await getCombinedGames(context.env);
     const allGames = [...LOCAL_GAMES, ...games];
@@ -30,6 +29,8 @@ export async function onRequestGet(context) {
     if (!game) {
       return Response.redirect(new URL('/', requestUrl), 302);
     }
+
+    const targetUrl = `${requestUrl.origin}/play/${encodeURIComponent(game.id)}/${slugify(game.title)}`;
 
     const imageUrl = absoluteUrl(game.thumb, requestUrl.origin);
     const description = game.description || `Play ${game.title} free online at ${SITE_NAME}. ${game.category} game, no install — just play, have fun, right in your browser.`;
@@ -44,7 +45,7 @@ export async function onRequestGet(context) {
   <!-- Open Graph / Facebook / Threads -->
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="${escapeHtml(SITE_NAME)}">
-  <meta property="og:url" content="${escapeHtml(request.url)}">
+  <meta property="og:url" content="${escapeHtml(targetUrl)}">
   <meta property="og:title" content="Play ${escapeHtml(game.title)} Instantly!">
   <meta property="og:description" content="${escapeHtml(description)}">
   <meta property="og:image" content="${escapeHtml(imageUrl)}">
@@ -60,9 +61,6 @@ export async function onRequestGet(context) {
 </head>
 <body>
   <p>Loading game... <a href="${escapeHtml(targetUrl)}">Click here</a> if not automatically redirected.</p>
-  <script>
-    window.location.replace("${escapeJs(targetUrl)}");
-  </script>
 </body>
 </html>`;
 
@@ -252,13 +250,14 @@ function escapeHtml(str) {
     .replace(/'/g, '\u0026#039;');
 }
 
-function escapeJs(str) {
-  return String(str ?? '')
-    .replace(/\\/g, '\\\\')
-    .replace(/"/g, '\\"')
-    .replace(/'/g, "\\'")
-    .replace(/</g, '\\u003c')
-    .replace(/>/g, '\\u003e')
-    .replace(/\n/g, '\\n')
-    .replace(/\r/g, '\\r');
+function slugify(text) {
+  return (
+    String(text ?? '')
+      .toLowerCase()
+      .normalize('NFKD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .slice(0, 60) || 'game'
+  );
 }
