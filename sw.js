@@ -71,7 +71,7 @@ self.addEventListener('fetch', (event) => {
         })
         .catch(() => cached);
 
-      return cached || network;
+      return cached || network || new Response('Offline', { status: 503 });
     })
   );
 });
