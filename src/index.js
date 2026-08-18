@@ -274,7 +274,9 @@ async function handlePlayRoute(request, url, env, ctx) {
 
   if (!gameId) return assetResponse;
 
-  const num = clampNum(url.searchParams.get('num'), GM_DEFAULT_NUM, GM_MAX_NUM);
+  // A shared /play URL must resolve games loaded after the home page's first
+  // 50 items too. Use the full catalog window for server-side SEO metadata.
+  const num = GM_MAX_NUM;
   const { games } = await getCombinedGames(num, env, ctx);
   const allGames = [...LOCAL_GAMES, ...(games || [])];
   const game = allGames.find((g) => String(g.id) === gameId);

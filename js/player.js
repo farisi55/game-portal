@@ -48,7 +48,9 @@ async function init() {
     if (!game) {
       let games;
       try {
-        games = await fetchGameCatalog(CONFIG.GAMES_API_ENDPOINT, CONFIG.DEFAULT_GAME_COUNT, CONFIG.LOCAL_GAMES);
+        // Direct links can point to games fetched by Load More, so the
+        // fallback lookup must search the full catalog window.
+        games = await fetchGameCatalog(CONFIG.GAMES_API_ENDPOINT, CONFIG.MAX_GAME_COUNT, CONFIG.LOCAL_GAMES);
       } catch (err) {
         console.error('Failed to resolve game for /play/ route:', err);
         games = CONFIG.LOCAL_GAMES;
