@@ -1,6 +1,6 @@
 import { CONFIG } from './config.js';
 import { escapeHtml, buildPlayUrl, isAllowedEmbedUrl, readSessionGames, fetchGameCatalog } from './utils.js';
-import { saveRecent } from './state.js';
+import { saveRecent, toggleFavorite, isFavorite } from './state.js';
 
 const params = new URLSearchParams(window.location.search);
 
@@ -26,6 +26,8 @@ const els = {
   playBtn: document.getElementById('play-btn'),
   title: document.getElementById('game-title'),
   category: document.getElementById('game-category'),
+  favoriteBtn: document.getElementById('favorite-btn'),
+  favoriteLabel: document.getElementById('favorite-label'),
   fullscreenBtn: document.getElementById('fullscreen-btn'),
   shareBtn: document.getElementById('share-btn'),
   shareFeedback: document.getElementById('share-feedback'),
@@ -90,6 +92,7 @@ async function init() {
 
   els.iframe.allow = allowAttributeFor(gameId);
   els.iframe.title = title;
+  setupFavorite();
 
   // Lazy load: don't set iframe src until the user clicks "Play Now".
   // This keeps the page fast and avoids loading the game script before
@@ -172,9 +175,45 @@ function showPlayerError() {
 }
 
 function bindActions() {
+  els.favoriteBtn.addEventListener('click', togglePageFavorite);
   els.fullscreenBtn.addEventListener('click', toggleFullscreen);
   document.addEventListener('fullscreenchange', updateFullscreenLabel);
   els.shareBtn.addEventListener('click', shareGame);
+}
+
+function setupFavorite() {
+  if (!gameId) {
+    els.favoriteBtn.hidden = true;
+    return;
+  }
+
+  updateFavoriteButton(isFavorite(gameId));
+}
+
+function togglePageFavorite() {
+  if (!gameId) return;
+
+  const added = toggleFavorite({
+    id: gameId,
+    title,
+    category,
+    url: embedUrl,
+    thumb: readMetaContent('gimboot-play-image') || '',
+  });
+
+  updateFavoriteButton(added);
+  flashShareFeedback(added ? 'Added to favorites!' : 'Removed from favorites');
+}
+
+function updateFavoriteButton(favorited) {
+  els.favoriteBtn.classList.toggle('player-favorite--active', favorited);
+  els.favoriteBtn.setAttribute('aria-pressed', String(favorited));
+  const label = favorited ? 'Favorited' : 'Favorite';
+  const ariaLabel = favorited ? 'Remove from favorites' : 'Add to favorites';
+  els.favoriteLabel.textContent = label;
+  els.favoriteBtn.setAttribute('aria-label', ariaLabel);
+  els.favoriteBtn.title = ariaLabel;
+  els.favoriteBtn.querySelector('.player-favorite__icon').textContent = favorited ? '\u2764' : '\u2661';
 }
 
 async function toggleFullscreen() {

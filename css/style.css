@@ -638,6 +638,21 @@ main {
   position: relative;
 }
 
+.player-favorite {
+  gap: 7px;
+}
+
+.player-favorite__icon {
+  font-size: 16px;
+  line-height: 1;
+}
+
+.player-favorite--active {
+  color: var(--magenta);
+  border-color: var(--magenta);
+  background: rgba(255, 61, 154, 0.1);
+}
+
 .share-feedback {
   position: absolute;
   bottom: -24px;

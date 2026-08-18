@@ -335,6 +335,7 @@ async function handlePlayRoute(request, url, env, ctx) {
 <meta name="gimboot-play-url" content="${escapeHtmlAttr(game.url)}">
 <meta name="gimboot-play-title" content="${escapeHtmlAttr(game.title)}">
 <meta name="gimboot-play-category" content="${escapeHtmlAttr(game.category)}">
+<meta name="gimboot-play-image" content="${escapeHtmlAttr(imageUrl)}">
 <meta name="gimboot-play-width" content="${escapeHtmlAttr(game.width ?? '')}">
 <meta name="gimboot-play-height" content="${escapeHtmlAttr(game.height ?? '')}">
 ${jsonLdHtml}
