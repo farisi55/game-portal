@@ -9,7 +9,7 @@ const TABS = [
   { id: 'popular', label: 'Popular' },
   { id: 'new', label: 'New' },
   { id: 'trending', label: 'Trending' },
-  { id: 'more', label: 'More >>' },
+  { id: 'more', label: 'More' },
 ];
 
 const state = {
@@ -82,7 +82,7 @@ function genreMenuTemplate() {
   return `
     <div class="genre-menu">
       <button type="button" class="tab-btn genre-menu__toggle" data-genre-toggle aria-haspopup="true" aria-expanded="false" aria-controls="genre-menu-panel">
-        More &gt;&gt;
+        More
       </button>
       <div id="genre-menu-panel" class="genre-menu__panel" data-genre-panel hidden>
         <label class="genre-menu__label" for="genre-search">Search genre</label>

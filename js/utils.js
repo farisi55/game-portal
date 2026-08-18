@@ -140,11 +140,38 @@ export async function fetchGameCatalog(endpoint, num, localGames = []) {
 
   if (!Array.isArray(games)) throw new Error('Catalog response was not an array');
 
-  // Keep the browser catalog size exact even though local games are
-  // prepended and the upstream feeds are merged.
-  const catalog = [...localGames, ...games];
   const requestedCount = Number(num);
-  return Number.isFinite(requestedCount) && requestedCount > 0
-    ? catalog.slice(0, requestedCount)
-    : catalog;
+  if (!Number.isFinite(requestedCount) || requestedCount <= 0) {
+    return shuffleGames([...localGames, ...games]);
+  }
+
+  // Keep every requested window balanced: local games are kept separately,
+  // then the remote catalog is split by source before the final order is
+  // randomized. The source order remains cumulative for Load More requests.
+  const local = localGames.slice(0, requestedCount);
+  const remoteCount = Math.max(0, requestedCount - local.length);
+  const gameMonetize = games.filter((game) => String(game.id).startsWith('gm-'));
+  const gamePix = games.filter((game) => String(game.id).startsWith('gp-'));
+  const other = games.filter(
+    (game) => !String(game.id).startsWith('gm-') && !String(game.id).startsWith('gp-')
+  );
+  const gameMonetizeCount = Math.ceil(remoteCount / 2);
+  const gamePixCount = Math.floor(remoteCount / 2);
+  const selected = [
+    ...local,
+    ...gameMonetize.slice(0, gameMonetizeCount),
+    ...gamePix.slice(0, gamePixCount),
+    ...other.slice(0, Math.max(0, remoteCount - gameMonetizeCount - gamePixCount)),
+  ];
+
+  return shuffleGames(selected).slice(0, requestedCount);
+}
+
+function shuffleGames(games) {
+  const shuffled = [...games];
+  for (let index = shuffled.length - 1; index > 0; index -= 1) {
+    const swapIndex = Math.floor(Math.random() * (index + 1));
+    [shuffled[index], shuffled[swapIndex]] = [shuffled[swapIndex], shuffled[index]];
+  }
+  return shuffled;
 }

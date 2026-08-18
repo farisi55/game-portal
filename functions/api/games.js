@@ -20,28 +20,29 @@
 // ============================================================================
 
 const GM_FEED_BASE = 'https://gamemonetize.com/feed.php';
-const GM_DEFAULT_NUM = 50;
-const GM_MAX_NUM = 200;
+const CATALOG_DEFAULT_NUM = 50;
+const CATALOG_MAX_NUM = 200;
 
 const GAMEPIX_FEED_BASE = 'https://feeds.gamepix.com/v2/json';
 const GAMEPIX_DEFAULT_SID = '985I2';
-const GAMEPIX_PAGINATION = 12;
+const GAMEPIX_PAGINATION_OPTIONS = [12, 24, 48, 96];
 
 const CACHE_TTL_SECONDS = 1800;
 
 export async function onRequestGet(context) {
   const { request } = context;
   const requestUrl = new URL(request.url);
-  const num = clampNum(requestUrl.searchParams.get('num'), GM_DEFAULT_NUM, GM_MAX_NUM);
+  const num = clampNum(requestUrl.searchParams.get('num'), CATALOG_DEFAULT_NUM, CATALOG_MAX_NUM);
 
   const cache = caches.default;
-  const cacheKey = new Request(`https://cache.internal/api/games?num=${num}`, request);
+  const cacheKey = new Request(`https://cache.internal/api/games-balanced-v2?num=${num}`, request);
   const cached = await cache.match(cacheKey);
   if (cached) return cached;
 
+  const sourceCount = Math.min(CATALOG_MAX_NUM, Math.ceil(num / 2));
   const [gmResult, gpResult] = await Promise.allSettled([
-    fetchGameMonetize(num),
-    fetchGamePix(context.env),
+    fetchGameMonetize(sourceCount),
+    fetchGamePix(context.env, sourceCount),
   ]);
 
   const gmGames = gmResult.status === 'fulfilled' ? gmResult.value : [];
@@ -132,9 +133,36 @@ function decodeEntities(str) {
   return out;
 }
 
-async function fetchGamePix(env) {
+async function fetchGamePix(env, count) {
+  const requestedCount = Math.max(1, Math.floor(Number(count) || 1));
+  const pagination = GAMEPIX_PAGINATION_OPTIONS.find((size) => size >= requestedCount) || 96;
+  const pageCount = Math.ceil(requestedCount / pagination);
   const feedSid = String(env.GAMEPIX_SID || GAMEPIX_DEFAULT_SID).trim();
-  const feedUrl = `${GAMEPIX_FEED_BASE}?sid=${encodeURIComponent(feedSid)}&pagination=${GAMEPIX_PAGINATION}&page=1`;
+  const pages = await Promise.all(
+    Array.from({ length: pageCount }, (_, index) => fetchGamePixPage(feedSid, pagination, index + 1))
+  );
+
+  const games = pages
+    .flatMap((items) => items)
+    .filter((item) => item && item.id && item.title && item.url)
+    .map((item) => ({
+      id: `gp-${item.id}`,
+      title: item.title,
+      category: capitalize(item.category) || 'Arcade',
+      url: item.url,
+      thumb: item.banner_image || item.image || '',
+      width: item.width || null,
+      height: item.height || null,
+    }))
+    .filter((game, index, list) => list.findIndex((item) => item.id === game.id) === index)
+    .slice(0, requestedCount);
+
+  if (games.length === 0) throw new Error('GamePix feed produced zero usable items');
+  return games;
+}
+
+async function fetchGamePixPage(feedSid, pagination, page) {
+  const feedUrl = `${GAMEPIX_FEED_BASE}?sid=${encodeURIComponent(feedSid)}&pagination=${pagination}&page=${page}`;
   const upstream = await fetch(feedUrl, {
     headers: {
       Accept: 'application/json',
@@ -152,7 +180,7 @@ async function fetchGamePix(env) {
   let data;
   try {
     data = JSON.parse(rawText);
-  } catch (err) {
+  } catch {
     console.error('GamePix feed returned non-JSON body:', rawText.slice(0, 300));
     throw new Error('GamePix feed response was not valid JSON');
   }
@@ -162,20 +190,7 @@ async function fetchGamePix(env) {
     throw new Error('GamePix feed response missing an items array');
   }
 
-  const games = data.items
-    .filter((item) => item && item.id && item.title && item.url)
-    .map((item) => ({
-      id: `gp-${item.id}`,
-      title: item.title,
-      category: capitalize(item.category) || 'Arcade',
-      url: item.url,
-      thumb: item.banner_image || item.image || '',
-      width: item.width || null,
-      height: item.height || null,
-    }));
-
-  if (games.length === 0) throw new Error('GamePix feed produced zero usable items');
-  return games;
+  return data.items;
 }
 
 function capitalize(str) {

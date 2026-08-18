@@ -19,12 +19,12 @@
 // ============================================================================
 
 const GM_FEED_BASE = 'https://gamemonetize.com/feed.php';
-const GM_DEFAULT_NUM = 50;
-const GM_MAX_NUM = 200;
+const CATALOG_DEFAULT_NUM = 50;
+const CATALOG_MAX_NUM = 200;
 
 const GAMEPIX_FEED_BASE = 'https://feeds.gamepix.com/v2/json';
 const GAMEPIX_DEFAULT_SID = '985I2';
-const GAMEPIX_PAGINATION = 12;
+const GAMEPIX_PAGINATION_OPTIONS = [12, 24, 48, 96];
 
 const CACHE_TTL_SECONDS = 1800; // 30 menit
 const SITE_NAME = 'Gimboot';
@@ -84,7 +84,7 @@ export default {
  */
 async function getCombinedGames(num, env, ctx) {
   const cache = caches.default;
-  const cacheKey = new Request(`https://cache.internal/api/games?num=${num}`, { method: 'GET' });
+  const cacheKey = new Request(`https://cache.internal/api/games-balanced-v2?num=${num}`, { method: 'GET' });
   const cached = await cache.match(cacheKey);
   if (cached) {
     return { games: await cached.clone().json(), response: cached };
@@ -93,9 +93,12 @@ async function getCombinedGames(num, env, ctx) {
   // Each source is fetched independently — if one feed is down or errors,
   // the other's games still make it to the player instead of the whole
   // catalog going blank.
+  // `num` is the total catalog window. Each source supplies half so the
+  // browser receives a balanced catalog instead of a GameMonetize-first list.
+  const sourceCount = Math.min(CATALOG_MAX_NUM, Math.ceil(num / 2));
   const [gmResult, gpResult] = await Promise.allSettled([
-    fetchGameMonetize(num),
-    fetchGamePix(env),
+    fetchGameMonetize(sourceCount),
+    fetchGamePix(env, sourceCount),
   ]);
 
   const gmGames = gmResult.status === 'fulfilled' ? gmResult.value : [];
@@ -122,7 +125,7 @@ async function getCombinedGames(num, env, ctx) {
 }
 
 async function handleApiGames(url, env, ctx) {
-  const num = clampNum(url.searchParams.get('num'), GM_DEFAULT_NUM, GM_MAX_NUM);
+  const num = clampNum(url.searchParams.get('num'), CATALOG_DEFAULT_NUM, CATALOG_MAX_NUM);
   const { games, response, error } = await getCombinedGames(num, env, ctx);
 
   if (!games) {
@@ -151,7 +154,7 @@ async function handleApiSearch(url, env, ctx) {
   if (cached) return cached;
 
   try {
-    const num = clampNum(url.searchParams.get('num'), GM_DEFAULT_NUM, GM_MAX_NUM);
+    const num = clampNum(url.searchParams.get('num'), CATALOG_DEFAULT_NUM, CATALOG_MAX_NUM);
     const { games } = await getCombinedGames(num, env, ctx);
     const lowerQuery = q.toLowerCase();
 
@@ -188,7 +191,7 @@ async function handleShareRoute(request, url, env, ctx) {
   if (!gameId) return Response.redirect(new URL('/', url), 302);
 
   try {
-    const num = clampNum(url.searchParams.get('num'), GM_DEFAULT_NUM, GM_MAX_NUM);
+    const num = CATALOG_MAX_NUM * 2;
     const { games } = await getCombinedGames(num, env, ctx);
     const allGames = [...LOCAL_GAMES, ...(games || [])];
     const game = allGames.find((g) => String(g.id) === gameId);
@@ -276,7 +279,7 @@ async function handlePlayRoute(request, url, env, ctx) {
 
   // A shared /play URL must resolve games loaded after the home page's first
   // 50 items too. Use the full catalog window for server-side SEO metadata.
-  const num = GM_MAX_NUM;
+  const num = CATALOG_MAX_NUM * 2;
   const { games } = await getCombinedGames(num, env, ctx);
   const allGames = [...LOCAL_GAMES, ...(games || [])];
   const game = allGames.find((g) => String(g.id) === gameId);
@@ -415,7 +418,7 @@ function slugify(text) {
 // ----------------------------------------------------------------------------
 
 async function handleSitemap(url, env, ctx) {
-  const { games } = await getCombinedGames(GM_DEFAULT_NUM, env, ctx);
+  const { games } = await getCombinedGames(CATALOG_MAX_NUM, env, ctx);
   const allGames = [...LOCAL_GAMES, ...(games || [])];
 
   const urlEntries = [
@@ -514,14 +517,43 @@ function decodeEntities(str) {
 // GamePix
 // ----------------------------------------------------------------------------
 
-async function fetchGamePix(env) {
+async function fetchGamePix(env, count) {
   // Exactly the URL pattern confirmed from your GamePix dashboard — no
   // extra query params guessed on top of it. An earlier version of this
   // file added `&order=quality`, inferred from the dashboard's "Games
   // Order By" label rather than confirmed documentation; removed since it
   // was never actually verified and could cause the request to be rejected.
+  const requestedCount = Math.max(1, Math.floor(Number(count) || 1));
+  const pagination = GAMEPIX_PAGINATION_OPTIONS.find((size) => size >= requestedCount) || 96;
+  const pageCount = Math.ceil(requestedCount / pagination);
   const feedSid = String(env.GAMEPIX_SID || GAMEPIX_DEFAULT_SID).trim();
-  const feedUrl = `${GAMEPIX_FEED_BASE}?sid=${encodeURIComponent(feedSid)}&pagination=${GAMEPIX_PAGINATION}&page=1`;
+  const pages = await Promise.all(
+    Array.from({ length: pageCount }, (_, index) => fetchGamePixPage(feedSid, pagination, index + 1))
+  );
+
+  const games = pages
+    .flatMap((items) => items)
+    .filter((item) => item && item.id && item.title && item.url)
+    .map((item) => ({
+      id: `gp-${item.id}`,
+      title: item.title,
+      category: capitalize(item.category) || 'Arcade',
+      url: item.url,
+      thumb: item.banner_image || item.image || '',
+      width: item.width || null,
+      height: item.height || null,
+    }))
+    .filter((game, index, list) => list.findIndex((item) => item.id === game.id) === index)
+    .slice(0, requestedCount);
+
+  if (games.length === 0) {
+    throw new Error('GamePix feed produced zero usable items');
+  }
+  return games;
+}
+
+async function fetchGamePixPage(feedSid, pagination, page) {
+  const feedUrl = `${GAMEPIX_FEED_BASE}?sid=${encodeURIComponent(feedSid)}&pagination=${pagination}&page=${page}`;
   const upstream = await fetch(feedUrl, {
     headers: {
       Accept: 'application/json',
@@ -539,7 +571,7 @@ async function fetchGamePix(env) {
   let data;
   try {
     data = JSON.parse(rawText);
-  } catch (err) {
+  } catch {
     console.error('GamePix feed returned non-JSON body:', rawText.slice(0, 300));
     throw new Error('GamePix feed response was not valid JSON');
   }
@@ -549,22 +581,7 @@ async function fetchGamePix(env) {
     throw new Error('GamePix feed response missing an items array');
   }
 
-  const games = data.items
-    .filter((item) => item && item.id && item.title && item.url)
-    .map((item) => ({
-      id: `gp-${item.id}`,
-      title: item.title,
-      category: capitalize(item.category) || 'Arcade',
-      url: item.url,
-      thumb: item.banner_image || item.image || '',
-      width: item.width || null,
-      height: item.height || null,
-    }));
-
-  if (games.length === 0) {
-    throw new Error('GamePix feed produced zero usable items');
-  }
-  return games;
+  return data.items;
 }
 
 function capitalize(str) {
