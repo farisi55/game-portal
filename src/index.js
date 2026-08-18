@@ -176,6 +176,31 @@ async function handlePlayRoute(request, url, env, ctx) {
   const canonicalUrl = `${url.origin}/play/${encodeURIComponent(game.id)}/${slugify(game.title)}`;
   const imageUrl = absoluteUrl(game.thumb, url.origin);
 
+  // JSON-LD structured data — lets Google AI (Gemini/SGE) understand the
+  // page content without guessing. Escaped for safe embedding in a <script>
+  // tag: HTML entities are NOT parsed inside script data, so we escape the
+  // three characters that could terminate the script element instead.
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'VideoGame',
+    name: game.title,
+    description: seoDescription,
+    genre: game.category,
+    playMode: 'SinglePlayer',
+    applicationCategory: 'GameApplication',
+    operatingSystem: 'Windows, Android, iOS, MacOS',
+    gamePlatform: 'Web Browser',
+    url: canonicalUrl,
+    image: imageUrl,
+    offers: {
+      '@type': 'Offer',
+      price: '0',
+      priceCurrency: 'IDR',
+      category: 'free',
+    },
+  };
+  const jsonLdHtml = `<script type="application/ld+json">${escapeJsonLd(jsonLd)}</script>`;
+
   const headExtra = `
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="${escapeHtmlAttr(SITE_NAME)}">
@@ -194,6 +219,7 @@ async function handlePlayRoute(request, url, env, ctx) {
 <meta name="gimboot-play-category" content="${escapeHtmlAttr(game.category)}">
 <meta name="gimboot-play-width" content="${escapeHtmlAttr(game.width ?? '')}">
 <meta name="gimboot-play-height" content="${escapeHtmlAttr(game.height ?? '')}">
+${jsonLdHtml}
 `;
 
   return new HTMLRewriter()
@@ -229,11 +255,24 @@ function absoluteUrl(maybeRelative, origin) {
 
 function escapeHtmlAttr(str) {
   return String(str ?? '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
+    .replace(/&/g, '\u0026amp;')
+    .replace(/</g, '\u0026lt;')
+    .replace(/>/g, '\u0026gt;')
+    .replace(/"/g, '\u0026quot;')
+    .replace(/'/g, '\u0026#039;');
+}
+
+/**
+ * Escapes a JSON-LD object for safe embedding inside a <script type="application/ld+json">
+ * tag. HTML entities are NOT decoded inside script data, so we must escape the
+ * three character sequences that could prematurely terminate the script element:
+ * `</script`, `<!--`, and `-->`. JSON.stringify already handles quotes/backslashes.
+ */
+function escapeJsonLd(obj) {
+  return JSON.stringify(obj)
+    .replace(/</g, '\\u003c')
+    .replace(/>/g, '\\u003e')
+    .replace(/&/g, '\\u0026');
 }
 
 /** Mirrors js/utils.js's slugify exactly — keep the two in sync. */
@@ -259,10 +298,10 @@ async function handleSitemap(url, env, ctx) {
   const allGames = [...LOCAL_GAMES, ...(games || [])];
 
   const urlEntries = [
-    `<url><loc>${escapeHtmlAttr(url.origin)}/</loc><changefreq>daily</changefreq></url>`,
+    `<url><loc>${escapeHtmlAttr(url.origin)}/</loc><changefreq>daily</changefreq><priority>1.0</priority></url>`,
     ...allGames.map((g) => {
       const loc = `${url.origin}/play/${encodeURIComponent(g.id)}/${slugify(g.title)}`;
-      return `<url><loc>${escapeHtmlAttr(loc)}</loc><changefreq>weekly</changefreq></url>`;
+      return `<url><loc>${escapeHtmlAttr(loc)}</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>`;
     }),
   ];
 

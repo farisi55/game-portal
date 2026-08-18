@@ -49,17 +49,39 @@
   <div class="frame-shell">
     <div class="frame-bezel">
       <div class="frame-wrap" id="frame-wrap">
+        <div class="frame-placeholder" id="frame-placeholder">
+          <button type="button" class="btn btn--primary btn--play" id="play-btn">
+            &#9654; Play Now
+          </button>
+          <p class="frame-placeholder__hint">Click to load the game instantly in your browser</p>
+        </div>
         <iframe
           id="game-frame"
           src=""
           allow="autoplay; fullscreen"
           allowfullscreen
-          loading="eager"></iframe>
+          loading="lazy"
+          title=""
+          hidden></iframe>
       </div>
     </div>
   </div>
 
   <div class="status-block" id="player-status" hidden></div>
+
+  <section class="game-info">
+    <h2 id="how-to-play-title">How to Play <span id="how-to-play-game"></span></h2>
+    <p id="how-to-play-text">Click the Play button above to start <span id="how-to-play-game-2"></span> instantly in your browser. No download, no install — just pure fun. Use your keyboard, mouse, or touch screen to control the game. The game loads directly in your browser and works on Windows, Android, iOS, and MacOS.</p>
+
+    <h2>Features</h2>
+    <ul class="game-features">
+      <li>Play <span id="feature-game"></span> free online — no download, no install</li>
+      <li>Works on Windows, Android, iOS, and MacOS</li>
+      <li>Instant loading in your browser</li>
+      <li>Full screen mode for immersive gameplay</li>
+      <li>No sign-up or registration required</li>
+    </ul>
+  </section>
 
   <section class="related-section">
     <h2>Related Games</h2>

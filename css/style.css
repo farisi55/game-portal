@@ -561,6 +561,88 @@ main {
   display: block;
 }
 
+.frame-wrap iframe[hidden] {
+  display: none;
+}
+
+.frame-placeholder {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  background:
+    radial-gradient(circle at 30% 20%, rgba(53, 228, 224, 0.12), transparent 50%),
+    radial-gradient(circle at 70% 80%, rgba(255, 61, 154, 0.12), transparent 50%),
+    var(--ink);
+  z-index: 1;
+}
+
+.frame-placeholder[hidden] {
+  display: none;
+}
+
+.btn--play {
+  font-size: 18px;
+  padding: 16px 40px;
+  box-shadow: 0 0 0 1px var(--gold), 0 8px 24px -8px rgba(255, 197, 66, 0.5);
+}
+
+.frame-placeholder__hint {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 13px;
+  font-family: var(--font-mono);
+  letter-spacing: 0.3px;
+}
+
+/* ============================================================================
+   Game info section — SEO content (How to Play, Features)
+   ============================================================================ */
+
+.game-info {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 24px 40px;
+}
+
+.game-info h2 {
+  font-family: var(--font-display);
+  font-size: 18px;
+  letter-spacing: 0.5px;
+  color: var(--text);
+  margin: 0 0 12px;
+}
+
+.game-info p {
+  color: var(--text-muted);
+  font-size: 14.5px;
+  line-height: 1.6;
+  margin: 0 0 28px;
+  max-width: 720px;
+}
+
+.game-features {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 40px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 10px;
+}
+
+.game-features li {
+  padding: 12px 16px;
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  border: 1px solid var(--surface-border);
+  color: var(--text-muted);
+  font-size: 13.5px;
+  line-height: 1.4;
+}
+
 .related-section {
   max-width: 1280px;
   margin: 0 auto;
@@ -614,6 +696,7 @@ main {
   .catalog-meta,
   .player-bar,
   .frame-shell,
+  .game-info,
   .related-section {
     padding-left: 16px;
     padding-right: 16px;

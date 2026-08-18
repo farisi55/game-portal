@@ -21,6 +21,8 @@ let height = Number(params.get('h')) || null;
 const els = {
   frameWrap: document.getElementById('frame-wrap'),
   iframe: document.getElementById('game-frame'),
+  placeholder: document.getElementById('frame-placeholder'),
+  playBtn: document.getElementById('play-btn'),
   title: document.getElementById('game-title'),
   category: document.getElementById('game-category'),
   fullscreenBtn: document.getElementById('fullscreen-btn'),
@@ -29,6 +31,9 @@ const els = {
   related: document.getElementById('related-grid'),
   relatedStatus: document.getElementById('related-status'),
   playerStatus: document.getElementById('player-status'),
+  howToPlayGame: document.getElementById('how-to-play-game'),
+  howToPlayGame2: document.getElementById('how-to-play-game-2'),
+  featureGame: document.getElementById('feature-game'),
 };
 
 init();
@@ -71,6 +76,11 @@ async function init() {
   els.title.textContent = title;
   els.category.textContent = category;
 
+  // Populate SEO content sections with the game title
+  if (els.howToPlayGame) els.howToPlayGame.textContent = title;
+  if (els.howToPlayGame2) els.howToPlayGame2.textContent = title;
+  if (els.featureGame) els.featureGame.textContent = title;
+
   const ratio = width && height ? `${width} / ${height}` : CONFIG.FALLBACK_ASPECT_RATIO;
   els.frameWrap.style.setProperty('--game-ratio', ratio);
   if (width && height && height > width) {
@@ -78,11 +88,22 @@ async function init() {
   }
 
   els.iframe.allow = allowAttributeFor(gameId);
-  els.iframe.src = embedUrl;
   els.iframe.title = title;
+
+  // Lazy load: don't set iframe src until the user clicks "Play Now".
+  // This keeps the page fast and avoids loading the game script before
+  // the user actually wants to play.
+  els.playBtn.addEventListener('click', loadGame);
 
   bindActions();
   loadRelatedGames();
+}
+
+function loadGame() {
+  if (els.iframe.src) return; // already loaded
+  els.iframe.src = embedUrl;
+  els.iframe.hidden = false;
+  els.placeholder.hidden = true;
 }
 
 function readPlayIdFromPathname(pathname) {
@@ -232,7 +253,7 @@ function relatedCardTemplate(game) {
   return `
     <a href="${buildPlayUrl(game)}" class="game-card game-card--compact">
       <div class="game-card__thumb-wrap">
-        <img class="game-card__thumb" src="${escapeHtml(game.thumb)}" alt="${escapeHtml(game.title)}" loading="lazy" width="512" height="384">
+        <img class="game-card__thumb" src="${escapeHtml(game.thumb)}" alt="Main Game ${escapeHtml(game.title)} Gratis Tanpa Install" loading="lazy" width="512" height="384">
         <span class="game-card__play">&#9654; Play</span>
       </div>
       <div class="game-card__body">

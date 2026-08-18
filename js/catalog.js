@@ -90,7 +90,7 @@ function cardTemplate(game, index) {
   return `
     <a href="${playUrl}" class="game-card" style="--stagger:${index % 12}">
       <div class="game-card__thumb-wrap">
-        <img class="game-card__thumb" src="${escapeHtml(game.thumb)}" alt="${escapeHtml(game.title)}" loading="lazy" width="512" height="384">
+        <img class="game-card__thumb" src="${escapeHtml(game.thumb)}" alt="Main Game ${escapeHtml(game.title)} Gratis Tanpa Install" loading="lazy" width="512" height="384">
         <span class="game-card__play">&#9654; Play</span>
         ${sourceBadge}
       </div>
