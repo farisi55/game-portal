@@ -11,7 +11,9 @@ export const CONFIG = {
 
   // Number of games requested from the upstream GameMonetize feed. Raise
   // this (up to 200 — see the clamp in src/index.js) for a bigger catalog.
-  DEFAULT_GAME_COUNT: 36,
+  DEFAULT_GAME_COUNT: 50,
+  LOAD_MORE_COUNT: 10,
+  MAX_GAME_COUNT: 200,
 
   // Hostnames allowed as an <iframe src>. game.html reads `url` from the
   // query string, so without this allowlist the player page could be used

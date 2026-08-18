@@ -2,8 +2,6 @@ import { CONFIG } from './config.js';
 import { escapeHtml, debounce, buildPlayUrl, writeSessionGames, fetchGameCatalog } from './utils.js';
 import { getFavorites, getRecentGames, toggleFavorite, isFavorite, saveRecent } from './state.js';
 
-const ITEMS_PER_PAGE = 30;
-
 const TABS = [
   { id: 'all', label: 'All' },
   { id: 'recent', label: 'Recent' },
@@ -22,6 +20,9 @@ const state = {
   query: '',
   filteredGames: [],
   currentIndex: 0,
+  requestedCount: CONFIG.DEFAULT_GAME_COUNT,
+  hasMore: true,
+  loadingMore: false,
   onlineSearching: false,
 };
 
@@ -153,7 +154,9 @@ function renderGrid(reset = false) {
     els.loadMoreWrap.hidden = true;
   }
 
-  const nextBatch = state.filteredGames.slice(state.currentIndex, state.currentIndex + ITEMS_PER_PAGE);
+  // Render the complete cumulative window. Load More expands it from 50 to
+  // 60, 70, and so on instead of only revealing already-fetched cards.
+  const nextBatch = state.filteredGames.slice(state.currentIndex);
 
   if (nextBatch.length === 0) {
     if (state.filteredGames.length === 0) {
@@ -168,7 +171,60 @@ function renderGrid(reset = false) {
   state.currentIndex += nextBatch.length;
 
   // Show/hide Load More
-  els.loadMoreWrap.hidden = state.currentIndex >= state.filteredGames.length;
+  els.loadMoreWrap.hidden = !canLoadMore();
+}
+
+function canLoadMore() {
+  return (
+    state.hasMore &&
+    !state.loadingMore &&
+    state.requestedCount < CONFIG.MAX_GAME_COUNT &&
+    state.activeTab !== 'favorite' &&
+    state.activeTab !== 'recent'
+  );
+}
+
+async function loadMoreGames() {
+  if (!canLoadMore()) return;
+
+  state.loadingMore = true;
+  els.loadMoreBtn.disabled = true;
+  els.loadMoreBtn.textContent = 'Loading...';
+
+  const nextCount = Math.min(
+    state.requestedCount + CONFIG.LOAD_MORE_COUNT,
+    CONFIG.MAX_GAME_COUNT
+  );
+
+  try {
+    const expandedGames = await fetchGameCatalog(
+      CONFIG.GAMES_API_ENDPOINT,
+      nextCount,
+      CONFIG.LOCAL_GAMES
+    );
+    const existingIds = new Set(state.games.map((game) => String(game.id)));
+    const freshGames = expandedGames.filter((game) => !existingIds.has(String(game.id)));
+
+    state.requestedCount = nextCount;
+    state.hasMore = freshGames.length > 0 && nextCount < CONFIG.MAX_GAME_COUNT;
+    state.games = [...state.games, ...freshGames];
+    state.categories = ['All', ...uniqueCategories(state.games)];
+    writeSessionGames(CONFIG.SESSION_CACHE_KEY, state.games);
+
+    renderCategoryChips();
+    state.filteredGames = getTabGames();
+    state.currentIndex = 0;
+    els.gameCount.textContent = String(state.filteredGames.length);
+    renderGrid(true);
+  } catch (err) {
+    console.error('Failed to load more games:', err);
+    flashToast('Could not load more games. Please try again.');
+  } finally {
+    state.loadingMore = false;
+    els.loadMoreBtn.disabled = false;
+    els.loadMoreBtn.textContent = 'Load More';
+    els.loadMoreWrap.hidden = !canLoadMore();
+  }
 }
 
 function renderEmptyState() {
@@ -367,7 +423,7 @@ function bindEvents() {
   );
 
   // Load More
-  els.loadMoreBtn.addEventListener('click', () => renderGrid(false));
+  els.loadMoreBtn.addEventListener('click', loadMoreGames);
 
   // Grid delegation: favorite, share, play
   els.grid.addEventListener('click', (e) => {

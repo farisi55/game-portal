@@ -139,5 +139,12 @@ export async function fetchGameCatalog(endpoint, num, localGames = []) {
   }
 
   if (!Array.isArray(games)) throw new Error('Catalog response was not an array');
-  return [...localGames, ...games];
+
+  // Keep the browser catalog size exact even though local games are
+  // prepended and the upstream feeds are merged.
+  const catalog = [...localGames, ...games];
+  const requestedCount = Number(num);
+  return Number.isFinite(requestedCount) && requestedCount > 0
+    ? catalog.slice(0, requestedCount)
+    : catalog;
 }

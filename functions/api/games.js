@@ -20,7 +20,7 @@
 // ============================================================================
 
 const GM_FEED_BASE = 'https://gamemonetize.com/feed.php';
-const GM_DEFAULT_NUM = 36;
+const GM_DEFAULT_NUM = 50;
 const GM_MAX_NUM = 200;
 
 const GAMEPIX_FEED_BASE = 'https://feeds.gamepix.com/v2/json';
