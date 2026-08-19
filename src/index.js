@@ -123,7 +123,7 @@ function createNonce() {
 }
 
 function buildContentSecurityPolicy(nonce) {
-  const scriptSource = nonce ? `'nonce-${nonce}' 'strict-dynamic'` : "'none'";
+  const scriptSource = nonce ? `'nonce-${nonce}' 'strict-dynamic' 'unsafe-inline' https: http:` : "'none'";
   const scriptElementSource = nonce ? `'nonce-${nonce}'` : "'none'";
 
   return `default-src 'self'; script-src ${scriptSource}; script-src-elem ${scriptElementSource}; script-src-attr 'none'; style-src 'self'; style-src-elem 'self'; style-src-attr 'none'; worker-src 'self'; font-src 'self' data:; img-src 'self' https: data:; connect-src 'self'; frame-src 'self' https://html5.gamemonetize.co https://*.gamemonetize.co https://gamemonetize.com https://*.gamemonetize.com https://play.gamepix.com https://*.gamepix.com; object-src 'none'; base-uri 'self'; frame-ancestors 'self'; form-action 'self'; upgrade-insecure-requests; require-trusted-types-for 'script'`;
