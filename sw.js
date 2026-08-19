@@ -1,4 +1,4 @@
-const CACHE_NAME = 'gimboot-portal-v3';
+const CACHE_NAME = 'gimboot-portal-v4';
 const APP_SHELL = [
   '/',
   '/game',

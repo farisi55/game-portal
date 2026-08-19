@@ -63,8 +63,8 @@ async function init() {
       embedUrl = game.url;
       title = game.title;
       category = game.category;
-      width = game.width;
-      height = game.height;
+      width = Number(game.width) || null;
+      height = Number(game.height) || null;
     }
   }
 
@@ -86,8 +86,15 @@ async function init() {
   if (els.howToPlayGame2) els.howToPlayGame2.textContent = title;
   if (els.featureGame) els.featureGame.textContent = title;
 
-  const ratio = width && height ? `${width} / ${height}` : CONFIG.FALLBACK_ASPECT_RATIO;
-  els.frameWrap.style.setProperty('--game-ratio', ratio);
+  const gameWidth = Number(width);
+  const gameHeight = Number(height);
+  if (Number.isFinite(gameWidth) && gameWidth > 0 && Number.isFinite(gameHeight) && gameHeight > 0) {
+    els.frameWrap.dataset.gameWidth = String(gameWidth);
+    els.frameWrap.dataset.gameHeight = String(gameHeight);
+  } else {
+    delete els.frameWrap.dataset.gameWidth;
+    delete els.frameWrap.dataset.gameHeight;
+  }
   if (width && height && height > width) {
     els.frameWrap.classList.add('frame-wrap--portrait');
   }
@@ -168,11 +175,22 @@ function allowAttributeFor(id) {
 
 function showPlayerError() {
   els.playerStatus.hidden = false;
-  els.playerStatus.innerHTML = `
-    <p class="status-title">This game link looks invalid</p>
-    <p class="status-subtitle">Head back to the catalog and pick a game to play.</p>
-    <a class="btn btn--primary" href="/">Back to Catalog</a>
-  `;
+  els.playerStatus.replaceChildren();
+
+  const titleElement = document.createElement('p');
+  titleElement.className = 'status-title';
+  titleElement.textContent = 'This game link looks invalid';
+
+  const subtitleElement = document.createElement('p');
+  subtitleElement.className = 'status-subtitle';
+  subtitleElement.textContent = 'Head back to the catalog and pick a game to play.';
+
+  const backLink = document.createElement('a');
+  backLink.className = 'btn btn--primary';
+  backLink.href = '/';
+  backLink.textContent = 'Back to Catalog';
+
+  els.playerStatus.append(titleElement, subtitleElement, backLink);
   els.frameWrap.hidden = true;
 }
 

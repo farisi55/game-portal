@@ -29,6 +29,17 @@ const GAMEPIX_PAGINATION_OPTIONS = [12, 24, 48, 96];
 const CACHE_TTL_SECONDS = 1800; // 30 menit
 const SITE_NAME = 'Gimboot';
 
+// `_headers` is useful for static hosting, but Worker-with-assets deployments
+// do not consistently apply it to every response. Enforce the same policy at
+// the Worker boundary so HTML, JavaScript, API, and game routes all share it.
+const SECURITY_HEADERS = {
+  'Content-Security-Policy': "default-src 'self'; script-src 'self'; script-src-elem 'self'; script-src-attr 'none'; style-src 'self'; style-src-elem 'self'; style-src-attr 'none'; worker-src 'self'; font-src 'self' data:; img-src 'self' https: data:; connect-src 'self'; frame-src 'self' https://html5.gamemonetize.co https://*.gamemonetize.co https://gamemonetize.com https://*.gamemonetize.com https://play.gamepix.com https://*.gamepix.com; object-src 'none'; base-uri 'self'; frame-ancestors 'self'; form-action 'self'; upgrade-insecure-requests",
+  'X-Content-Type-Options': 'nosniff',
+  'Referrer-Policy': 'strict-origin-when-cross-origin',
+  'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
+  'Strict-Transport-Security': 'max-age=31536000',
+};
+
 // Game(s) we host ourselves. Mirrors js/config.js's LOCAL_GAMES exactly —
 // duplicated here (rather than imported) because this Worker script and the
 // browser-side ES modules don't share a build step to import from one
@@ -49,32 +60,42 @@ const LOCAL_GAMES = [
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
+    let response;
 
     if (url.protocol === 'http:') {
       const httpsUrl = new URL(url);
       httpsUrl.protocol = 'https:';
-      return Response.redirect(httpsUrl.toString(), 301);
+      response = Response.redirect(httpsUrl.toString(), 301);
+    } else if (url.pathname === '/api/games') {
+      response = await handleApiGames(url, env, ctx);
+    } else if (url.pathname === '/api/search') {
+      response = await handleApiSearch(url, env, ctx);
+    } else if (url.pathname.startsWith('/share/')) {
+      response = await handleShareRoute(request, url, env, ctx);
+    } else if (url.pathname.startsWith('/play/')) {
+      response = await handlePlayRoute(request, url, env, ctx);
+    } else if (url.pathname === '/sitemap.xml') {
+      response = await handleSitemap(url, env, ctx);
+    } else {
+      response = await env.ASSETS.fetch(request);
     }
 
-    if (url.pathname === '/api/games') {
-      return handleApiGames(url, env, ctx);
-    }
-    if (url.pathname === '/api/search') {
-      return handleApiSearch(url, env, ctx);
-    }
-    if (url.pathname.startsWith('/share/')) {
-      return handleShareRoute(request, url, env, ctx);
-    }
-    if (url.pathname.startsWith('/play/')) {
-      return handlePlayRoute(request, url, env, ctx);
-    }
-    if (url.pathname === '/sitemap.xml') {
-      return handleSitemap(url, env, ctx);
-    }
-
-    return env.ASSETS.fetch(request);
+    return withSecurityHeaders(response);
   },
 };
+
+function withSecurityHeaders(response) {
+  const headers = new Headers(response.headers);
+  for (const [name, value] of Object.entries(SECURITY_HEADERS)) {
+    headers.set(name, value);
+  }
+
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  });
+}
 
 /**
  * Fetches + merges both catalogs (GameMonetize + GamePix), cached at the

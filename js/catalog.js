@@ -275,32 +275,41 @@ async function loadMoreGames() {
 }
 
 function renderEmptyState() {
-  els.grid.innerHTML = '';
+  els.grid.replaceChildren();
   els.status.hidden = false;
+  els.status.replaceChildren();
 
   if (state.query.trim()) {
-    els.status.innerHTML = `
-      <p class="status-title">No games match "${escapeHtml(state.query)}"</p>
-      <p class="status-subtitle">Try a different search term or pick another category.</p>
-      <button type="button" class="btn btn--primary" id="search-online-btn">Game not found. Search Online?</button>
-    `;
-    document.getElementById('search-online-btn')?.addEventListener('click', searchOnline);
+    appendStatusParagraph('status-title', `No games match "${state.query}"`);
+    appendStatusParagraph('status-subtitle', 'Try a different search term or pick another category.');
+    appendSearchOnlineButton();
   } else if (state.activeTab === 'favorite') {
-    els.status.innerHTML = `
-      <p class="status-title">No favorite games yet</p>
-      <p class="status-subtitle">Tap the heart on any game to save it here.</p>
-    `;
+    appendStatusParagraph('status-title', 'No favorite games yet');
+    appendStatusParagraph('status-subtitle', 'Tap the heart on any game to save it here.');
   } else if (state.activeTab === 'recent') {
-    els.status.innerHTML = `
-      <p class="status-title">No recently played games</p>
-      <p class="status-subtitle">Play a game and it will show up here.</p>
-    `;
+    appendStatusParagraph('status-title', 'No recently played games');
+    appendStatusParagraph('status-subtitle', 'Play a game and it will show up here.');
   } else {
-    els.status.innerHTML = `
-      <p class="status-title">No games found</p>
-      <p class="status-subtitle">Try a different filter.</p>
-    `;
+    appendStatusParagraph('status-title', 'No games found');
+    appendStatusParagraph('status-subtitle', 'Try a different filter.');
   }
+}
+
+function appendStatusParagraph(className, text) {
+  const paragraph = document.createElement('p');
+  paragraph.className = className;
+  paragraph.textContent = text;
+  els.status.appendChild(paragraph);
+}
+
+function appendSearchOnlineButton() {
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.className = 'btn btn--primary';
+  button.id = 'search-online-btn';
+  button.textContent = 'Game not found. Search Online?';
+  button.addEventListener('click', searchOnline);
+  els.status.appendChild(button);
 }
 
 function cardTemplate(game, index) {
@@ -314,7 +323,7 @@ function cardTemplate(game, index) {
   const favIcon = fav ? '\u2764' : '\u2661';
 
   return `
-    <div class="game-card" style="--stagger:${index % 12}">
+    <div class="game-card">
       <a href="${playUrl}" class="game-card__link" data-game-id="${escapeHtml(game.id)}">
         <div class="game-card__thumb-wrap">
           <img class="game-card__thumb" src="${escapeHtml(game.thumb)}" alt="Main Game ${escapeHtml(game.title)} Gratis Tanpa Install" loading="lazy" width="512" height="384">
@@ -342,17 +351,20 @@ function renderSkeleton(count) {
 }
 
 function renderError() {
-  els.grid.innerHTML = '';
+  els.grid.replaceChildren();
   els.status.hidden = false;
-  els.status.innerHTML = `
-    <p class="status-title">Couldn't load the game catalog</p>
-    <p class="status-subtitle">Check your connection and try again.</p>
-    <button type="button" class="btn btn--primary" id="retry-btn">Retry</button>
-  `;
-  document.getElementById('retry-btn')?.addEventListener('click', () => {
+  els.status.replaceChildren();
+  appendStatusParagraph('status-title', "Couldn't load the game catalog");
+  appendStatusParagraph('status-subtitle', 'Check your connection and try again.');
+  const retryButton = document.createElement('button');
+  retryButton.type = 'button';
+  retryButton.className = 'btn btn--primary';
+  retryButton.textContent = 'Retry';
+  retryButton.addEventListener('click', () => {
     renderSkeleton(12);
     init();
   });
+  els.status.appendChild(retryButton);
 }
 
 // ----------------------------------------------------------------------------
@@ -365,7 +377,8 @@ async function searchOnline() {
 
   state.onlineSearching = true;
   els.status.hidden = false;
-  els.status.innerHTML = `<p class="status-subtitle">Searching online for "${escapeHtml(q)}"…</p>`;
+  els.status.replaceChildren();
+  appendStatusParagraph('status-subtitle', `Searching online for "${q}"...`);
 
   try {
     const res = await fetch(`/api/search?q=${encodeURIComponent(q)}`);
@@ -373,10 +386,9 @@ async function searchOnline() {
     const results = await res.json();
 
     if (!Array.isArray(results) || results.length === 0) {
-      els.status.innerHTML = `
-        <p class="status-title">No results found online either</p>
-        <p class="status-subtitle">Try a different search term.</p>
-      `;
+      els.status.replaceChildren();
+      appendStatusParagraph('status-title', 'No results found online either');
+      appendStatusParagraph('status-subtitle', 'Try a different search term.');
       return;
     }
 
@@ -392,10 +404,9 @@ async function searchOnline() {
     renderGrid(true);
   } catch (err) {
     console.error('Online search failed:', err);
-    els.status.innerHTML = `
-      <p class="status-title">Online search failed</p>
-      <p class="status-subtitle">Check your connection and try again.</p>
-    `;
+    els.status.replaceChildren();
+    appendStatusParagraph('status-title', 'Online search failed');
+    appendStatusParagraph('status-subtitle', 'Check your connection and try again.');
   } finally {
     state.onlineSearching = false;
   }

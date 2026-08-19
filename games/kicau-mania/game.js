@@ -423,20 +423,6 @@ const canvas = document.getElementById('game-canvas');
 const ctx = canvas.getContext('2d');
 
 function resizeCanvas() {
-  const ratio = CONFIG.BASE_W / CONFIG.BASE_H;
-  const availW = window.innerWidth;
-  const availH = window.innerHeight;
-
-  let cssW = availW;
-  let cssH = cssW / ratio;
-  if (cssH > availH) {
-    cssH = availH;
-    cssW = cssH * ratio;
-  }
-
-  canvas.style.width = Math.floor(cssW) + 'px';
-  canvas.style.height = Math.floor(cssH) + 'px';
-
   const dpr = window.devicePixelRatio || 1;
   canvas.width = CONFIG.BASE_W * dpr;
   canvas.height = CONFIG.BASE_H * dpr;

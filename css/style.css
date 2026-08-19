@@ -345,6 +345,14 @@ main {
   text-transform: uppercase;
 }
 
+.catalog-meta--row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
 .high-score-pill {
   display: inline-flex;
   align-items: center;
@@ -734,10 +742,9 @@ main {
 }
 
 .frame-wrap {
-  --game-ratio: 16 / 9;
   position: relative;
   width: 100%;
-  aspect-ratio: var(--game-ratio);
+  aspect-ratio: 16 / 9;
   max-height: 78vh;
   margin: 0 auto;
   border-radius: var(--radius-md);
@@ -745,8 +752,13 @@ main {
   background: #000;
 }
 
+.frame-wrap[data-game-width][data-game-height] {
+  aspect-ratio: attr(data-game-width type(<number>)) / attr(data-game-height type(<number>));
+}
+
 .frame-wrap--portrait {
   max-width: 480px;
+  aspect-ratio: 9 / 16;
 }
 
 .frame-wrap iframe {

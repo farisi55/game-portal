@@ -29,6 +29,11 @@ html, body {
 
 #game-canvas {
   display: block;
+  width: min(100vw, 56.25dvh);
+  width: min(100vw, 56.25vh);
+  height: min(100dvh, 177.7778vw);
+  height: min(100vh, 177.7778vw);
+  aspect-ratio: 9 / 16;
   touch-action: none;
   background: #bfe7f0;
   border-radius: 4px;
