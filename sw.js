@@ -1,6 +1,7 @@
-const CACHE_NAME = 'gimboot-portal-v4';
+const CACHE_NAME = 'gimboot-portal-v5';
 const APP_SHELL = [
   '/',
+  '/game.html',
   '/game',
   '/manifest.json',
   '/icon-192.png',
@@ -48,7 +49,14 @@ self.addEventListener('fetch', (event) => {
   }
 
   if (request.mode === 'navigate') {
-    event.respondWith(fetch(request).catch(() => caches.match('/')));
+    event.respondWith(
+      fetch(request).catch(async () => {
+        const fallback = requestUrl.pathname.startsWith('/play/')
+          ? (await caches.match('/game.html')) || (await caches.match('/game')) || (await caches.match('/'))
+          : await caches.match('/');
+        return fallback || new Response('Offline', { status: 503 });
+      })
+    );
     return;
   }
 
@@ -71,7 +79,7 @@ self.addEventListener('fetch', (event) => {
         })
         .catch(() => cached);
 
-      return cached || network || new Response('Offline', { status: 503 });
+      return cached || network.then((response) => response || new Response('Offline', { status: 503 }));
     })
   );
 });
