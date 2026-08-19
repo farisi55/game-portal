@@ -1,5 +1,5 @@
 import { CONFIG } from './config.js';
-import { escapeHtml, debounce, buildPlayUrl, writeSessionGames, fetchGameCatalog } from './utils.js';
+import { debounce, buildPlayUrl, writeSessionGames, fetchGameCatalog } from './utils.js';
 import { getFavorites, getRecentGames, toggleFavorite, isFavorite, saveRecent } from './state.js';
 
 const TABS = [
@@ -71,46 +71,97 @@ function uniqueCategories(games) {
 // ----------------------------------------------------------------------------
 
 function renderTabs() {
-  els.tabBar.innerHTML = TABS.map((tab) => {
-    if (tab.id === 'more') return genreMenuTemplate();
-    const isActive = tab.id === state.activeTab;
-    return `<button type="button" class="tab-btn ${isActive ? 'tab-btn--active' : ''}" data-tab="${tab.id}" role="tab" aria-selected="${isActive}">${escapeHtml(tab.label)}</button>`;
-  }).join('');
+  const fragment = document.createDocumentFragment();
+
+  TABS.forEach((tab) => {
+    if (tab.id === 'more') {
+      fragment.appendChild(createGenreMenu());
+      return;
+    }
+
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = `tab-btn ${tab.id === state.activeTab ? 'tab-btn--active' : ''}`;
+    button.dataset.tab = tab.id;
+    button.setAttribute('role', 'tab');
+    button.setAttribute('aria-selected', String(tab.id === state.activeTab));
+    button.textContent = tab.label;
+    fragment.appendChild(button);
+  });
+
+  els.tabBar.replaceChildren(fragment);
 }
 
-function genreMenuTemplate() {
-  return `
-    <div class="genre-menu">
-      <button type="button" class="tab-btn genre-menu__toggle" data-genre-toggle aria-haspopup="true" aria-expanded="false" aria-controls="genre-menu-panel">
-        More
-      </button>
-      <div id="genre-menu-panel" class="genre-menu__panel" data-genre-panel hidden>
-        <label class="genre-menu__label" for="genre-search">Search genre</label>
-        <input id="genre-search" class="genre-menu__search" type="search" placeholder="Search genre..." autocomplete="off">
-        <div class="genre-menu__list" data-genre-list role="listbox" aria-label="Game genres">
-          ${genreOptionsTemplate()}
-        </div>
-      </div>
-    </div>
-  `;
+function createGenreMenu() {
+  const menu = document.createElement('div');
+  menu.className = 'genre-menu';
+
+  const toggle = document.createElement('button');
+  toggle.type = 'button';
+  toggle.className = 'tab-btn genre-menu__toggle';
+  toggle.dataset.genreToggle = '';
+  toggle.setAttribute('aria-haspopup', 'true');
+  toggle.setAttribute('aria-expanded', 'false');
+  toggle.setAttribute('aria-controls', 'genre-menu-panel');
+  toggle.textContent = 'More';
+
+  const panel = document.createElement('div');
+  panel.id = 'genre-menu-panel';
+  panel.className = 'genre-menu__panel';
+  panel.dataset.genrePanel = '';
+  panel.hidden = true;
+
+  const label = document.createElement('label');
+  label.className = 'genre-menu__label';
+  label.htmlFor = 'genre-search';
+  label.textContent = 'Search genre';
+
+  const search = document.createElement('input');
+  search.id = 'genre-search';
+  search.className = 'genre-menu__search';
+  search.type = 'search';
+  search.placeholder = 'Search genre...';
+  search.autocomplete = 'off';
+
+  const list = document.createElement('div');
+  list.className = 'genre-menu__list';
+  list.dataset.genreList = '';
+  list.setAttribute('role', 'listbox');
+  list.setAttribute('aria-label', 'Game genres');
+  renderGenreOptions(list);
+
+  panel.append(label, search, list);
+  menu.append(toggle, panel);
+  return menu;
 }
 
-function genreOptionsTemplate(query = '') {
+function renderGenreOptions(list, query = '') {
   const normalizedQuery = query.trim().toLowerCase();
   const categories = ['All', ...state.categories.filter((category) => category !== 'All')]
     .filter((category, index, list) => list.indexOf(category) === index)
     .filter((category) => !normalizedQuery || category.toLowerCase().includes(normalizedQuery));
 
   if (categories.length === 0) {
-    return '<p class="genre-menu__empty">No genres found</p>';
+    const empty = document.createElement('p');
+    empty.className = 'genre-menu__empty';
+    empty.textContent = 'No genres found';
+    list.replaceChildren(empty);
+    return;
   }
 
-  return categories
-    .map((category) => {
-      const selected = category === state.activeCategory;
-      return `<button type="button" class="genre-menu__option ${selected ? 'genre-menu__option--active' : ''}" data-genre="${escapeHtml(category)}" role="option" aria-selected="${selected}">${escapeHtml(category)}</button>`;
-    })
-    .join('');
+  const fragment = document.createDocumentFragment();
+  categories.forEach((category) => {
+    const selected = category === state.activeCategory;
+    const option = document.createElement('button');
+    option.type = 'button';
+    option.className = `genre-menu__option ${selected ? 'genre-menu__option--active' : ''}`;
+    option.dataset.genre = category;
+    option.setAttribute('role', 'option');
+    option.setAttribute('aria-selected', String(selected));
+    option.textContent = category;
+    fragment.appendChild(option);
+  });
+  list.replaceChildren(fragment);
 }
 
 function closeGenreMenu() {
@@ -197,7 +248,7 @@ function trendingScore(game) {
 
 function renderGrid(reset = false) {
   if (reset) {
-    els.grid.innerHTML = '';
+    els.grid.replaceChildren();
     els.loadMoreWrap.hidden = true;
   }
 
@@ -214,7 +265,7 @@ function renderGrid(reset = false) {
   }
 
   els.status.hidden = true;
-  els.grid.insertAdjacentHTML('beforeend', nextBatch.map(cardTemplate).join(''));
+  els.grid.append(...nextBatch.map(createCardElement));
   state.currentIndex += nextBatch.length;
 
   // Show/hide Load More
@@ -312,42 +363,83 @@ function appendSearchOnlineButton() {
   els.status.appendChild(button);
 }
 
-function cardTemplate(game, index) {
+function createCardElement(game) {
   const playUrl = buildPlayUrl(game);
   const sourceBadge = game.source
-    ? `<span class="game-card__source">${escapeHtml(game.source)}</span>`
-    : '';
+    ? createTextElement('span', 'game-card__source', game.source)
+    : null;
   const fav = isFavorite(game.id);
   const favClass = fav ? 'game-card__fav--active' : '';
   const favLabel = fav ? 'Remove from favorites' : 'Add to favorites';
   const favIcon = fav ? '\u2764' : '\u2661';
 
-  return `
-    <div class="game-card">
-      <a href="${playUrl}" class="game-card__link" data-game-id="${escapeHtml(game.id)}">
-        <div class="game-card__thumb-wrap">
-          <img class="game-card__thumb" src="${escapeHtml(game.thumb)}" alt="Main Game ${escapeHtml(game.title)} Gratis Tanpa Install" loading="lazy" width="512" height="384">
-          <span class="game-card__play">&#9654; Play</span>
-          ${sourceBadge}
-        </div>
-        <div class="game-card__body">
-          <p class="game-card__title">${escapeHtml(game.title)}</p>
-          <span class="game-card__tag">${escapeHtml(game.category)}</span>
-        </div>
-      </a>
-      <div class="game-card__actions">
-        <button type="button" class="game-card__fav ${favClass}" data-fav-id="${escapeHtml(game.id)}" aria-label="${favLabel}" title="${favLabel}">${favIcon}</button>
-        <button type="button" class="game-card__share" data-share-id="${escapeHtml(game.id)}" aria-label="Share game" title="Share">&#128279;</button>
-      </div>
-    </div>
-  `;
+  const card = document.createElement('div');
+  card.className = 'game-card';
+
+  const link = document.createElement('a');
+  link.href = playUrl;
+  link.className = 'game-card__link';
+  link.dataset.gameId = String(game.id ?? '');
+
+  const thumbWrap = document.createElement('div');
+  thumbWrap.className = 'game-card__thumb-wrap';
+  const image = document.createElement('img');
+  image.className = 'game-card__thumb';
+  image.src = String(game.thumb ?? '');
+  image.alt = `Main Game ${String(game.title ?? '')} Gratis Tanpa Install`;
+  image.loading = 'lazy';
+  image.width = 512;
+  image.height = 384;
+  thumbWrap.append(image, createTextElement('span', 'game-card__play', '\u25b6 Play'));
+  if (sourceBadge) thumbWrap.appendChild(sourceBadge);
+
+  const body = document.createElement('div');
+  body.className = 'game-card__body';
+  body.append(
+    createTextElement('p', 'game-card__title', game.title),
+    createTextElement('span', 'game-card__tag', game.category)
+  );
+  link.append(thumbWrap, body);
+
+  const actions = document.createElement('div');
+  actions.className = 'game-card__actions';
+  const favoriteButton = document.createElement('button');
+  favoriteButton.type = 'button';
+  favoriteButton.className = `game-card__fav ${favClass}`;
+  favoriteButton.dataset.favId = String(game.id ?? '');
+  favoriteButton.setAttribute('aria-label', favLabel);
+  favoriteButton.title = favLabel;
+  favoriteButton.textContent = favIcon;
+  const shareButton = document.createElement('button');
+  shareButton.type = 'button';
+  shareButton.className = 'game-card__share';
+  shareButton.dataset.shareId = String(game.id ?? '');
+  shareButton.setAttribute('aria-label', 'Share game');
+  shareButton.title = 'Share';
+  shareButton.textContent = '\u{1f517}';
+  actions.append(favoriteButton, shareButton);
+
+  card.append(link, actions);
+  return card;
+}
+
+function createTextElement(tagName, className, value) {
+  const element = document.createElement(tagName);
+  element.className = className;
+  element.textContent = String(value ?? '');
+  return element;
 }
 
 function renderSkeleton(count) {
   els.status.hidden = true;
-  els.grid.innerHTML = Array.from({ length: count })
-    .map(() => `<div class="game-card game-card--skeleton" aria-hidden="true"></div>`)
-    .join('');
+  const fragment = document.createDocumentFragment();
+  for (let index = 0; index < count; index += 1) {
+    const skeleton = document.createElement('div');
+    skeleton.className = 'game-card game-card--skeleton';
+    skeleton.setAttribute('aria-hidden', 'true');
+    fragment.appendChild(skeleton);
+  }
+  els.grid.replaceChildren(fragment);
 }
 
 function renderError() {
@@ -484,7 +576,7 @@ function bindEvents() {
   els.tabBar.addEventListener('input', (e) => {
     if (!e.target.matches('#genre-search')) return;
     const list = els.tabBar.querySelector('[data-genre-list]');
-    if (list) list.innerHTML = genreOptionsTemplate(e.target.value);
+    if (list) renderGenreOptions(list, e.target.value);
   });
 
   document.addEventListener('click', (e) => {

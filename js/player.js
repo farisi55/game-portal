@@ -1,5 +1,5 @@
 import { CONFIG } from './config.js';
-import { escapeHtml, buildPlayUrl, isAllowedEmbedUrl, readSessionGames, fetchGameCatalog } from './utils.js';
+import { buildPlayUrl, isAllowedEmbedUrl, readSessionGames, fetchGameCatalog } from './utils.js';
 import { saveRecent, toggleFavorite, isFavorite } from './state.js';
 
 const params = new URLSearchParams(window.location.search);
@@ -313,19 +313,35 @@ async function loadRelatedGames() {
   }
 
   els.relatedStatus.hidden = true;
-  els.related.innerHTML = related.map(relatedCardTemplate).join('');
+  els.related.replaceChildren(...related.map(createRelatedCardElement));
 }
 
-function relatedCardTemplate(game) {
-  return `
-    <a href="${buildPlayUrl(game)}" class="game-card game-card--compact">
-      <div class="game-card__thumb-wrap">
-        <img class="game-card__thumb" src="${escapeHtml(game.thumb)}" alt="Main Game ${escapeHtml(game.title)} Gratis Tanpa Install" loading="lazy" width="512" height="384">
-        <span class="game-card__play">&#9654; Play</span>
-      </div>
-      <div class="game-card__body">
-        <p class="game-card__title">${escapeHtml(game.title)}</p>
-      </div>
-    </a>
-  `;
+function createRelatedCardElement(game) {
+  const link = document.createElement('a');
+  link.href = buildPlayUrl(game);
+  link.className = 'game-card game-card--compact';
+
+  const thumbWrap = document.createElement('div');
+  thumbWrap.className = 'game-card__thumb-wrap';
+  const image = document.createElement('img');
+  image.className = 'game-card__thumb';
+  image.src = String(game.thumb ?? '');
+  image.alt = `Main Game ${String(game.title ?? '')} Gratis Tanpa Install`;
+  image.loading = 'lazy';
+  image.width = 512;
+  image.height = 384;
+  const playLabel = document.createElement('span');
+  playLabel.className = 'game-card__play';
+  playLabel.textContent = '\u25b6 Play';
+  thumbWrap.append(image, playLabel);
+
+  const body = document.createElement('div');
+  body.className = 'game-card__body';
+  const titleElement = document.createElement('p');
+  titleElement.className = 'game-card__title';
+  titleElement.textContent = String(game.title ?? '');
+  body.appendChild(titleElement);
+
+  link.append(thumbWrap, body);
+  return link;
 }

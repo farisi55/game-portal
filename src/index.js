@@ -33,7 +33,6 @@ const SITE_NAME = 'Gimboot';
 // do not consistently apply it to every response. Enforce the same policy at
 // the Worker boundary so HTML, JavaScript, API, and game routes all share it.
 const SECURITY_HEADERS = {
-  'Content-Security-Policy': "default-src 'self'; script-src 'self'; script-src-elem 'self'; script-src-attr 'none'; style-src 'self'; style-src-elem 'self'; style-src-attr 'none'; worker-src 'self'; font-src 'self' data:; img-src 'self' https: data:; connect-src 'self'; frame-src 'self' https://html5.gamemonetize.co https://*.gamemonetize.co https://gamemonetize.com https://*.gamemonetize.com https://play.gamepix.com https://*.gamepix.com; object-src 'none'; base-uri 'self'; frame-ancestors 'self'; form-action 'self'; upgrade-insecure-requests",
   'X-Content-Type-Options': 'nosniff',
   'Referrer-Policy': 'strict-origin-when-cross-origin',
   'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
@@ -86,15 +85,48 @@ export default {
 
 function withSecurityHeaders(response) {
   const headers = new Headers(response.headers);
+  const nonce = isHtmlResponse(response) ? createNonce() : null;
+  let body = response.body;
+
+  if (nonce) {
+    body = new HTMLRewriter()
+      .on('script', new SetAttribute('nonce', nonce))
+      .transform(response)
+      .body;
+    headers.delete('Content-Length');
+    headers.delete('Content-Encoding');
+    headers.delete('ETag');
+  }
+
+  headers.set('Content-Security-Policy', buildContentSecurityPolicy(nonce));
   for (const [name, value] of Object.entries(SECURITY_HEADERS)) {
     headers.set(name, value);
   }
 
-  return new Response(response.body, {
+  return new Response(body, {
     status: response.status,
     statusText: response.statusText,
     headers,
   });
+}
+
+function isHtmlResponse(response) {
+  return (response.headers.get('content-type') || '').toLowerCase().includes('text/html');
+}
+
+function createNonce() {
+  const bytes = new Uint8Array(16);
+  crypto.getRandomValues(bytes);
+  let binary = '';
+  for (const byte of bytes) binary += String.fromCharCode(byte);
+  return btoa(binary);
+}
+
+function buildContentSecurityPolicy(nonce) {
+  const scriptSource = nonce ? `'nonce-${nonce}' 'strict-dynamic'` : "'none'";
+  const scriptElementSource = nonce ? `'nonce-${nonce}'` : "'none'";
+
+  return `default-src 'self'; script-src ${scriptSource}; script-src-elem ${scriptElementSource}; script-src-attr 'none'; style-src 'self'; style-src-elem 'self'; style-src-attr 'none'; worker-src 'self'; font-src 'self' data:; img-src 'self' https: data:; connect-src 'self'; frame-src 'self' https://html5.gamemonetize.co https://*.gamemonetize.co https://gamemonetize.com https://*.gamemonetize.com https://play.gamepix.com https://*.gamepix.com; object-src 'none'; base-uri 'self'; frame-ancestors 'self'; form-action 'self'; upgrade-insecure-requests; require-trusted-types-for 'script'`;
 }
 
 /**
