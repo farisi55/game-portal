@@ -52,6 +52,16 @@ export function buildPlayUrl(game) {
   return `/play/${id}/${slug}`;
 }
 
+export function buildGamePageUrl(game) {
+  const params = new URLSearchParams({
+    id: String(game.id ?? ''),
+    title: String(game.title ?? ''),
+    category: String(game.category ?? ''),
+    url: String(game.url ?? ''),
+  });
+  return `/game.html?${params.toString()}`;
+}
+
 /**
  * True for a same-origin path under games/ (our own locally-hosted games,
  * e.g. /games/kicau-mania/index.html), with or without a leading slash.

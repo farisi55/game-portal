@@ -1,5 +1,5 @@
 import { CONFIG } from './config.js';
-import { debounce, buildPlayUrl, writeSessionGames, fetchGameCatalog } from './utils.js';
+import { debounce, buildPlayUrl, buildGamePageUrl, writeSessionGames, fetchGameCatalog } from './utils.js';
 import { getFavorites, getRecentGames, toggleFavorite, isFavorite, saveRecent } from './state.js';
 
 const TABS = [
@@ -364,7 +364,7 @@ function appendSearchOnlineButton() {
 }
 
 function createCardElement(game) {
-  const playUrl = buildPlayUrl(game);
+  const playUrl = buildGamePageUrl(game);
   const sourceBadge = game.source
     ? createTextElement('span', 'game-card__source', game.source)
     : null;

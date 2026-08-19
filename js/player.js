@@ -1,5 +1,5 @@
 import { CONFIG } from './config.js';
-import { buildPlayUrl, isAllowedEmbedUrl, readSessionGames, fetchGameCatalog } from './utils.js';
+import { buildPlayUrl, buildGamePageUrl, isAllowedEmbedUrl, readSessionGames, fetchGameCatalog } from './utils.js';
 import { saveRecent, toggleFavorite, isFavorite } from './state.js';
 
 const params = new URLSearchParams(window.location.search);
@@ -318,7 +318,7 @@ async function loadRelatedGames() {
 
 function createRelatedCardElement(game) {
   const link = document.createElement('a');
-  link.href = buildPlayUrl(game);
+  link.href = buildGamePageUrl(game);
   link.className = 'game-card game-card--compact';
 
   const thumbWrap = document.createElement('div');
