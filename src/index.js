@@ -28,15 +28,16 @@ const GAMEPIX_PAGINATION_OPTIONS = [12, 24, 48, 96];
 
 const CACHE_TTL_SECONDS = 1800; // 30 menit
 const SITE_NAME = 'Gimboot';
+const ALLOWED_HTTP_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
 
 // `_headers` is useful for static hosting, but Worker-with-assets deployments
 // do not consistently apply it to every response. Enforce the same policy at
 // the Worker boundary so HTML, JavaScript, API, and game routes all share it.
 const SECURITY_HEADERS = {
+  'X-Frame-Options': 'SAMEORIGIN',
   'X-Content-Type-Options': 'nosniff',
   'Referrer-Policy': 'strict-origin-when-cross-origin',
   'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
-  'Strict-Transport-Security': 'max-age=31536000',
 };
 
 // Game(s) we host ourselves. Mirrors js/config.js's LOCAL_GAMES exactly —
@@ -61,7 +62,17 @@ export default {
     const url = new URL(request.url);
     let response;
 
-    if (url.protocol === 'http:') {
+    if (!ALLOWED_HTTP_METHODS.has(request.method)) {
+      response = new Response('Method Not Allowed', {
+        status: 405,
+        headers: { Allow: 'GET, HEAD, OPTIONS' },
+      });
+    } else if (request.method === 'OPTIONS') {
+      response = new Response(null, {
+        status: 204,
+        headers: { Allow: 'GET, HEAD, OPTIONS' },
+      });
+    } else if (url.protocol === 'http:') {
       const httpsUrl = new URL(url);
       httpsUrl.protocol = 'https:';
       response = Response.redirect(httpsUrl.toString(), 301);
