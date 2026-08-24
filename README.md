@@ -13,7 +13,8 @@ programmatically from the live catalog.
 Browser
   ├─ GET /                         → index.html   (catalog: grid, search, category filter)
   ├─ GET /play/{id}/{slug}         → src/index.js  (SEO landing page — see below)
-  ├─ GET /game.html?...            → game.html     (legacy query-param player, kept for old links)
+  ├─ GET /game?...                 → src/index.js  (clean query-param player + per-game meta)
+  ├─ GET /game.html?...            → 301 → /game?...  (legacy extension stripped, query kept)
   ├─ GET /api/games                → src/index.js  (Cloudflare Worker)
   ├─ GET /sitemap.xml              → src/index.js  (every /play/ URL, for crawlers)
   │                                       │
@@ -63,9 +64,10 @@ Google Search Console / Bing Webmaster Tools so the ~50 (and growing)
 game pages get discovered without needing to be crawled through the
 client-rendered grid first.
 
-**Old links still work.** `game.html?id=...&url=...` (the original
-query-param format) is still fully supported by `js/player.js` as a
-fallback — new links just don't use it anymore.
+**Old `/game.html` links 301 to `/game`.** Query string stays intact.
+`handleGameRoute` injects `<title>`, description, Open Graph, and a
+canonical `https://…/game?…` before the HTML leaves the edge. Catalog
+cards now emit `/game?id=&title=&category=&url=&thumb=`.
 
 ### Why this needed absolute paths everywhere
 
@@ -117,7 +119,7 @@ that likely never runs.
 
 ```
 gimboot/
-├── index.html                Catalog page
+├── index.html                CPlayer shell (served as /game; /game.html 301s here
 ├── game.html                  Legacy query-param player (still supported)
 ├── manifest.json               PWA manifest — name "Gimboot", pixel icons
 ├── sw.js                        Service worker — offline app shell + stale-while-revalidate

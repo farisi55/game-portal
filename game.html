@@ -5,6 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Loading… — Gimboot</title>
 <meta name="description" content="Play instantly in your browser — no downloads, no sign-up. No install, just play, have fun.">
+<script>
+(function () {
+  if (location.pathname.toLowerCase() !== '/game.html') return;
+  location.replace('https://' + location.host + '/game' + location.search);
+})();
+</script>
 <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png">
 <link rel="apple-touch-icon" href="/icon-192.png">
 <link rel="manifest" href="/manifest.json">

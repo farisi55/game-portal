@@ -73,11 +73,8 @@ async function init() {
     return;
   }
 
-  // When arriving via /play/, the <title> was already set server-side with
-  // an SEO-optimized string — don't clobber it with a plainer client-side one.
-  if (!playRouteGameId) {
-    document.title = `${title} — Gimboot`;
-  }
+  // /play/ and /game both get <title> from the Worker (and /game also from
+  // the early head script). Don't clobber those SEO strings here.
   els.title.textContent = title;
   els.category.textContent = category;
 

@@ -15,7 +15,7 @@ export const CONFIG = {
   LOAD_MORE_COUNT: 10,
   MAX_GAME_COUNT: 200,
 
-  // Hostnames allowed as an <iframe src>. game.html reads `url` from the
+  // Hostnames allowed as an <iframe src>. /game reads `url` from the
   // query string, so without this allowlist the player page could be used
   // to frame arbitrary third-party URLs. Anything outside this list (and
   // outside our own games/ folder — see isAllowedEmbedUrl in utils.js) is
@@ -53,7 +53,7 @@ export const CONFIG = {
   RELATED_GAMES_LIMIT: 12,
 
   // sessionStorage key used to hand the already-fetched catalog from
-  // index.html to game.html, avoiding a second network round-trip when the
+  // index.html to /game, avoiding a second network round-trip when the
   // person clicks from the grid into a game.
   SESSION_CACHE_KEY: 'gp_games_cache_v1',
 };

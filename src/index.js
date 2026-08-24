@@ -72,6 +72,8 @@ export default {
         status: 204,
         headers: { Allow: 'GET, HEAD, OPTIONS' },
       });
+    } else if (url.pathname.toLowerCase() === '/game.html') {
+      response = redirectGameHtml(url);
     } else if (url.protocol === 'http:') {
       const httpsUrl = new URL(url);
       httpsUrl.protocol = 'https:';
@@ -84,6 +86,8 @@ export default {
       response = await handleShareRoute(request, url, env, ctx);
     } else if (url.pathname.startsWith('/play/')) {
       response = await handlePlayRoute(request, url, env, ctx);
+    } else if (url.pathname === '/game') {
+      response = await handleGameRoute(request, url, env);
     } else if (url.pathname === '/sitemap.xml') {
       response = await handleSitemap(url, env, ctx);
     } else {
@@ -329,6 +333,65 @@ function clampNum(rawNum, fallback, max) {
 // each of these thousands of URLs is a genuinely distinct, indexable page
 // from one shared codebase.
 // ----------------------------------------------------------------------------
+
+function redirectGameHtml(url) {
+  const clean = new URL(url);
+  clean.protocol = 'https:';
+  clean.pathname = '/game';
+  return Response.redirect(clean.toString(), 301);
+}
+
+function canonicalGameUrl(url) {
+  const canonical = new URL(url);
+  canonical.protocol = 'https:';
+  canonical.pathname = '/game';
+  canonical.hash = '';
+  return canonical;
+}
+
+function safeImageUrl(maybeRelative, origin) {
+  const abs = absoluteUrl(maybeRelative, origin);
+  try {
+    const parsed = new URL(abs);
+    if (parsed.protocol === 'https:' || parsed.protocol === 'http:') return parsed.toString();
+  } catch {
+    // fall through
+  }
+  return `${origin}/icon-512.png`;
+}
+
+async function handleGameRoute(request, url, env) {
+  const assetResponse = await env.ASSETS.fetch(new Request('https://assets.local/game', request));
+  const title = (url.searchParams.get('title') || 'Game').trim() || 'Game';
+  const category = (url.searchParams.get('category') || '').trim();
+  const thumb = url.searchParams.get('thumb') || '';
+  const canonical = canonicalGameUrl(url);
+  const seoTitle = `${title} - Main Gratis di ${SITE_NAME}`;
+  const seoDescription = category
+    ? `Mainkan ${title}, game ${category} seru secara gratis di ${SITE_NAME}.`
+    : `Mainkan ${title} seru secara gratis di ${SITE_NAME}.`;
+  const imageUrl = safeImageUrl(thumb, canonical.origin);
+
+  const headExtra = `
+<link rel="canonical" href="${escapeHtmlAttr(canonical.toString())}">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="${escapeHtmlAttr(SITE_NAME)}">
+<meta property="og:title" content="${escapeHtmlAttr(seoTitle)}">
+<meta property="og:description" content="${escapeHtmlAttr(seoDescription)}">
+<meta property="og:image" content="${escapeHtmlAttr(imageUrl)}">
+<meta property="og:url" content="${escapeHtmlAttr(canonical.toString())}">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="${escapeHtmlAttr(seoTitle)}">
+<meta name="twitter:description" content="${escapeHtmlAttr(seoDescription)}">
+<meta name="twitter:image" content="${escapeHtmlAttr(imageUrl)}">
+`;
+
+  return new HTMLRewriter()
+    .on('title', new SetTextContent(seoTitle))
+    .on('meta[name="description"]', new SetAttribute('content', seoDescription))
+    .on('head', new AppendHtml(headExtra))
+    .transform(assetResponse);
+}
 
 async function handlePlayRoute(request, url, env, ctx) {
   const segments = url.pathname.split('/').filter(Boolean); // ['play', '<id>', '<slug>']

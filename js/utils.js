@@ -27,7 +27,6 @@ export function debounce(fn, wait = 250) {
   };
 }
 
-/** Builds the game.html query string used to identify and embed a game. */
 /** Turns a game title into a URL-friendly slug, e.g. "Moto X3M!" -> "moto-x3m". */
 export function slugify(text) {
   return String(text ?? '')
@@ -59,7 +58,8 @@ export function buildGamePageUrl(game) {
     category: String(game.category ?? ''),
     url: String(game.url ?? ''),
   });
-  return `/game.html?${params.toString()}`;
+  if (game.thumb) params.set('thumb', String(game.thumb));
+  return `/game?${params.toString()}`;
 }
 
 /**
@@ -107,7 +107,7 @@ export function readSessionGames(key) {
   }
 }
 
-/** Writes the game list to sessionStorage so game.html can reuse it. */
+/** Writes the game list to sessionStorage so /game can reuse it. */
 export function writeSessionGames(key, games) {
   try {
     sessionStorage.setItem(key, JSON.stringify(games));
