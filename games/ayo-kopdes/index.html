@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Ayo ke Kopdes — Lari Belanja ke Koperasi Desa Merah Putih</title>
+  <meta name="description" content="Game lari endless ala Chrome Dino bertema lokal: bawa keranjang belanjamu, lompati batu, selokan, dan gagak menuju Koperasi Desa Merah Putih.">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div id="game-container">
+  <canvas id="game-canvas"></canvas>
+
+  <div id="hud">
+    <span id="hud-high">HI 00000</span>
+    <span id="hud-score">00000</span>
+  </div>
+
+  <button type="button" id="sound-toggle" class="sound-toggle" aria-label="Turn sound off" aria-pressed="false">
+    <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+      <path d="M4 9v6h4l5 5V4L8 9H4z" fill="currentColor"/>
+      <path id="sound-waves" d="M15.5 8.5a5 5 0 0 1 0 7M18.2 6a8.5 8.5 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+      <path id="sound-mute-x" d="M16 8l5.5 8M21.5 8 16 16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" hidden></path>
+    </svg>
+  </button>
+
+  <div id="loading-screen" class="screen">
+    <p class="brand">AYO KE KOPDES</p>
+    <div class="spinner" aria-hidden="true"></div>
+    <p class="hint">Menyiapkan jalan desa…</p>
+  </div>
+
+  <div id="start-screen" class="screen" hidden>
+    <p class="brand">AYO KE KOPDES</p>
+    <p class="subtitle">Pergi berbelanja menuju Koperasi Desa Merah Putih</p>
+    <p class="hint">Tekan Spasi, Panah Atas, atau Tap untuk melompat</p>
+    <p class="hint hint--small">Lompati batu &amp; selokan — awas gagak terbang!</p>
+    <p id="start-best" class="hint hint--small">Skor terbaik: 0</p>
+  </div>
+
+  <div id="gameover-screen" class="screen" hidden>
+    <p class="brand brand--small">GAME OVER</p>
+    <p id="new-record" class="new-record" hidden>REKOR BARU!</p>
+    <div class="score-row">
+      <div class="score-box">
+        <span class="score-label">Skor</span>
+        <span id="final-score" class="score-value">0</span>
+      </div>
+      <div class="score-box">
+        <span class="score-label">Terbaik</span>
+        <span id="final-high" class="score-value">0</span>
+      </div>
+    </div>
+    <p class="hint">Tekan Spasi atau Tap untuk Restart</p>
+    <button type="button" id="retry-btn" class="btn-retry">Main Lagi</button>
+  </div>
+</div>
+
+<script src="game.js"></script>
+</body>
+</html>

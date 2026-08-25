@@ -44,6 +44,16 @@ export const CONFIG = {
       height: 640,
       source: 'Buatan Sendiri',
     },
+    {
+      id: 'local-ayo-kopdes',
+      title: 'Ayo ke Kopdes',
+      category: 'Arcade',
+      url: '/games/ayo-kopdes/index.html',
+      thumb: '/games/ayo-kopdes/thumb.svg',
+      width: 960,
+      height: 540,
+      source: 'Buatan Sendiri',
+    },
   ],
 
   // Aspect ratio used when a game doesn't report its own width/height.

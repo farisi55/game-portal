@@ -1,0 +1,240 @@
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #241512;
+  font-family: 'Segoe UI', Roboto, -apple-system, sans-serif;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+#game-container {
+  position: relative;
+  width: 100%;
+  height: 100dvh;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+/* Kanvas lanskap 16:9 — kebalikan dari kicau-mania (portrait):
+   lebar mengikuti viewport kecuali saat layar sangat "panjang". */
+#game-canvas {
+  display: block;
+  width: min(100vw, 177.7778dvh);
+  width: min(100vw, 177.7778vh);
+  height: min(100dvh, 56.25vw);
+  height: min(100vh, 56.25vw);
+  aspect-ratio: 16 / 9;
+  touch-action: none;
+  background: #aee3f5;
+  border-radius: 4px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+}
+
+/* Skor di pojok KANAN ATAS (gaya Chrome Dino): skor aktif besar,
+   rekor di atasnya lebih kecil. */
+#hud {
+  position: fixed;
+  top: 14px;
+  right: 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  pointer-events: none;
+  z-index: 5;
+}
+
+#hud-score {
+  font-size: 34px;
+  font-weight: 800;
+  color: #fff;
+  text-shadow: 0 2px 0 #7a2c1e, 0 4px 10px rgba(0, 0, 0, 0.35);
+  font-variant-numeric: tabular-nums;
+}
+
+#hud-high {
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: rgba(255, 255, 255, 0.85);
+  text-shadow: 0 2px 0 rgba(90, 30, 20, 0.6);
+  font-variant-numeric: tabular-nums;
+}
+
+.sound-toggle {
+  position: fixed;
+  top: 14px;
+  left: 14px;
+  z-index: 12;
+  width: 38px;
+  height: 38px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(36, 21, 18, 0.35);
+  color: rgba(255, 255, 255, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.sound-toggle:hover,
+.sound-toggle:focus-visible {
+  background: rgba(36, 21, 18, 0.55);
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.sound-toggle:active {
+  transform: scale(0.94);
+}
+
+.screen {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  text-align: center;
+  padding: 24px;
+  background: linear-gradient(160deg, rgba(36, 21, 18, 0.9), rgba(122, 44, 30, 0.9));
+  color: #f6efe3;
+}
+
+/* KRUSIAL: .screen men-set display:flex secara tidak bersyarat. Tanpa
+   aturan ini semua layar (loading/start/gameover) tampil bertumpuk walau
+   atribut hidden terpasang — lihat catatan serupa di kicau-mania. */
+.screen[hidden] {
+  display: none;
+}
+
+.brand {
+  font-size: 42px;
+  font-weight: 900;
+  letter-spacing: 2px;
+  color: #f6efe3;
+  text-shadow: 0 3px 0 #8c1d18, 0 6px 14px rgba(0, 0, 0, 0.35);
+  margin: 0 0 4px;
+}
+
+.brand--small {
+  font-size: 30px;
+}
+
+.subtitle {
+  margin: 0 0 14px;
+  font-size: 16px;
+  color: #ffd9c9;
+}
+
+.hint {
+  margin: 0;
+  font-size: 15px;
+  color: #f6efe3;
+  opacity: 0.92;
+}
+
+.hint--small {
+  font-size: 12.5px;
+  opacity: 0.7;
+  margin-top: 2px;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  margin: 14px 0;
+  border: 4px solid rgba(246, 239, 227, 0.25);
+  border-top-color: #f6efe3;
+  border-radius: 50%;
+  animation: spin 0.9s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.score-row {
+  display: flex;
+  gap: 16px;
+  margin: 12px 0 18px;
+}
+
+.score-box {
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(246, 239, 227, 0.35);
+  border-radius: 12px;
+  padding: 10px 22px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 84px;
+}
+
+.score-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #ffd9c9;
+  margin-bottom: 4px;
+}
+
+.score-value {
+  font-size: 26px;
+  font-weight: 800;
+  color: #fff;
+  font-variant-numeric: tabular-nums;
+}
+
+.new-record {
+  color: #ffc93c;
+  font-weight: 800;
+  font-size: 15px;
+  letter-spacing: 1px;
+  margin: 0;
+  animation: pulse 1s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.08); }
+}
+
+.btn-retry {
+  appearance: none;
+  border: none;
+  border-radius: 999px;
+  padding: 14px 42px;
+  font-size: 17px;
+  font-weight: 700;
+  color: #fff;
+  background: linear-gradient(180deg, #e05243, #b3261e);
+  box-shadow: 0 6px 0 #7a1512, 0 10px 20px rgba(0, 0, 0, 0.35);
+  cursor: pointer;
+}
+
+.btn-retry:active {
+  transform: translateY(4px);
+  box-shadow: 0 2px 0 #7a1512, 0 6px 14px rgba(0, 0, 0, 0.3);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spinner { animation: none; }
+  .new-record { animation: none; }
+}
