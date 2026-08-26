@@ -54,6 +54,16 @@ export const CONFIG = {
       height: 540,
       source: 'Buatan Sendiri',
     },
+    {
+      id: 'local-mobil-mbg',
+      title: 'Mobil MBG',
+      category: 'Arcade',
+      url: '/games/mobil-mbg/index.html',
+      thumb: '/games/mobil-mbg/thumb.svg',
+      width: 360,
+      height: 640,
+      source: 'Buatan Sendiri',
+    },
   ],
 
   // Aspect ratio used when a game doesn't report its own width/height.

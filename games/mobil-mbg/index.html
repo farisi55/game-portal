@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Mobil MBG — Deliver MBG Food Fast</title>
+  <meta name="description" content="Retro top-down runner: drive the MBG van, deliver food, avoid traffic and oil spills.">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div id="game-container">
+  <canvas id="game-canvas"></canvas>
+
+  <div id="hud">
+    <div id="hud-left">
+      <span id="hud-score">SCORE: 00000</span>
+      <span id="hud-speed">0 KM/H</span>
+    </div>
+    <div id="hud-center">
+      <span id="hud-lives">LIVES: <span id="life-icons">&#9829;&#9829;&#9829;</span></span>
+    </div>
+    <div id="hud-right">
+      <span id="hud-high">BEST: 00000</span>
+    </div>
+  </div>
+
+  <button type="button" id="sound-toggle" class="sound-toggle" aria-label="Turn sound off" aria-pressed="false">
+    <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+      <path d="M4 9v6h4l5 5V4L8 9H4z" fill="currentColor"/>
+      <path id="sound-waves" d="M15.5 8.5a5 5 0 0 1 0 7M18.2 6a8.5 8.5 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+      <path id="sound-mute-x" d="M16 8l5.5 8M21.5 8 16 16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" hidden></path>
+    </svg>
+  </button>
+
+  <div id="loading-screen" class="screen">
+    <p class="brand">MOBIL MBG</p>
+    <div class="spinner" aria-hidden="true"></div>
+    <p class="hint">Loading the van…</p>
+  </div>
+
+  <div id="start-screen" class="screen" hidden>
+    <p class="brand">MOBIL MBG</p>
+    <p class="subtitle">Deliver MBG Food Fast</p>
+    <p class="hint">Tap Left / Right or Arrow Keys / A-D to Steer</p>
+    <p class="hint hint--small">Collect Food Boxes • Avoid Cars & Oil</p>
+    <p id="start-best" class="hint hint--small">Best Score: 0</p>
+    <p class="hint hint--small">Tap Screen or Press Space to Start</p>
+  </div>
+
+  <div id="gameover-screen" class="screen" hidden>
+    <p class="brand brand--small">GAME OVER</p>
+    <p id="new-record" class="new-record" hidden>NEW RECORD!</p>
+    <div class="score-row">
+      <div class="score-box">
+        <span class="score-label">Score</span>
+        <span id="final-score" class="score-value">0</span>
+      </div>
+      <div class="score-box">
+        <span class="score-label">Best</span>
+        <span id="final-high" class="score-value">0</span>
+      </div>
+    </div>
+    <p class="hint">Tap Screen or Press Space to Restart</p>
+    <button type="button" id="retry-btn" class="btn-retry">Play Again</button>
+  </div>
+</div>
+
+<script src="game.js"></script>
+</body>
+</html>
