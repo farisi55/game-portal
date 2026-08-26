@@ -638,7 +638,9 @@ function jump() {
   spawnDust(5);
 }
 
-canvas.addEventListener('pointerdown', (e) => {
+// Tap anywhere on the full-screen container (including letterbox bars) to jump.
+const container = document.getElementById('game-container');
+container.addEventListener('pointerdown', (e) => {
   e.preventDefault();
   primaryAction();
 }, { passive: false });
