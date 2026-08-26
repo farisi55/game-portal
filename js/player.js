@@ -74,6 +74,20 @@ async function init() {
     return;
   }
 
+  // Fallback: if game not resolved yet (e.g., accessed via ?id= query params),
+  // look it up from LOCAL_GAMES so thumb/category/width/height are available.
+  if (!game && gameId) {
+    const local = CONFIG.LOCAL_GAMES.find((g) => String(g.id) === String(gameId));
+    if (local) {
+      game = local;
+      if (!embedUrl) embedUrl = local.url;
+      if (!title || title === 'Game') title = local.title;
+      if (!category) category = local.category;
+      if (!width) width = Number(local.width) || null;
+      if (!height) height = Number(local.height) || null;
+    }
+  }
+
   // /play/ and /game both get <title> from the Worker (and /game also from
   // the early head script). Don't clobber those SEO strings here.
   els.title.textContent = title;

@@ -91,6 +91,16 @@ const LOCAL_GAMES = [
     height: 640,
     source: 'Original',
   },
+  {
+    id: 'local-ayo-kopdes',
+    title: 'Ayo ke Kopdes',
+    category: 'Arcade',
+    url: '/games/ayo-kopdes/index.html',
+    thumb: '/games/ayo-kopdes/thumb.svg',
+    width: 960,
+    height: 540,
+    source: 'Original',
+  },
 ];
 
 // ----------------------------------------------------------------------------
