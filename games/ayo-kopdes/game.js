@@ -1,69 +1,69 @@
 'use strict';
 
 /* ============================================================================
-   AYO KE KOPDES — endless runner ala Chrome Dino
-   Tema: pergi berbelanja menuju Koperasi Desa (Kopdes) Merah Putih.
-   Arsitektur: Config -> Assets (SVG->Image) -> Audio -> Music -> State ->
+   AYO KE KOPDES — endless runner like Chrome Dino
+   Theme: go shopping to the Village Co-op (Kopdes) Red-White.
+   Architecture: Config -> Assets (SVG->Image) -> Audio -> Music -> State ->
                Input -> Spawn/Physics/Collision -> Draw -> Loop ->
                Parent bridge (postMessage)
    ============================================================================ */
 
 /* ---------------------------------------------------------------------------
    1. CONFIG
-   Resolusi internal (logical) 960x540 (lanskap 16:9). Ukuran fisik di layar
-   di-scale lewat resizeCanvas() supaya tajam di semua DPI & responsif.
+   Internal (logical) resolution 960x540 (landscape 16:9). Physical size on
+   screen is scaled via resizeCanvas() for crisp rendering on all DPI & responsive.
 --------------------------------------------------------------------------- */
 const CONFIG = {
   BASE_W: 960,
   BASE_H: 540,
-  GROUND_H: 110,          // ketebalan visual jalan/tanah
-  GROUND_Y: 540 - 110,    // garis permukaan tanah (y = 430)
+  GROUND_H: 110,          // visual ground/road thickness
+  GROUND_Y: 540 - 110,    // ground surface line (y = 430)
 
-  // --- FISIKA LOMPATAN -------------------------------------------------
-  // gravity diterapkan setiap frame: vy += GRAVITY * dt (px/s^2).
-  // Impuls lompatan sekali di awal: vy = JUMP_VELOCITY (px/s, negatif = atas).
-  // Tinggi apex = JUMP_VELOCITY^2 / (2*GRAVITY) = 960^2/5800 ≈ 159 px,
-  // lama di udara ≈ 2*960/2900 ≈ 0.66 s — cukup untuk menyeberangi selokan
-  // terlebar (150 px) bahkan pada kecepatan minimum.
+  // --- JUMP PHYSICS --------------------------------------------------
+  // gravity applied each frame: vy += GRAVITY * dt (px/s^2).
+  // Jump impulse once at start: vy = JUMP_VELOCITY (px/s, negative = up).
+  // Apex height = JUMP_VELOCITY^2 / (2*GRAVITY) = 960^2/5800 ≈ 159 px,
+  // air time ≈ 2*960/2900 ≈ 0.66 s — enough to clear widest ditch (150 px)
+  // even at minimum speed.
   GRAVITY: 2900,
   JUMP_VELOCITY: -960,
   MAX_FALL_SPEED: 1300,
 
-  PLAYER_X: 130,          // posisi horizontal pemain (tetap, dunia yang bergeser)
-  PLAYER_DRAW_W: 74,      // lebar gambar pemain di canvas (viewBox 40x63)
+  PLAYER_X: 130,          // player horizontal position (fixed, world scrolls)
+  PLAYER_DRAW_W: 74,      // player draw width on canvas (viewBox 40x63)
   PLAYER_DRAW_H: 116,
 
   SPEED_START: 350,       // px/s
   SPEED_MAX: 780,
-  SPEED_ACCEL: 8.5,       // px/s per detik — makin lama makin cepat
+  SPEED_ACCEL: 8.5,       // px/s per second — faster the longer you play
 
-  SCORE_DIVISOR: 24,      // jarak (px) per 1 poin
+  SCORE_DIVISOR: 24,      // distance (px) per 1 point
 
   ROCK_MIN_W: 48,
   ROCK_MAX_W: 70,
   DITCH_MIN_W: 84,
   DITCH_MAX_W: 150,
-  DITCH_SINK_COMMIT: 6,   // tenggelam sedalam ini = komit jatuh ke lubang
-  DITCH_KILL_DEPTH: 14,   // jatuh sedalam ini (kaki menyentuh air selokan) = mati
+  DITCH_SINK_COMMIT: 6,   // sunk this deep = commit to falling into ditch
+  DITCH_KILL_DEPTH: 14,   // fall this deep (feet touch ditch water) = dead
 
-  CROW_EXTRA_SPEED: 140,  // gagak terbang lebih cepat dari tanah
-  CROW_FLAP_MS: 150,      // durasi 1 frame kepakan sayap
+  CROW_EXTRA_SPEED: 140,  // crow flies faster than ground
+  CROW_FLAP_MS: 150,      // wing flap frame duration
 
   FIRST_SPAWN_DIST: 600,
   STORAGE_KEY: 'ayoKopdes_highScore',
-  MAX_DT_MS: 34,          // clamp delta time (~30fps) agar fisika stabil
+  MAX_DT_MS: 34,          // clamp delta time (~30fps) for stable physics
 
-  // Nama pesan postMessage ke portal (js/pwa.js) saat game over.
+  // postMessage name sent to portal (js/pwa.js) on game over.
   PARENT_MESSAGE_TYPE: 'arcade-score',
 };
 
 /* ---------------------------------------------------------------------------
-   2. ASSETS — semua visual berupa string SVG murni yang dirender ke Image()
-   lewat data URI base64. Tidak ada satu pun file gambar eksternal.
+   2. ASSETS — all visuals as pure SVG strings rendered to Image()
+   via base64 data URIs. No external image files at all.
 --------------------------------------------------------------------------- */
 
-const INK = '#33322f';      // siluet pemain & gagak (charcoal seperti referensi)
-const INK_SOFT = '#6b6b6b'; // sayap jauh gagak (biar terbaca kedalaman)
+const INK = '#33322f';      // player & crow silhouette (charcoal like reference)
+const INK_SOFT = '#6b6b6b'; // far crow wing (for depth perception)
 
 function svgToDataUri(svg) {
   const encoded = btoa(unescape(encodeURIComponent(svg)));
@@ -76,37 +76,37 @@ function loadSvgImage(svg) {
   return img;
 }
 
-// --- PLAYER: bapak-bapak bertopi membawa keranjang belanja (siluet),
-// ditracing setia dari gambar referensi: kepala besar berprofil (dahi-hidung-
-// dagu), topi brim pendek, badan gempal, kaki pendek tebal + sepatu gemuk.
-// ViewBox 40x63 (rasio referensi), kaki menghadap kanan.
+// --- PLAYER: villager with cap carrying a shopping basket (silhouette),
+// faithfully traced from reference image: large head in profile (forehead-nose-
+// chin), short cap brim, stout body, short thick legs + chunky shoes.
+// ViewBox 40x63 (reference ratio), facing right.
 function buildPlayerSVG(frame) {
-  // Siklus jalan 4-frame: kontak (langkah lebar) -> lewat (kaki menopang) ->
-  // kontak terbalik -> lewat. Frame "lewat" diberi bob -0.8 biar badan
-  // memantul sedikit — larian terasa hidup. Kaki: polyline tebal
-  // (pinggul -> lutut -> pergelangan), sepatu: segmen gemuk.
+  // 4-frame walk cycle: contact (wide stride) -> passing (leg supports) ->
+  // opposite contact -> passing. "Passing" frames get bob -0.8 so body
+  // bounces slightly — running feels alive. Legs: thick polylines
+  // (hip -> knee -> ankle), shoes: chunky segments.
   const poses = {
-    run1: { // kontak: kaki depan merentang maju, kaki belakang mendorong (tumit naik)
+    run1: { // contact: front leg strides forward, back leg pushes (heel up)
       front: [[21, 44.5], [26, 52], [28.5, 58]],   shoeF: [[27, 59.4], [34, 59.4]],
       back:  [[17, 44.5], [13.5, 52], [10.5, 57]], shoeB: [[7.8, 57.4], [13, 60.6]],
       bob: 0,
     },
-    run2: { // lewat: kaki depan menopang di bawah badan, kaki belakang terangkat
+    run2: { // passing: front leg supports under body, back leg lifts
       front: [[21, 44.5], [22, 52], [22, 58.5]],   shoeF: [[20.8, 60], [27.5, 60]],
       back:  [[17, 44.5], [14.5, 51.5], [16.5, 55.5]], shoeB: [[15.3, 59.6], [19.3, 56.6]],
       bob: -0.8,
     },
-    run3: { // kontak terbalik: kaki depan mendorong ke belakang, kaki belakang melangkah maju
+    run3: { // opposite contact: front leg pushes back, back leg steps forward
       front: [[21, 44.5], [17, 52], [14, 57]],     shoeF: [[11.3, 57.4], [16.5, 60.6]],
       back:  [[17, 44.5], [22.5, 52], [25, 58]],   shoeB: [[23.5, 59.4], [30.5, 59.4]],
       bob: 0,
     },
-    run4: { // lewat terbalik
+    run4: { // opposite passing
       front: [[21, 44.5], [22.5, 52], [23, 58.5]], shoeF: [[21.8, 60], [28.5, 60]],
       back:  [[17, 44.5], [19.5, 51.5], [17.5, 55.5]], shoeB: [[16.3, 59.6], [12.8, 56.6]],
       bob: -0.8,
     },
-    jump: { // melayang: dua lutut terangkat, sepatu menyempit
+    jump: { // airborne: both knees tucked, shoes narrow
       front: [[21, 44], [26.5, 49], [26, 54]],     shoeF: [[24.5, 55.2], [31, 54.6]],
       back:  [[17, 44], [13.5, 49], [14.5, 54]],   shoeB: [[11.8, 55.4], [17, 55]],
       bob: 0,
@@ -127,7 +127,7 @@ function buildPlayerSVG(frame) {
       ${limb(L.front, 3.4)}
       ${limb(L.shoeF, 2.6)}
 
-      <!-- torso gempal + profil kepala + topi brim pendek (satu siluet) -->
+      <!-- stout torso + head profile + short cap brim (single silhouette) -->
       <path d="M14,9.5
         C13.5,5.5 16,2.5 20,2.5 C24,2.5 26.5,5.5 26,8.5
         L30.5,9.5 L30.5,12 L25.5,11.5
@@ -143,10 +143,10 @@ function buildPlayerSVG(frame) {
         C13.8,19 14.4,16.4 14.2,13.6
         C13.8,12.2 13.8,10.8 14,9.5 Z" fill="${INK}"/>
 
-      <!-- lengan memegang keranjang, tangan di puncak pegangan -->
+      <!-- arm holding basket, hand at handle apex -->
       <path d="M22,21.5 C25.5,23.5 27.5,27 28,31 L27.5,35.5 L24.5,35 C24.4,31 23,27.5 20.5,25 Z" fill="${INK}"/>
 
-      <!-- keranjang: barang di atas rim, badan, anyaman putih, pegangan -->
+      <!-- basket: items above rim, body, white weave, handle -->
       <rect x="18.6" y="31" width="3.4" height="9.5" rx="0.8" fill="#f2efe4"/>
       <rect x="19.7" y="28.5" width="1.6" height="3" fill="#f2efe4"/>
       <ellipse cx="27.5" cy="36.5" rx="1.8" ry="4" transform="rotate(22 27.5 36.5)" fill="#f2efe4"/>
@@ -160,8 +160,8 @@ function buildPlayerSVG(frame) {
   </svg>`;
 }
 
-// --- GAGAK: siluet burung terbang (menghadap kiri, menuju pemain).
-// 2 frame: sayap terangkat & sayap merenduk — kepakan tidak kaku.
+// --- CROW: flying bird silhouette (facing left, toward player).
+// 2 frames: wings up & wings down — flapping not stiff.
 function buildCrowSVG(wing) {
   const wings = {
     up: `
@@ -173,19 +173,19 @@ function buildCrowSVG(wing) {
   };
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 140 100">
     ${wings[wing] || wings.up}
-    <!-- badan + ekor bercabang -->
+    <!-- body + forked tail -->
     <path d="M14,54 C20,46 32,42 46,43 C60,44 74,50 86,58 L118,72 L106,74 L114,82 L98,77 L102,87 L88,75 C74,66 58,63 44,62 C32,61 20,60 14,54 Z" fill="${INK}"/>
-    <!-- paruh sedikit terbuka + mata -->
+    <!-- slightly open beak + eye -->
     <path d="M16,50 L2,53 L15,56 Z" fill="${INK}"/>
     <path d="M16,57 L4,59 L16,61 Z" fill="${INK}"/>
     <circle cx="24" cy="50" r="1.8" fill="#e8e8e8"/>
-    <!-- kaki menggantung -->
+    <!-- dangling legs -->
     <path d="M62,66 L58,82 M70,66 L72,82" stroke="${INK}" stroke-width="3" stroke-linecap="round" fill="none"/>
     <path d="M53,84 L58,81 L63,85 M67,84 L72,81 L77,85" stroke="${INK}" stroke-width="2" stroke-linecap="round" fill="none"/>
   </svg>`;
 }
 
-// --- BATU BESAR: rintangan daratan yang harus dilompati.
+// --- BIG ROCK: ground obstacle that must be jumped.
 function buildRockSVG() {
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 78">
     <path d="M6,74 L14,40 L34,16 L62,10 L84,28 L94,74 Z" fill="#7d7d78"/>
@@ -197,7 +197,7 @@ function buildRockSVG() {
   </svg>`;
 }
 
-// --- LANGIT JAUH (parallax paling lambat): siluet bukit, rumah, pohon desa.
+// --- FAR SKYLINE (slowest parallax): hill, house, village tree silhouettes.
 function buildSkylineSVG() {
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 180">
     <g fill="#c9d6d2">
@@ -220,8 +220,8 @@ function buildSkylineSVG() {
   </svg>`;
 }
 
-// --- RUMAH TOKO (parallax sedang): deretan ruko dengan papan "KOPDES"
-// merah-putih, tenda awning, bendera. MURNI latar — tidak pernah jadi rintangan.
+// --- SHOP HOUSES (medium parallax): row of shophouses with "KOPDES"
+// red-white sign, awning, flag. PURE background — never an obstacle.
 function buildShopsSVG() {
   const awning = (x, w, y) => {
     let s = `<rect x="${x}" y="${y}" width="${w}" height="24" fill="#8fa5a1"/>`;
@@ -231,7 +231,7 @@ function buildShopsSVG() {
     return s;
   };
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 230">
-    <!-- ruko 1: KOPDES merah putih -->
+    // Ruko 1: KOPDES red-white
     <rect x="10" y="90" width="180" height="140" fill="#a3b8b4"/>
     <rect x="6" y="80" width="188" height="14" fill="#93a9a5"/>
     <rect x="20" y="100" width="160" height="30" fill="#c62828"/>
@@ -244,7 +244,7 @@ function buildShopsSVG() {
     <rect x="196" y="30" width="26" height="8" fill="#c62828"/>
     <rect x="196" y="38" width="26" height="8" fill="#f4f1e8"/>
 
-    <!-- ruko 2: toko kelontong -->
+    // Ruko 2: convenience store
     <rect x="230" y="70" width="160" height="160" fill="#a3b8b4"/>
     <rect x="226" y="60" width="168" height="14" fill="#93a9a5"/>
     <rect x="242" y="80" width="136" height="26" fill="#7d9691"/>
@@ -254,20 +254,20 @@ function buildShopsSVG() {
     <rect x="322" y="158" width="52" height="72" fill="#8aa39f"/>
     <path d="M246,186 h52 M322,186 h52" stroke="#a3b8b4" stroke-width="4"/>
 
-    <!-- pohon -->
+    // Tree
     <rect x="416" y="150" width="10" height="80" fill="#7d9691"/>
     <circle cx="421" cy="128" r="27" fill="#8fa5a1"/>
     <circle cx="399" cy="144" r="18" fill="#8fa5a1"/>
     <circle cx="443" cy="144" r="18" fill="#8fa5a1"/>
 
-    <!-- warung tenda -->
+    // Warung stall
     <path d="M462,132 L618,132 L606,108 L474,108 Z" fill="#8fa5a1"/>
     <rect x="470" y="132" width="140" height="98" fill="#a3b8b4"/>
     <rect x="490" y="158" width="60" height="72" fill="#8aa39f"/>
     <rect x="564" y="176" width="30" height="22" fill="#8aa39f"/>
     <rect x="564" y="204" width="30" height="26" fill="#8aa39f"/>
 
-    <!-- ruko 4: sembako -->
+    // Ruko 4: grocery
     <rect x="640" y="84" width="150" height="146" fill="#a3b8b4"/>
     <rect x="636" y="74" width="158" height="14" fill="#93a9a5"/>
     <rect x="652" y="94" width="126" height="26" fill="#7d9691"/>
@@ -278,7 +278,7 @@ function buildShopsSVG() {
   </svg>`;
 }
 
-// --- JALAN TANAH (parallax penuh / kecepatan dunia), bisa di-tile mulus.
+// --- DIRT ROAD (full parallax / world speed), seamlessly tileable.
 function buildGroundSVG() {
   let specks = '';
   for (let i = 0; i < 30; i++) {
@@ -300,7 +300,7 @@ function buildGroundSVG() {
   </svg>`;
 }
 
-// --- Awan (parallax paling lambat, di atas semuanya).
+// --- CLOUDS (slowest parallax, above everything).
 function buildCloudsSVG() {
   const cloud = (x, y, s) => `
     <g fill="#ffffff" opacity="0.92" transform="translate(${x},${y}) scale(${s})">
@@ -325,7 +325,7 @@ const assets = {
   clouds: null,
 };
 
-// Lebar tile tiap layer (harus = viewBox width SVG-nya, dipakai drawTiled).
+// Tile width per layer (must match SVG viewBox width, used by drawTiled).
 const TILE_W = { skyline: 640, shops: 800, ground: 640, clouds: 640 };
 
 let assetsReadyCount = 0;
@@ -366,16 +366,16 @@ function preloadAssets(callback) {
       markReady();
     } else {
       img.onload = markReady;
-      // Defensif: aset yang gagal decode tidak boleh menggantungkan game
-      // di layar loading selamanya.
+      // Defensive: asset that fails decode must not hang the game
+      // on loading screen forever.
       img.onerror = markReady;
     }
   });
 }
 
 /* ---------------------------------------------------------------------------
-   3. AUDIO — SFX lewat Web Audio API (oscillator), tanpa file audio.
-   Di-mute otomatis saat tab/iframe disembunyikan + tombol toggle manual.
+   3. AUDIO — SFX via Web Audio API (oscillator), no audio files.
+   Auto-muted when tab/iframe hidden + manual toggle button.
 --------------------------------------------------------------------------- */
 const SOUND_PREF_KEY = 'ayoKopdes_soundMuted';
 
@@ -391,7 +391,7 @@ function saveSoundPreference(muted) {
   try {
     localStorage.setItem(SOUND_PREF_KEY, String(muted));
   } catch {
-    // Mode privat — preferensi cukup berlaku untuk sesi ini.
+    // Private mode — preference only applies for this session.
   }
 }
 
@@ -434,7 +434,7 @@ const AudioFX = {
     this.applyMuteState();
   },
 
-  // Nada tunggu dengan pitch yang bisa " menyapu" dari f0 ke f1 (glissando).
+  // Single tone with pitch that can "sweep" from f0 to f1 (glissando).
   sweep(f0, f1, duration, type, gainStart, when = 0) {
     if (this.muted) return;
     const ctx = this.ensureCtx();
@@ -452,12 +452,12 @@ const AudioFX = {
     osc.stop(t + duration + 0.02);
   },
 
-  // SFX lompat: "bloop" pendek yang nadanya meloncat naik.
+  // SFX jump: short "bloop" with rising pitch.
   jump() {
     this.sweep(260, 620, 0.13, 'square', 0.12);
   },
 
-  // SFX mati: benturan pendek lalu rangkaian nada menurun.
+  // SFX die: short impact then descending tone sequence.
   die() {
     this.sweep(180, 40, 0.2, 'triangle', 0.22);
     const notes = [392, 311, 247, 175];
@@ -468,10 +468,10 @@ const AudioFX = {
 };
 
 /* ---------------------------------------------------------------------------
-   3b. MUSIK LATAR — "partitur" 8-bit (nama not + durasi) yang dimainkan lewat
-   oscillator, seperti semangat MIDI. Dua track: melodi lead (square) dan bass
-   (triangle). Dijadwalkan presisi memakai jam AudioContext dengan pola
-   lookahead scheduler, bukan setTimeout.
+   3b. BACKGROUND MUSIC — 8-bit "score" (note names + durations) played via
+   oscillators, MIDI-style. Two tracks: lead melody (square) and bass
+   (triangle). Scheduled precisely using AudioContext clock with a
+   lookahead scheduler, not setTimeout.
 --------------------------------------------------------------------------- */
 const NOTE_SEMITONE = { C: 0, 'C#': 1, D: 2, 'D#': 3, E: 4, F: 5, 'F#': 6, G: 7, 'G#': 8, A: 9, 'A#': 10, B: 11 };
 
@@ -487,7 +487,7 @@ const MUSIC_BPM = 138;
 const MUSIC_BEAT = 60 / MUSIC_BPM;
 const MUSIC_EIGHTH = MUSIC_BEAT / 2;
 
-// 4 bar x 8 ketukan eighth-note, nada '' = rest. Ceria, pentatonik-major.
+// 4 bars x 8 eighth-notes, '' = rest. Cheerful, major pentatonic.
 const MELODY = [
   'E5', 'G5', 'A5', 'G5', 'E5', 'D5', 'C5', 'D5',
   'E5', 'E5', 'G5', 'E5', 'D5', 'C5', 'A4', 'C5',
@@ -495,7 +495,7 @@ const MELODY = [
   'A5', 'G5', 'E5', 'D5', 'C5', 'D5', 'C5', '',
 ];
 
-// Bass memukul tiap 2 ketukan (quarter note): C - Am - F - G.
+// Bass hits every 2 eighth-notes (quarter note): C - Am - F - G.
 const BASS = [
   'C3', '', 'G3', '', 'C3', '', 'G3', '',
   'A2', '', 'E3', '', 'A2', '', 'E3', '',
@@ -561,12 +561,12 @@ const MusicFX = {
 --------------------------------------------------------------------------- */
 const state = {
   mode: 'loading', // loading | ready | playing | paused | gameover
-  // y = posisi KAKI pemain dalam koordinat canvas (GROUND_Y saat di tanah).
+  // y = player FOOT position in canvas coords (GROUND_Y when on ground).
   player: { y: CONFIG.GROUND_Y, vy: 0, grounded: true, inDitch: false, frame: 'run1', frameTimer: 0 },
   obstacles: [],   // {type:'rock'|'ditch'|'crow', x, ...}
-  particles: [],   // debu di kaki pemain
+  particles: [],   // dust at player feet
   speed: CONFIG.SPEED_START,
-  dist: 0,         // total jarak dunia (px) — sumber skor
+  dist: 0,         // total world distance (px) — score source
   score: 0,
   highScore: 0,
   nextSpawnDist: CONFIG.FIRST_SPAWN_DIST,
@@ -591,7 +591,7 @@ function saveHighScore(value) {
   try {
     localStorage.setItem(CONFIG.STORAGE_KEY, String(value));
   } catch {
-    // Tidak fatal.
+    // Non-fatal.
   }
 }
 
@@ -612,7 +612,7 @@ window.addEventListener('resize', resizeCanvas);
 window.addEventListener('orientationchange', resizeCanvas);
 
 /* ---------------------------------------------------------------------------
-   6. INPUT — Spasi / Panah Atas / sentuh layar untuk lompat.
+   6. INPUT — Space / Arrow Up / touch to jump.
 --------------------------------------------------------------------------- */
 function primaryAction() {
   AudioFX.ensureCtx();
@@ -621,7 +621,7 @@ function primaryAction() {
     return;
   }
   if (state.mode === 'gameover') {
-    // Guard 350 ms supaya restart tak terpicu tak sengaja saat spam tap mati.
+    // 350 ms guard so restart isn't triggered accidentally on death tap spam.
     if (performance.now() - state.gameOverAt > 350) startPlaying();
     return;
   }
@@ -630,7 +630,7 @@ function primaryAction() {
 }
 
 function jump() {
-  // Hanya boleh melompat saat kaki menapak (tidak ada double jump).
+  // Only jump when feet on ground (no double jump).
   if (!state.player.grounded) return;
   state.player.vy = CONFIG.JUMP_VELOCITY;
   state.player.grounded = false;
@@ -697,7 +697,7 @@ function resetGame() {
 function goToStartScreen() {
   resetGame();
   state.mode = 'ready';
-  startBestEl.textContent = 'Skor terbaik: ' + state.highScore;
+  startBestEl.textContent = 'Best Score: ' + state.highScore;
   showScreen('start');
 }
 
@@ -707,6 +707,12 @@ function startPlaying() {
   showScreen(null);
   MusicFX.start();
 }
+
+// Touch/click on start screen to start immediately.
+screens.start.addEventListener('pointerdown', (e) => {
+  e.preventDefault();
+  primaryAction();
+}, { passive: false });
 
 // Lapor skor ke portal (js/pwa.js) bila game dijalankan di dalam iframe.
 function reportScoreToParent(score) {
@@ -739,10 +745,11 @@ function gameOver() {
   reportScoreToParent(state.score);
 }
 
-retryBtn.addEventListener('click', () => {
+retryBtn.addEventListener('pointerdown', (e) => {
+  e.preventDefault();
   AudioFX.ensureCtx();
   startPlaying();
-});
+}, { passive: false });
 
 /* ---------------------------------------------------------------------------
    8. SPAWN, PHYSICS & COLLISION
@@ -909,7 +916,7 @@ function update(dtMs) {
         return;
       }
     } else if (o.type === 'crow') {
-      // Bob naik-turun mengikuti kepakan; hitbox mengikuti bob yang sama.
+      // Bob up/down following wing flap; hitbox follows same bob.
       o.bobPhase += dt * 6;
       const bob = Math.sin(o.bobPhase) * 4;
       if (aabb(pb.x, pb.y, pb.w, pb.h, o.x + 6, o.y + bob + 11, 40, 22)) {
@@ -917,17 +924,17 @@ function update(dtMs) {
         return;
       }
     }
-    // 'ditch' tidak memakai AABB — ditangani lewat logika penopang tanah.
+    // 'ditch' doesn't use AABB — handled via ground support logic.
   }
 
-  // --- Skor berbasis jarak ------------------------------------------------
+  // --- Distance-based Score -----------------------------------------------
   const newScore = Math.floor(state.dist / CONFIG.SCORE_DIVISOR);
   if (newScore !== state.score) {
     state.score = newScore;
     scoreEl.textContent = padScore(state.score);
   }
 
-  // --- PARTIKEL DEBU ------------------------------------------------------
+  // --- DUST PARTICLES -----------------------------------------------------
   for (let i = state.particles.length - 1; i >= 0; i--) {
     const d = state.particles[i];
     d.x += d.vx * dt;
@@ -938,8 +945,8 @@ function update(dtMs) {
   }
 
   // --- PARALLAX -----------------------------------------------------------
-  // Tiap layer bergeser dengan pecahan kecepatan dunia yang berbeda:
-  // makin jauh objeknya, makin lambat — itulah ilusi kedalaman.
+  // Each layer moves at a different fraction of world speed:
+  // farther objects move slower — that's the depth illusion.
   state.bg.clouds = (state.bg.clouds + worldDx * 0.04) % TILE_W.clouds;
   state.bg.skyline = (state.bg.skyline + worldDx * 0.08) % TILE_W.skyline;
   state.bg.shops = (state.bg.shops + worldDx * 0.22) % TILE_W.shops;
@@ -990,7 +997,7 @@ function drawDitch(o, waterOnly) {
     ctx.fillRect(o.x + o.w - 5, top, 5, CONFIG.BASE_H - top);
   }
   // Air hampir setinggi bibir selokan: pemain yang jatuh mati terlihat
-  // kakinya menyentuh air (DITCH_KILL_DEPTH 14 > 12).
+  // feet touch water (DITCH_KILL_DEPTH 14 > 12).
   const waterY = top + 12;
   ctx.fillStyle = '#4a7d96';
   ctx.fillRect(o.x + 3, waterY, o.w - 6, CONFIG.BASE_H - waterY);
@@ -1000,15 +1007,15 @@ function drawDitch(o, waterOnly) {
 
 function drawObstacle(o) {
   if (o.type === 'rock') {
-    // SVG viewBox 100x78, basis visual di y=74 → 4/78 padding di bawah.
-    // Gambar sedikit lebih rendah agar basis batu menempel ke GROUND_Y.
+    // SVG viewBox 100x78, visual base at y=74 → 4/78 padding at bottom.
+    // Draw slightly lower so rock base touches GROUND_Y.
     const rockDrawY = CONFIG.GROUND_Y - o.h + o.h * (4 / 78);
     ctx.drawImage(assets.rock, o.x, rockDrawY, o.w, o.h);
   } else if (o.type === 'crow') {
     const bob = Math.sin(o.bobPhase || 0) * 4;
     ctx.drawImage(assets.crow[state.crowWing], o.x, o.y + bob, 56, 40);
   }
-  // ditch digambar terpisah lewat drawDitch().
+  // ditch drawn separately via drawDitch().
 }
 
 function drawPlayer() {
@@ -1030,14 +1037,14 @@ function draw() {
   drawTiled(assets.shops, state.bg.shops, CONFIG.GROUND_Y - 230, 800, 230, TILE_W.shops);
   drawTiled(assets.ground, state.bg.ground, CONFIG.GROUND_Y, 640, CONFIG.GROUND_H, TILE_W.ground);
 
-  // Lubang selokan (di atas tekstur tanah supaya terlihat menembus).
+  // Ditch holes (above ground texture so they appear to cut through).
   for (const o of state.obstacles) {
     if (o.type === 'ditch') drawDitch(o, false);
   }
 
   for (const o of state.obstacles) drawObstacle(o);
 
-  // Debu.
+  // Dust.
   ctx.fillStyle = 'rgba(160, 130, 95, 0.55)';
   for (const d of state.particles) {
     ctx.beginPath();
@@ -1047,8 +1054,8 @@ function draw() {
 
   drawPlayer();
 
-  // Permukaan air digambar terakhir: pemain yang jatuh ke selokan
-  // terlihat tenggelam di balik air.
+  // Water surface drawn last: player falling into ditch
+  // appears submerged behind water.
   for (const o of state.obstacles) {
     if (o.type === 'ditch') drawDitch(o, true);
   }
@@ -1056,8 +1063,8 @@ function draw() {
 
 /* ---------------------------------------------------------------------------
    10. GAME LOOP + VISIBILITY-BASED PAUSE
-   Di 'ready' dunia tidak bergerak kecuali awan — pemain berdiri di warung
-   menunggu pemain menekan tombol.
+   In 'ready' world doesn't move except clouds — player stands at shop
+   waiting for player to press button.
 --------------------------------------------------------------------------- */
 let rafId = null;
 let lastTs = 0;
@@ -1076,7 +1083,7 @@ function loop(ts) {
     draw();
     MusicFX.tick();
   } catch (err) {
-    console.error('[AyoKopdes] Error saat update/draw:', err);
+    console.error('[AyoKopdes] Error during update/draw:', err);
   }
 
   rafId = requestAnimationFrame(loop);
