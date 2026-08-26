@@ -18,6 +18,7 @@ let title = params.get('title') || 'Game';
 let category = params.get('category') || '';
 let width = Number(params.get('w')) || null;
 let height = Number(params.get('h')) || null;
+let game = null;
 
 const els = {
   frameWrap: document.getElementById('frame-wrap'),
@@ -43,7 +44,7 @@ init();
 
 async function init() {
   if (playRouteGameId) {
-    let game = ssrGame && String(ssrGame.id) === String(playRouteGameId) ? ssrGame : null;
+    game = ssrGame && String(ssrGame.id) === String(playRouteGameId) ? ssrGame : null;
 
     if (!game) {
       let games;
@@ -104,7 +105,7 @@ async function init() {
   // This keeps the page fast and avoids loading the game script before
   // the user actually wants to play.
   els.playBtn.addEventListener('click', () => {
-    saveRecent({ id: gameId, title, category, url: embedUrl, thumb: readMetaContent('gimboot-play-image') || '' });
+    saveRecent({ id: gameId, title, category, url: embedUrl, thumb: game?.thumb || readMetaContent('gimboot-play-image') || '' });
     loadGame();
   });
 
@@ -215,7 +216,7 @@ function togglePageFavorite() {
     title,
     category,
     url: embedUrl,
-    thumb: readMetaContent('gimboot-play-image') || '',
+    thumb: game?.thumb || readMetaContent('gimboot-play-image') || '',
   });
 
   updateFavoriteButton(added);
