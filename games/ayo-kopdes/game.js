@@ -701,6 +701,7 @@ function goToStartScreen() {
   state.mode = 'ready';
   startBestEl.textContent = 'Best Score: ' + state.highScore;
   showScreen('start');
+  canvas.focus();
 }
 
 function startPlaying() {

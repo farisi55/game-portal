@@ -772,6 +772,7 @@ function goToStartScreen() {
   state.mode = 'ready';
   startBestEl.textContent = 'Best score: ' + state.highScore;
   showScreen('start');
+  canvas.focus();
 }
 
 // Report score to portal (js/pwa.js) when inside the portal iframe.
