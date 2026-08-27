@@ -111,6 +111,16 @@ const LOCAL_GAMES = [
     height: 640,
     source: 'Original',
   },
+  {
+    id: 'local-kejar-koruptor',
+    title: 'Kejar Koruptor',
+    category: 'Arcade',
+    url: '/games/kejar-koruptor/index.html',
+    thumb: '/games/kejar-koruptor/thumb.svg',
+    width: 360,
+    height: 640,
+    source: 'Original',
+  },
 ];
 
 // ----------------------------------------------------------------------------

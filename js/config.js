@@ -64,6 +64,16 @@ export const CONFIG = {
       height: 640,
       source: 'Buatan Sendiri',
     },
+    {
+      id: 'local-kejar-koruptor',
+      title: 'Kejar Koruptor',
+      category: 'Arcade',
+      url: '/games/kejar-koruptor/index.html',
+      thumb: '/games/kejar-koruptor/thumb.svg',
+      width: 360,
+      height: 640,
+      source: 'Buatan Sendiri',
+    },
   ],
 
   // Aspect ratio used when a game doesn't report its own width/height.
