@@ -114,31 +114,55 @@
       confettiCanvas.height = window.innerHeight;
     });
 
-    /* --- modal overlay --- */
+    /* --- modal overlay — built with DOM APIs to avoid innerHTML + Trusted Types --- */
     overlay = document.createElement('div');
     overlay.className = 'viral-overlay';
     overlay.setAttribute('role', 'dialog');
     overlay.setAttribute('aria-modal', 'true');
     overlay.setAttribute('aria-label', 'Rekor baru');
-    overlay.innerHTML = [
-      '<div class="viral-modal">',
-      '  <div class="viral-trophy">\u{1F3C6}</div>',
-      '  <p class="viral-heading">\u{1F389} SELAMAT! Rekor Baru! \u{1F389}</p>',
-      '  <div class="viral-score" id="viral-score">0</div>',
-      '  <div class="viral-btns">',
-      '    <button class="viral-btn viral-btn-share" id="viral-share-btn">',
-      '      \u{1F4E4} Bagikan Rekormu!',
-      '    </button>',
-      '    <button class="viral-btn viral-btn-close" id="viral-close-btn">',
-      '      \u{1F519} Tutup / Main Lagi',
-      '    </button>',
-      '  </div>',
-      '</div>',
-    ].join('');
+
+    var modal = document.createElement('div');
+    modal.className = 'viral-modal';
+
+    var trophy = document.createElement('div');
+    trophy.className = 'viral-trophy';
+    trophy.textContent = '\u{1F3C6}';
+    modal.appendChild(trophy);
+
+    var heading = document.createElement('p');
+    heading.className = 'viral-heading';
+    heading.textContent = '\u{1F389} SELAMAT! Rekor Baru! \u{1F389}';
+    modal.appendChild(heading);
+
+    var scoreEl = document.createElement('div');
+    scoreEl.className = 'viral-score';
+    scoreEl.id = 'viral-score';
+    scoreEl.textContent = '0';
+    modal.appendChild(scoreEl);
+
+    var btns = document.createElement('div');
+    btns.className = 'viral-btns';
+
+    var shareBtn = document.createElement('button');
+    shareBtn.className = 'viral-btn viral-btn-share';
+    shareBtn.id = 'viral-share-btn';
+    shareBtn.type = 'button';
+    shareBtn.textContent = '\u{1F4E4} Bagikan Rekormu!';
+    btns.appendChild(shareBtn);
+
+    var closeBtn = document.createElement('button');
+    closeBtn.className = 'viral-btn viral-btn-close';
+    closeBtn.id = 'viral-close-btn';
+    closeBtn.type = 'button';
+    closeBtn.textContent = '\u{1F519} Tutup / Main Lagi';
+    btns.appendChild(closeBtn);
+
+    modal.appendChild(btns);
+    overlay.appendChild(modal);
     document.body.appendChild(overlay);
 
     /* --- close button --- */
-    document.getElementById('viral-close-btn').addEventListener('click', hide);
+    closeBtn.addEventListener('click', hide);
 
     /* --- overlay backdrop click to close --- */
     overlay.addEventListener('click', function (e) {
@@ -277,11 +301,11 @@
 
   function showCopied (btn) {
     if (!btn) return;
-    var orig = btn.innerHTML;
-    btn.innerHTML = '\u2705 Teks Disalin!';
+    var orig = btn.textContent;
+    btn.textContent = '\u2705 Teks Disalin!';
     btn.style.pointerEvents = 'none';
     setTimeout(function () {
-      btn.innerHTML = orig;
+      btn.textContent = orig;
       btn.style.pointerEvents = '';
     }, 2200);
   }
@@ -310,7 +334,7 @@
     /* reset share button */
     var shareBtn = document.getElementById('viral-share-btn');
     if (shareBtn) {
-      shareBtn.innerHTML = '\u{1F4E4} Bagikan Rekormu!';
+      shareBtn.textContent = '\u{1F4E4} Bagikan Rekormu!';
       shareBtn.onclick = onShareClick;
       shareBtn.style.pointerEvents = '';
     }
