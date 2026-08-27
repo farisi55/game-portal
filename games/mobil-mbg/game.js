@@ -709,7 +709,7 @@ function gameOver() {
   if (isNewRecord) {
     state.highScore = state.score;
     saveHighScore(state.highScore);
-    ViralShare.show('mobil-mbg', state.score);
+    ViralShare.show('mobil-mbg', state.score, startPlaying);
   }
 
   finalScoreEl.textContent = String(state.score);

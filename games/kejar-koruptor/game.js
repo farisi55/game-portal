@@ -796,7 +796,7 @@ function gameOver() {
   if (isNewRecord) {
     state.highScore = state.score;
     saveHighScore(state.highScore);
-    ViralShare.show('kejar-koruptor', state.score);
+    ViralShare.show('kejar-koruptor', state.score, startPlaying);
   }
 
   goReasonEl.textContent = GAME_OVER_REASON[state.lastHitType] || GAME_OVER_REASON.car;

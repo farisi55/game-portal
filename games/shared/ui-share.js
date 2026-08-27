@@ -251,6 +251,7 @@
      5. SHARE LOGIC
   ------------------------------------------------------------------ */
   var pendingShareText = '';
+  var pendingCallback = null;
 
   function onShareClick () {
     var text = pendingShareText;
@@ -303,9 +304,12 @@
   /* ------------------------------------------------------------------
      6. SHOW / HIDE
   ------------------------------------------------------------------ */
-  function show (gameId, newScore) {
+  function show (gameId, newScore, onClose) {
     injectCSS();
     ensureDOM();
+
+    /* store callback for when modal closes */
+    pendingCallback = typeof onClose === 'function' ? onClose : null;
 
     /* update score display */
     document.getElementById('viral-score').textContent = String(newScore);
@@ -326,6 +330,11 @@
   function hide () {
     if (overlay) overlay.classList.remove('viral-show');
     stopConfetti();
+    if (pendingCallback) {
+      var cb = pendingCallback;
+      pendingCallback = null;
+      cb();
+    }
   }
 
   /* ------------------------------------------------------------------
