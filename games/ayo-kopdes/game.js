@@ -738,6 +738,7 @@ function gameOver() {
   if (isNewRecord) {
     state.highScore = state.score;
     saveHighScore(state.highScore);
+    ViralShare.show('ayo-kopdes', state.score);
   }
 
   finalScoreEl.textContent = String(state.score);

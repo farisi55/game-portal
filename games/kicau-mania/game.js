@@ -529,6 +529,7 @@ function gameOver() {
   if (isNewRecord) {
     state.highScore = state.score;
     saveHighScore(state.highScore);
+    ViralShare.show('kicau-mania', state.score);
   }
 
   finalScoreEl.textContent = String(state.score);
