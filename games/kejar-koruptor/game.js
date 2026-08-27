@@ -160,18 +160,18 @@ function buildRunnerSVG(frame) {
   </svg>`;
 }
 
-// --- MONEY BAG: brown sack, tied neck, big $ sign. viewBox 40x46.
+// --- MONEY BAG: green sack, tied neck, big $ sign. viewBox 40x46.
 function buildMoneySVG() {
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 46">
-    <path d="M20,10 C10,10 5,20 5,30 C5,40 12,44 20,44 C28,44 35,40 35,30 C35,20 30,10 20,10 Z" fill="#8a5a2b"/>
-    <path d="M20,10 C14,10 10,17 9.4,26 C12,30 16,31.6 20,31.6 C24,31.6 28,30 30.6,26 C30,17 26,10 20,10 Z" fill="#a06c34"/>
-    <path d="M13,4 L27,4 L24,12 L16,12 Z" fill="#7a4d24"/>
-    <path d="M13,4 Q20,9 27,4 L26,7 Q20,11 14,7 Z" fill="#5c3a1c"/>
-    <ellipse cx="15" cy="18" rx="3.4" ry="5" fill="#c9955a" opacity="0.55"/>
+    <path d="M20,10 C10,10 5,20 5,30 C5,40 12,44 20,44 C28,44 35,40 35,30 C35,20 30,10 20,10 Z" fill="#2d8a4e"/>
+    <path d="M20,10 C14,10 10,17 9.4,26 C12,30 16,31.6 20,31.6 C24,31.6 28,30 30.6,26 C30,17 26,10 20,10 Z" fill="#3a9e5c"/>
+    <path d="M13,4 L27,4 L24,12 L16,12 Z" fill="#1f6b38"/>
+    <path d="M13,4 Q20,9 27,4 L26,7 Q20,11 14,7 Z" fill="#155c2d"/>
+    <ellipse cx="15" cy="18" rx="3.4" ry="5" fill="#5cb870" opacity="0.55"/>
     <text x="20" y="40" text-anchor="middle" font-family="Arial Black, Arial, sans-serif"
       font-size="15" font-weight="900" fill="#ffd76a">$</text>
     <text x="20" y="40" text-anchor="middle" font-family="Arial Black, Arial, sans-serif"
-      font-size="15" font-weight="900" fill="none" stroke="#5c3a1c" stroke-width="0.8">$</text>
+      font-size="15" font-weight="900" fill="none" stroke="#155c2d" stroke-width="0.8">$</text>
   </svg>`;
 }
 
@@ -1125,8 +1125,8 @@ function drawEntity(e) {
     const cx = x + w / 2;
     const cy = y + h / 2;
     const grad = ctx.createRadialGradient(cx, cy, 2, cx, cy, w * 0.85);
-    grad.addColorStop(0, 'rgba(255, 215, 106, 0.5)');
-    grad.addColorStop(1, 'rgba(255, 215, 106, 0)');
+    grad.addColorStop(0, 'rgba(90, 200, 120, 0.5)');
+    grad.addColorStop(1, 'rgba(90, 200, 120, 0)');
     ctx.fillStyle = grad;
     ctx.beginPath();
     ctx.arc(cx, cy, w * 0.85, 0, Math.PI * 2);
