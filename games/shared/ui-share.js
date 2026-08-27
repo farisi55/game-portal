@@ -46,6 +46,12 @@
     cssInjected = true;
 
     var style = document.createElement('style');
+    // Forward nonce from server-generated script tag if CSP uses nonce for styles.
+    try {
+      var nonceSrc = document.querySelector('script[nonce]');
+      var nonceVal = nonceSrc && (nonceSrc.nonce || nonceSrc.getAttribute('nonce'));
+      if (nonceVal) { style.setAttribute('nonce', nonceVal); style.nonce = nonceVal; }
+    } catch (_) { /* ignore */ }
     style.textContent = [
       /* ---------- confetti canvas ---------- */
       '#viral-confetti-canvas {',
@@ -58,9 +64,10 @@
       '  position:fixed; inset:0; z-index:99999;',
       '  display:flex; align-items:center; justify-content:center;',
       '  background:rgba(0,0,0,0.55);',
-      '  opacity:0; transition:opacity .3s ease;',
+      '  opacity:0; visibility:hidden; pointer-events:none;',
+      '  transition:opacity .3s ease, visibility .3s ease;',
       '}',
-      '.viral-overlay.viral-show { opacity:1; }',
+      '.viral-overlay.viral-show { opacity:1; visibility:visible; pointer-events:auto; }',
 
       /* ---------- modal card ---------- */
       '.viral-modal {',
@@ -145,10 +152,18 @@
     confettiCanvas.height = window.innerHeight;
     document.body.appendChild(confettiCanvas);
     confettiCtx = confettiCanvas.getContext('2d');
+    window.addEventListener('resize', function () {
+      if (!confettiCanvas) return;
+      confettiCanvas.width = window.innerWidth;
+      confettiCanvas.height = window.innerHeight;
+    });
 
     /* --- modal overlay --- */
     overlay = document.createElement('div');
     overlay.className = 'viral-overlay';
+    overlay.setAttribute('role', 'dialog');
+    overlay.setAttribute('aria-modal', 'true');
+    overlay.setAttribute('aria-label', 'Rekor baru');
     overlay.innerHTML = [
       '<div class="viral-modal">',
       '  <div class="viral-trophy">\u{1F3C6}</div>',
@@ -172,6 +187,16 @@
     /* --- overlay backdrop click to close --- */
     overlay.addEventListener('click', function (e) {
       if (e.target === overlay) hide();
+    });
+
+    /* --- Esc to close & block propagation while visible --- */
+    document.addEventListener('keydown', function (e) {
+      if (!overlay || !overlay.classList.contains('viral-show')) return;
+      if (e.key === 'Escape' || e.code === 'Escape') {
+        e.preventDefault();
+        e.stopPropagation();
+        hide();
+      }
     });
   }
 
@@ -304,6 +329,10 @@
   /* ------------------------------------------------------------------
      6. SHOW / HIDE
   ------------------------------------------------------------------ */
+  function isVisible () {
+    return !!(overlay && overlay.classList.contains('viral-show'));
+  }
+
   function show (gameId, newScore, onClose) {
     injectCSS();
     ensureDOM();
@@ -312,33 +341,52 @@
     pendingCallback = typeof onClose === 'function' ? onClose : null;
 
     /* update score display */
-    document.getElementById('viral-score').textContent = String(newScore);
+    var scoreEl = document.getElementById('viral-score');
+    if (scoreEl) scoreEl.textContent = String(newScore);
 
     /* build share text */
     pendingShareText = buildShareText(gameId, newScore);
 
     /* reset share button */
     var shareBtn = document.getElementById('viral-share-btn');
-    shareBtn.innerHTML = '\u{1F4E4} Bagikan Rekormu!';
-    shareBtn.onclick = onShareClick;
+    if (shareBtn) {
+      shareBtn.innerHTML = '\u{1F4E4} Bagikan Rekormu!';
+      shareBtn.onclick = onShareClick;
+      shareBtn.style.pointerEvents = '';
+    }
 
-    /* show */
+    /* ensure canvas size matches viewport (handles rotation) */
+    if (confettiCanvas) {
+      confettiCanvas.width = window.innerWidth;
+      confettiCanvas.height = window.innerHeight;
+    }
+
+    /* show — force reflow so transition triggers even if re-shown quickly */
+    overlay.classList.remove('viral-show');
+    void overlay.offsetWidth;
     overlay.classList.add('viral-show');
     spawnConfetti();
   }
 
   function hide () {
+    var wasVisible = isVisible();
     if (overlay) overlay.classList.remove('viral-show');
     stopConfetti();
-    if (pendingCallback) {
+    if (wasVisible && pendingCallback) {
       var cb = pendingCallback;
       pendingCallback = null;
-      cb();
+      // Defer callback to next tick so overlay transition can start and
+      // game code (startPlaying) doesn't run inside the click event's
+      // propagation where it could be swallowed.
+      setTimeout(function () { try { cb(); } catch (e) { console.error(e); } }, 30);
+    } else if (!wasVisible) {
+      // If hide called while not visible (e.g. double click), just clear
+      pendingCallback = null;
     }
   }
 
   /* ------------------------------------------------------------------
      7. GLOBAL API
   ------------------------------------------------------------------ */
-  window.ViralShare = { show: show, hide: hide };
+  window.ViralShare = { show: show, hide: hide, isVisible: isVisible };
 })();

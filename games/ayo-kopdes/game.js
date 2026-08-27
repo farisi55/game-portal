@@ -614,8 +614,13 @@ window.addEventListener('orientationchange', resizeCanvas);
 /* ---------------------------------------------------------------------------
    6. INPUT — Space / Arrow Up / touch to jump.
 --------------------------------------------------------------------------- */
+function isViralVisible() {
+  try { return window.ViralShare && typeof ViralShare.isVisible === 'function' && ViralShare.isVisible(); } catch (_) { return false; }
+}
+
 function primaryAction() {
   AudioFX.ensureCtx();
+  if (isViralVisible()) { ViralShare.hide(); return; }
   if (state.mode === 'ready') {
     startPlaying();
     return;
@@ -630,6 +635,7 @@ function primaryAction() {
 }
 
 function jump() {
+  if (isViralVisible()) return;
   // Only jump when feet on ground (no double jump).
   if (!state.player.grounded) return;
   state.player.vy = CONFIG.JUMP_VELOCITY;
@@ -642,10 +648,18 @@ function jump() {
 const container = document.getElementById('game-container');
 container.addEventListener('pointerdown', (e) => {
   e.preventDefault();
+  if (isViralVisible()) { ViralShare.hide(); return; }
   primaryAction();
 }, { passive: false });
 
 window.addEventListener('keydown', (e) => {
+  if (isViralVisible()) {
+    if (e.code === 'Space' || e.code === 'ArrowUp' || e.code === 'Enter' || e.code === 'Escape') {
+      e.preventDefault();
+      ViralShare.hide();
+    }
+    return;
+  }
   if (e.code === 'Space' || e.code === 'ArrowUp') {
     e.preventDefault();
     if (!e.repeat) primaryAction();
@@ -714,6 +728,7 @@ function startPlaying() {
 // Touch/click on start screen to start immediately.
 screens.start.addEventListener('pointerdown', (e) => {
   e.preventDefault();
+  if (isViralVisible()) { ViralShare.hide(); return; }
   primaryAction();
 }, { passive: false });
 
@@ -738,7 +753,6 @@ function gameOver() {
   if (isNewRecord) {
     state.highScore = state.score;
     saveHighScore(state.highScore);
-    ViralShare.show('ayo-kopdes', state.score, startPlaying);
   }
 
   finalScoreEl.textContent = String(state.score);
@@ -747,10 +761,22 @@ function gameOver() {
   newRecordEl.hidden = !isNewRecord;
   showScreen('gameover');
   reportScoreToParent(state.score);
+
+  if (isNewRecord) {
+    try {
+      ViralShare.show('ayo-kopdes', state.score, function () {
+        showScreen(null);
+        startPlaying();
+      });
+    } catch (err) {
+      console.error('[AyoKopdes] ViralShare failed:', err);
+    }
+  }
 }
 
 retryBtn.addEventListener('pointerdown', (e) => {
   e.preventDefault();
+  if (isViralVisible()) { ViralShare.hide(); return; }
   AudioFX.ensureCtx();
   startPlaying();
 }, { passive: false });

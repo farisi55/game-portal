@@ -435,7 +435,12 @@ window.addEventListener('orientationchange', resizeCanvas);
 /* ---------------------------------------------------------------------------
    6. INPUT
 --------------------------------------------------------------------------- */
+function isViralVisible() {
+  try { return window.ViralShare && typeof ViralShare.isVisible === 'function' && ViralShare.isVisible(); } catch (_) { return false; }
+}
+
 function flap() {
+  if (isViralVisible()) { ViralShare.hide(); return; }
   MusicFX.start();
   if (state.mode === 'ready') {
     startPlaying();
@@ -447,11 +452,19 @@ function flap() {
 
 function onPointerDown(e) {
   e.preventDefault();
+  if (isViralVisible()) { ViralShare.hide(); return; }
   flap();
 }
 
 canvas.addEventListener('pointerdown', onPointerDown, { passive: false });
 window.addEventListener('keydown', (e) => {
+  if (isViralVisible()) {
+    if (e.code === 'Space' || e.code === 'ArrowUp' || e.code === 'Enter' || e.code === 'Escape') {
+      e.preventDefault();
+      ViralShare.hide();
+    }
+    return;
+  }
   if (e.code === 'Space' || e.code === 'ArrowUp') {
     e.preventDefault();
     flap();
@@ -491,6 +504,7 @@ function showScreen(name) {
 // Ketuk/klik di layar mulai untuk langsung bermain.
 screens.start.addEventListener('pointerdown', (e) => {
   e.preventDefault();
+  if (isViralVisible()) { ViralShare.hide(); return; }
   flap();
 });
 
@@ -529,7 +543,6 @@ function gameOver() {
   if (isNewRecord) {
     state.highScore = state.score;
     saveHighScore(state.highScore);
-    ViralShare.show('kicau-mania', state.score, startPlaying);
   }
 
   finalScoreEl.textContent = String(state.score);
@@ -537,9 +550,23 @@ function gameOver() {
   newRecordEl.hidden = !isNewRecord;
   showScreen('gameover');
   reportScoreToParent(state.score);
+
+  if (isNewRecord) {
+    try {
+      ViralShare.show('kicau-mania', state.score, function () {
+        showScreen(null);
+        startPlaying();
+      });
+    } catch (err) {
+      console.error('[KicauMania] ViralShare failed:', err);
+    }
+  }
 }
 
-retryBtn.addEventListener('click', startPlaying);
+retryBtn.addEventListener('click', function (e) {
+  if (isViralVisible()) { e.preventDefault(); ViralShare.hide(); return; }
+  startPlaying();
+});
 
 /* ---------------------------------------------------------------------------
    8. PHYSICS & COLLISION

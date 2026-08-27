@@ -622,8 +622,13 @@ function screenXAt(worldX, z) {
    Touch: tap left/right half = switch lane; swipe up = jump; plus a
    dedicated on-screen JUMP button. Tap anywhere starts / restarts.
 --------------------------------------------------------------------------- */
+function isViralVisible() {
+  try { return window.ViralShare && typeof ViralShare.isVisible === 'function' && ViralShare.isVisible(); } catch (_) { return false; }
+}
+
 function primaryAction() {
   AudioFX.ensureCtx();
+  if (isViralVisible()) { ViralShare.hide(); return; }
   if (state.mode === 'ready') {
     startPlaying();
     return;
@@ -635,12 +640,14 @@ function primaryAction() {
 }
 
 function switchLane(dir) {
+  if (isViralVisible()) return;
   if (state.mode !== 'playing') return;
   const next = Math.max(0, Math.min(CONFIG.LANES.length - 1, state.player.lane + dir));
   state.player.lane = next;
 }
 
 function doJump() {
+  if (isViralVisible()) return;
   if (state.mode !== 'playing') return;
   const p = state.player;
   if (!p.grounded) return; // no double jump
@@ -665,6 +672,7 @@ function container_pointerdown() {
 
   container.addEventListener('pointerdown', (e) => {
     e.preventDefault();
+    if (isViralVisible()) { ViralShare.hide(); return; }
     if (state.mode !== 'playing') {
       primaryAction();
       return;
@@ -696,6 +704,13 @@ function container_pointerdown() {
 }
 
 window.addEventListener('keydown', (e) => {
+  if (isViralVisible()) {
+    if (e.code === 'Space' || e.code === 'Enter' || e.code === 'Escape') {
+      e.preventDefault();
+      ViralShare.hide();
+    }
+    return;
+  }
   if (e.code === 'Space' || e.code === 'ArrowUp' || e.code === 'KeyW') {
     e.preventDefault();
     if (!e.repeat) {
@@ -796,7 +811,6 @@ function gameOver() {
   if (isNewRecord) {
     state.highScore = state.score;
     saveHighScore(state.highScore);
-    ViralShare.show('kejar-koruptor', state.score, startPlaying);
   }
 
   goReasonEl.textContent = GAME_OVER_REASON[state.lastHitType] || GAME_OVER_REASON.car;
@@ -806,10 +820,22 @@ function gameOver() {
   newRecordEl.hidden = !isNewRecord;
   showScreen('gameover');
   reportScoreToParent(state.score);
+
+  if (isNewRecord) {
+    try {
+      ViralShare.show('kejar-koruptor', state.score, function () {
+        showScreen(null);
+        startPlaying();
+      });
+    } catch (err) {
+      console.error('[KejarKoruptor] ViralShare failed:', err);
+    }
+  }
 }
 
 retryBtn.addEventListener('pointerdown', (e) => {
   e.preventDefault();
+  if (isViralVisible()) { ViralShare.hide(); return; }
   AudioFX.ensureCtx();
   startPlaying();
 }, { passive: false });
@@ -817,6 +843,7 @@ retryBtn.addEventListener('pointerdown', (e) => {
 jumpBtn.addEventListener('pointerdown', (e) => {
   e.preventDefault();
   e.stopPropagation();
+  if (isViralVisible()) { ViralShare.hide(); return; }
   AudioFX.ensureCtx();
   doJump();
 }, { passive: false });

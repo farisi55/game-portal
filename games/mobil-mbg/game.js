@@ -542,8 +542,13 @@ window.addEventListener('orientationchange', resizeCanvas);
    6. INPUT — keyboard Left/Right or A/D to steer; Space to start/restart.
    Touch: HOLD left/right half of the screen to steer; tap to start/restart.
 --------------------------------------------------------------------------- */
+function isViralVisible() {
+  try { return window.ViralShare && typeof ViralShare.isVisible === 'function' && ViralShare.isVisible(); } catch (_) { return false; }
+}
+
 function primaryAction() {
   AudioFX.ensureCtx();
+  if (isViralVisible()) { ViralShare.hide(); return; }
   if (state.mode === 'ready') {
     startPlaying();
     return;
@@ -587,6 +592,7 @@ const container = document.getElementById('game-container');
 
 container.addEventListener('pointerdown', (e) => {
   e.preventDefault();
+  if (isViralVisible()) { ViralShare.hide(); return; }
   primaryAction();
   if (state.mode === 'playing') {
     const side = e.clientX < window.innerWidth / 2 ? 'left' : 'right';
@@ -610,6 +616,13 @@ container.addEventListener('pointerup', releasePointer, { passive: true });
 container.addEventListener('pointercancel', releasePointer, { passive: true });
 
 window.addEventListener('keydown', (e) => {
+  if (isViralVisible()) {
+    if (e.code === 'Space' || e.code === 'Enter' || e.code === 'Escape') {
+      e.preventDefault();
+      ViralShare.hide();
+    }
+    return;
+  }
   if (e.code === 'Space' || e.code === 'ArrowUp') {
     e.preventDefault();
     if (!e.repeat) primaryAction();
@@ -709,7 +722,6 @@ function gameOver() {
   if (isNewRecord) {
     state.highScore = state.score;
     saveHighScore(state.highScore);
-    ViralShare.show('mobil-mbg', state.score, startPlaying);
   }
 
   finalScoreEl.textContent = String(state.score);
@@ -718,6 +730,17 @@ function gameOver() {
   newRecordEl.hidden = !isNewRecord;
   showScreen('gameover');
   reportScoreToParent(state.score);
+
+  if (isNewRecord) {
+    try {
+      ViralShare.show('mobil-mbg', state.score, function () {
+        showScreen(null);
+        startPlaying();
+      });
+    } catch (err) {
+      console.error('[MobilMBG] ViralShare failed:', err);
+    }
+  }
 }
 
 retryBtn.addEventListener('pointerdown', (e) => {
