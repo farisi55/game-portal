@@ -48,8 +48,13 @@ const CONFIG = {
   JUMP_VELOCITY: 390,  // px/s (screen space, straight up)
   JUMP_GRAVITY: 1400,
 
-  INVULN_SECONDS: 1.5,
+  // lives removed — 1 hit = game over (hard mode)
   SHAKE_SECONDS: 0.32,
+
+  // police car lateral drift (slow, dodgeable)
+  CAR_DRIFT_SPEED: 0.58,      // lane-frac units / s
+  CAR_DRIFT_INTERVAL_MIN: 0.85,
+  CAR_DRIFT_INTERVAL_RAND: 0.7,
 
   MIN_GAP: 430,        // min spawn gap (world units)
   GAP_RAND: 380,
@@ -526,16 +531,14 @@ const state = {
     jumpY: 0,       // jump height above ground (screen px)
     vy: 0,
     grounded: true,
-    invuln: 0,
     frameTimer: 0,
   },
-  entities: [],     // {type:'car'|'line'|'doc'|'money', lane, z, bobPhase}
+  entities: [],     // {type:'car'|'line'|'doc'|'money', lane, z, bobPhase, worldX, targetX, driftCd}
   popups: [],
   speed: CONFIG.SPEED_START,
   dist: 0,
   score: 0,
   moneyScore: 0,
-  lives: 3,
   highScore: 0,
   nextObstacleDist: 620,
   nextMoneyDist: 900,
@@ -737,7 +740,6 @@ const screens = {
   gameover: document.getElementById('gameover-screen'),
 };
 const scoreEl = document.getElementById('hud-score');
-const lifeIconsEl = document.getElementById('life-icons');
 const highEl = document.getElementById('hud-high');
 const startBestEl = document.getElementById('start-best');
 const finalScoreEl = document.getElementById('final-score');
@@ -764,7 +766,6 @@ function resetGame() {
   p.jumpY = 0;
   p.vy = 0;
   p.grounded = true;
-  p.invuln = 0;
   p.frameTimer = 0;
   state.entities = [];
   state.popups = [];
@@ -772,14 +773,12 @@ function resetGame() {
   state.dist = 0;
   state.score = 0;
   state.moneyScore = 0;
-  state.lives = 3;
   state.nextObstacleDist = 620;
   state.nextMoneyDist = 900;
   state.shake = 0;
   state.lastHitType = 'car';
   activePointers.clear();
   scoreEl.textContent = 'SCORE: 00000';
-  lifeIconsEl.textContent = '\u2665\u2665\u2665';
 }
 
 function goToStartScreen() {
@@ -864,12 +863,26 @@ function spawnObstacle() {
   if (roll < 0.4) type = 'car';
   else if (roll < 0.72) type = 'line';
   else type = 'doc';
-  state.entities.push({
-    type,
-    lane: Math.floor(Math.random() * CONFIG.LANES.length),
-    z: CONFIG.Z_FAR,
-    bobPhase: 0,
-  });
+  const lane = Math.floor(Math.random() * CONFIG.LANES.length);
+  if (type === 'car') {
+    // police car drifts slowly left-right; keep both discrete lane and continuous worldX
+    state.entities.push({
+      type,
+      lane,
+      z: CONFIG.Z_FAR,
+      bobPhase: 0,
+      worldX: CONFIG.LANES[lane],
+      targetX: CONFIG.LANES[lane],
+      driftCd: CONFIG.CAR_DRIFT_INTERVAL_MIN + Math.random() * CONFIG.CAR_DRIFT_INTERVAL_RAND,
+    });
+  } else {
+    state.entities.push({
+      type,
+      lane,
+      z: CONFIG.Z_FAR,
+      bobPhase: 0,
+    });
+  }
   state.nextObstacleDist = state.dist + currentGap();
 }
 
@@ -888,20 +901,11 @@ function aabb(ax, ay, aw, ah, bx, by, bw, bh) {
   return ax < bx + bw && ax + aw > bx && ay < by + bh && ay + ah > by;
 }
 
-function damagePlayer(type, worldX) {
-  if (state.player.invuln > 0) return;
+function handleHit(type) {
   state.lastHitType = type;
-  state.lives -= 1;
-  state.player.invuln = CONFIG.INVULN_SECONDS;
   state.shake = CONFIG.SHAKE_SECONDS;
   AudioFX.hit();
-  lifeIconsEl.textContent = '\u2665'.repeat(Math.max(0, state.lives));
-  state.popups.push({
-    x: CONFIG.CX + worldX * CONFIG.ROAD_HALF0,
-    y: CONFIG.BOTTOM_Y - 110,
-    text: '-1', life: 0.9, color: '#ff5a5a',
-  });
-  if (state.lives <= 0) gameOver();
+  gameOver();
 }
 
 function update(dtMs) {
@@ -916,7 +920,6 @@ function update(dtMs) {
   state.scroll += dz;
 
   // --- Timers --------------------------------------------------------------
-  if (p.invuln > 0) p.invuln = Math.max(0, p.invuln - dt);
   if (state.shake > 0) state.shake = Math.max(0, state.shake - dt);
 
   // --- Lane smoothing (discrete lanes, eased position) --------------------
@@ -960,15 +963,35 @@ function update(dtMs) {
     e.z -= dz;
     if (e.type === 'money') e.bobPhase += dt * CONFIG.MONEY_BOB_SPEED;
 
+    // police car drifts slowly left-right (only this type)
+    if (e.type === 'car' && typeof e.worldX === 'number') {
+      e.driftCd -= dt;
+      if (e.driftCd <= 0) {
+        e.driftCd = CONFIG.CAR_DRIFT_INTERVAL_MIN + Math.random() * CONFIG.CAR_DRIFT_INTERVAL_RAND;
+        var dir = Math.random() < 0.5 ? -1 : 1;
+        var newLane = e.lane + dir;
+        if (newLane < 0 || newLane > 2) newLane = e.lane - dir;
+        if (newLane < 0) newLane = 0;
+        if (newLane > 2) newLane = 2;
+        e.lane = newLane;
+        e.targetX = CONFIG.LANES[newLane];
+      }
+      var dx = e.targetX - e.worldX;
+      if (Math.abs(dx) > 0.001) {
+        var step = Math.sign(dx) * Math.min(Math.abs(dx), CONFIG.CAR_DRIFT_SPEED * dt);
+        e.worldX += step;
+      }
+    }
+
     if (e.z < -60) {
       state.entities.splice(i, 1);
       continue;
     }
 
-    // Collision only inside the near-depth window and same lane.
-    if (e.z > -14 && e.z < 44 && e.lane === p.lane) {
+    // Collision only inside the near-depth window
+    if (e.z > -14 && e.z < 44) {
       if (e.type === 'money') {
-        if (aabb(pbX, pbY, pbW, pbH, CONFIG.CX + CONFIG.LANES[e.lane] * CONFIG.ROAD_HALF0 * scaleAt(Math.max(0, e.z)) - 24, groundYAt(Math.max(0, e.z)) - 56, 48, 56)) {
+        if (e.lane === p.lane && aabb(pbX, pbY, pbW, pbH, CONFIG.CX + CONFIG.LANES[e.lane] * CONFIG.ROAD_HALF0 * scaleAt(Math.max(0, e.z)) - 24, groundYAt(Math.max(0, e.z)) - 56, 48, 56)) {
           state.entities.splice(i, 1);
           state.moneyScore += CONFIG.MONEY_BONUS;
           state.score = Math.floor(state.dist / CONFIG.SCORE_DIVISOR) + state.moneyScore;
@@ -981,10 +1004,18 @@ function update(dtMs) {
           });
         }
       } else if (!airborne) {
-        if (p.invuln <= 0) {
-          state.entities.splice(i, 1); // remove so it can't re-hit
-          damagePlayer(e.type, CONFIG.LANES[e.lane]);
-          if (state.mode !== 'playing') return; // game over fired
+        var hit = false;
+        if (e.type === 'car') {
+          // car uses continuous worldX — need overlap, not just discrete lane
+          var carX = (typeof e.worldX === 'number') ? e.worldX : CONFIG.LANES[e.lane];
+          if (Math.abs(carX - p.laneFrac) < 0.38) hit = true;
+        } else {
+          if (e.lane === p.lane) hit = true;
+        }
+        if (hit) {
+          state.entities.splice(i, 1);
+          handleHit(e.type);
+          return; // instant game over, no lives
         }
       }
     }
@@ -1136,7 +1167,8 @@ function drawEntity(e) {
   const art = ENTITY_ART[e.type];
   const w = art.w * s;
   const h = art.h * s;
-  const x = CONFIG.CX + CONFIG.LANES[e.lane] * CONFIG.ROAD_HALF0 * s - w / 2;
+  var worldX = (e.type === 'car' && typeof e.worldX === 'number') ? e.worldX : CONFIG.LANES[e.lane];
+  const x = CONFIG.CX + worldX * CONFIG.ROAD_HALF0 * s - w / 2;
 
   // Money bags float with a gentle bob; obstacles sit on the ground.
   let y = groundYAt(z) - h + 2;
@@ -1172,8 +1204,6 @@ function drawEntity(e) {
 
 function drawPlayer() {
   const p = state.player;
-  // Flicker while invulnerable.
-  if (p.invuln > 0 && Math.floor(p.invuln * 10) % 2 === 0) return;
 
   const w = 62, h = 80;
   const px = CONFIG.CX + p.laneFrac * CONFIG.ROAD_HALF0 - w / 2;

@@ -44,6 +44,10 @@ const CONFIG = {
   FOOD_GAP_MIN: 900,      // min distance between food boxes
   FOOD_GAP_RAND: 900,
 
+  // police car — new drifting obstacle (one-way lateral)
+  POLICE_CHANCE: 0.28,          // chance a car spawn becomes police
+  POLICE_SPEED: 72,             // px/s lateral (slow, dodgeable)
+
   STORAGE_KEY: 'mobilMbg_highScore',
   MAX_DT_MS: 34,
 
@@ -142,6 +146,40 @@ function buildEnemyCarSVG(body, shade, glass, aggressive) {
     <rect x="41" y="86" width="8" height="4.5" rx="2" fill="#fff3c4"/>
     <rect x="6" y="5" width="8" height="4" rx="2" fill="#c0392b" opacity="0.9"/>
     <rect x="42" y="5" width="8" height="4" rx="2" fill="#c0392b" opacity="0.9"/>
+  </svg>`;
+}
+
+// --- POLICE CAR: same sedan shape as enemy but police livery (white-blue, POLISI).
+// Separated so it reads instantly vs red/yellow traffic. ViewBox 56x94 same as enemy.
+function buildPoliceCarSVG() {
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 56 94">
+    <!-- wheel arches -->
+    <rect x="1" y="12" width="7" height="14" rx="3" fill="#22201e"/>
+    <rect x="48" y="12" width="7" height="14" rx="3" fill="#22201e"/>
+    <rect x="1" y="68" width="7" height="14" rx="3" fill="#22201e"/>
+    <rect x="48" y="68" width="7" height="14" rx="3" fill="#22201e"/>
+    <!-- body — white police base -->
+    <rect x="4" y="3" width="48" height="88" rx="12" fill="#e8eaf6"/>
+    <rect x="4" y="3" width="48" height="88" rx="12" fill="none" stroke="#3f51b5" stroke-width="2"/>
+    <!-- blue side stripe -->
+    <rect x="4" y="38" width="48" height="10" fill="#1a237e" opacity="0.95"/>
+    <rect x="4" y="42" width="48" height="2" fill="#ff3d00"/>
+    <!-- hood highlight -->
+    <ellipse cx="28" cy="14" rx="14" ry="7" fill="#ffffff" opacity="0.22"/>
+    <!-- windshield + rear window -->
+    <path d="M11,58 Q11,55 15,55 L41,55 Q45,55 45,58 L43,72 Q42,74 40,74 L16,74 Q14,74 13,72 Z" fill="#283593"/>
+    <rect x="14" y="16" width="28" height="11" rx="4" fill="#283593"/>
+    <!-- roof lights -->
+    <rect x="16" y="6" width="10" height="5" rx="2" fill="#e53935"/>
+    <rect x="30" y="6" width="10" height="5" rx="2" fill="#1e88e5"/>
+    <rect x="12" y="10" width="32" height="3" rx="1.2" fill="#22242c"/>
+    <!-- POLISI text on roof/stripe -->
+    <text x="28" y="46" text-anchor="middle" font-family="Arial, sans-serif" font-size="6.2" font-weight="900" letter-spacing="0.6" fill="#ffffff">POLISI</text>
+    <!-- headlights / taillights -->
+    <rect x="7" y="86" width="8" height="4.5" rx="2" fill="#fff3c4"/>
+    <rect x="41" y="86" width="8" height="4.5" rx="2" fill="#fff3c4"/>
+    <rect x="6" y="5" width="8" height="4" rx="2" fill="#c62828" opacity="0.9"/>
+    <rect x="42" y="5" width="8" height="4" rx="2" fill="#c62828" opacity="0.9"/>
   </svg>`;
 }
 
@@ -253,13 +291,13 @@ function buildRoadsideSVG() {
   </svg>`;
 }
 
-const assets = { van: null, enemyRed: null, enemyYellow: null, enemyAggro: null, food: null, oil: null, road: null, roadside: null };
+const assets = { van: null, enemyRed: null, enemyYellow: null, enemyAggro: null, enemyPolice: null, food: null, oil: null, road: null, roadside: null };
 
 const TILE_ROAD_H = 160;
 const TILE_SIDE_H = 320;
 
 let assetsReadyCount = 0;
-const ASSET_TOTAL = 8;
+const ASSET_TOTAL = 9;
 let onAssetsReady = null;
 
 function markReady() {
@@ -277,6 +315,7 @@ function preloadAssets(callback) {
   assets.enemyRed = loadSvgImage(buildEnemyCarSVG('#d63a2f', '#a3271f', '#28394b', false));
   assets.enemyYellow = loadSvgImage(buildEnemyCarSVG('#f2c230', '#c79a1a', '#28394b', false));
   assets.enemyAggro = loadSvgImage(buildEnemyCarSVG('#8e44ad', '#6c3384', '#1d2a3a', true));
+  assets.enemyPolice = loadSvgImage(buildPoliceCarSVG());
   assets.food = loadSvgImage(buildFoodSVG());
   assets.oil = loadSvgImage(buildOilSVG());
   assets.road = loadSvgImage(buildRoadSVG());
@@ -783,18 +822,37 @@ function spawnObstacle() {
       y: -70, w, h: 48,
     });
   } else {
-    // ENEMY CAR — static cruiser or rare lane-changing aggressor.
-    const aggressive = aggroUnlocked && Math.random() < aggroChance;
-    const { img, w, h } = pickCarImage(aggressive);
-    const lane = Math.floor(Math.random() * CONFIG.LANES);
-    state.obstacles.push({
-      type: aggressive ? 'aggro' : 'car', img,
-      lane,
-      x: laneCenter(lane) - w / 2,
-      targetX: laneCenter(lane) - w / 2,
-      y: -h - 20, w, h,
-      retargetIn: 0.9 + Math.random() * 1.1,
-    });
+    // POLICE CAR — one-way lateral drifter (new). Same size as other cars.
+    const isPolice = Math.random() < CONFIG.POLICE_CHANCE;
+    if (isPolice) {
+      const w = 56, h = 94;
+      const lane = Math.floor(Math.random() * CONFIG.LANES);
+      var targetLane;
+      if (lane === 0) targetLane = 1; // kiri → hanya bisa ke tengah
+      else if (lane === 2) targetLane = 1; // kanan → hanya bisa ke tengah
+      else targetLane = Math.random() < 0.5 ? 0 : 2; // tengah bebas
+      state.obstacles.push({
+        type: 'police', img: assets.enemyPolice,
+        lane, targetLane,
+        x: laneCenter(lane) - w / 2,
+        targetX: laneCenter(targetLane) - w / 2,
+        y: -h - 20, w, h,
+        driftDone: false,
+      });
+    } else {
+      // ENEMY CAR — static cruiser or rare lane-changing aggressor.
+      const aggressive = aggroUnlocked && Math.random() < aggroChance;
+      const { img, w, h } = pickCarImage(aggressive);
+      const lane = Math.floor(Math.random() * CONFIG.LANES);
+      state.obstacles.push({
+        type: aggressive ? 'aggro' : 'car', img,
+        lane,
+        x: laneCenter(lane) - w / 2,
+        targetX: laneCenter(lane) - w / 2,
+        y: -h - 20, w, h,
+        retargetIn: 0.9 + Math.random() * 1.1,
+      });
+    }
   }
 
   state.nextObstacleDist = state.dist + currentGap();
@@ -891,6 +949,21 @@ function update(dtMs) {
       const step = Math.sign(dx) * Math.min(Math.abs(dx), 170 * dt);
       o.x += step;
       o.y += worldDy * 1.1; // overtakes static traffic
+    } else if (o.type === 'police') {
+      // Police: one-way lateral drift only (searah, tidak bolak-balik).
+      // Spawn lane determines target: kiri→kanan, kanan→kiri, tengah→acak.
+      if (!o.driftDone) {
+        var dx = o.targetX - o.x;
+        if (Math.abs(dx) < 0.5) {
+          o.x = o.targetX;
+          o.driftDone = true;
+          o.lane = o.targetLane;
+        } else {
+          var step = Math.sign(dx) * Math.min(Math.abs(dx), CONFIG.POLICE_SPEED * dt);
+          o.x += step;
+        }
+      }
+      o.y += worldDy;
     } else {
       o.y += worldDy;
     }
