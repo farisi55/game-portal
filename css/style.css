@@ -805,6 +805,20 @@ main {
   letter-spacing: 0.3px;
 }
 
+.frame-wrap:fullscreen,
+.frame-wrap:-webkit-full-screen {
+  width: 100vw;
+  height: 100vh;
+  max-height: none;
+  max-width: none;
+  border-radius: 0;
+}
+
+.frame-bezel:fullscreen {
+  padding: 0;
+  border-radius: 0;
+}
+
 /* ============================================================================
    Game info section — SEO content (How to Play, Features)
    ============================================================================ */

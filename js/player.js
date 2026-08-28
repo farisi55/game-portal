@@ -249,14 +249,29 @@ function updateFavoriteButton(favorited) {
 }
 
 async function toggleFullscreen() {
+  // Fullscreen the whole frame (placeholder + iframe) so Play Now remains
+  // clickable even before the game is loaded. Requesting fullscreen on the
+  // hidden iframe alone would show a blank/black screen and block input.
+  const target = els.frameWrap;
   try {
     if (!document.fullscreenElement) {
-      await els.iframe.requestFullscreen();
+      // If game not yet loaded, keep placeholder visible — do not auto-load,
+      // the user can still press Play Now while in fullscreen.
+      await target.requestFullscreen();
     } else {
       await document.exitFullscreen();
     }
   } catch (err) {
-    console.error('Fullscreen request failed:', err);
+    // Fallback: try iframe directly (older browsers may require it)
+    try {
+      if (!document.fullscreenElement) {
+        await els.iframe.requestFullscreen();
+      } else {
+        await document.exitFullscreen();
+      }
+    } catch (e) {
+      console.error('Fullscreen request failed:', e);
+    }
   }
 }
 
