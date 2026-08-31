@@ -36,12 +36,40 @@ simple_mode: false
 - **Scope:** Audit the existing repo's security/config baseline (.gitignore coverage, secret handling, log PII exposure, env-var validation readiness) and close any gaps found. [AUDIT KODE] Target audit untuk "log PII exposure" & "env-var validation readiness" dikoreksi ke `src/index.js` — file inilah yang benar-benar menangani request live, bukan `functions/api/*`/`functions/share/[id].js` (dikonfirmasi non-aktif pada model deploy Worker-with-assets saat ini, lihat [AUDIT FINDINGS] #1 di atas).
 - **Files to create / modify:** `.gitignore`, `src/index.js`, `wrangler.toml`. [AUDIT KODE] `functions/api/games.js`, `functions/api/search.js`, `functions/share/[id].js` dikeluarkan dari daftar file task ini — statusnya (dipertahankan sebagai referensi vs. dihapus) adalah keputusan Task #002, bukan bagian dari audit keamanan environment ini.
 - **Acceptance criteria:**
-  - [ ] `.gitignore` explicitly excludes `.env`, `*.pem`, `*.key`, `*.p12`, `secrets/` — missing patterns added ([AUDIT KODE] dikonfirmasi: `.gitignore` saat ini HANYA berisi pola folder tool AI — `.claude/`, `.wrangler/`, `.wrangler-dry-run/`, `.kilo/`, `.serena/` — nol dari lima pola secret di atas sudah ada, jadi kriteria ini masih sepenuhnya valid & diperlukan)
-  - [ ] No secret/credential value exists in `wrangler.toml` or any committed file; confirmed all future secrets belong in Cloudflare Environment Variables ([AUDIT KODE] `wrangler.toml` yang ada saat ini memang tidak memuat secret apa pun — hanya `name`, `main`, `compatibility_date`, dan blok `[assets]`)
-  - [ ] `src/index.js` contains no logging of full request URLs/query strings that could carry user-supplied text ([AUDIT KODE] kriteria dipindah dari `functions/api/*`/`functions/share/[id].js` ke `src/index.js` — lihat catatan Scope di atas)
-  - [ ] A minimal env-var validation helper exists (fails fast with a clear error if a required var is missing) — ready for the first real one added
+  - [x] `.gitignore` explicitly excludes `.env`, `*.pem`, `*.key`, `*.p12`, `secrets/` — missing patterns added ([AUDIT KODE] dikonfirmasi: `.gitignore` saat ini HANYA berisi pola folder tool AI — `.claude/`, `.wrangler/`, `.wrangler-dry-run/`, `.kilo/`, `.serena/` — nol dari lima pola secret sudah ada, jadi kriteria ini masih sepenuhnya valid & diperlukan)
+  - [x] No secret/credential value exists in `wrangler.toml` or any committed file; confirmed all future secrets belong in Cloudflare Environment Variables ([AUDIT KODE] `wrangler.toml` yang ada saat ini memang tidak memuat secret apa pun — hanya `name`, `main`, `compatibility_date`, dan blok `[assets]`)
+  - [x] `src/index.js` contains no logging of full request URLs/query strings that could carry user-supplied text ([AUDIT KODE] kriteria dipindah dari `functions/api/*`/`functions/share/[id].js` ke `src/index.js` — lihat catatan Scope di atas)
+  - [x] A minimal env-var validation helper exists (fails fast with a clear error if a required var is missing) — ready for the first real one added
 - **Dependencies:** none
-- **Decisions made:** Belum dieksekusi — isi setelah task selesai.
+- **Decisions made:**
+  - [ARCH] .gitignore updated with .env, *.pem, *.key, *.p12, secrets/ patterns
+  - [INFRA] requireEnvVar helper added to src/index.js for fail-fast env var validation
+  - [OBSERVABILITY] .gitignore provides primary .env protection; pre-commit hook to be set up in Task #005
+
+### [COMPLETED]
+
+### Task #001 — Environment Audit & Security Baseline ✅
+- **Completed:** 2026-08-31
+- **Phase:** 1
+- **Status:** OK
+- **Branch:** feat/task-001-environment-audit-security-baseline
+- **Files created / modified:**
+  - `.gitignore` — added .env, *.pem, *.key, *.p12, secrets/ exclusion patterns
+  - `src/index.js` — added requireEnvVar helper for fail-fast environment variable validation
+- **Acceptance criteria met:**
+  - [x] .gitignore explicitly excludes .env, *.pem, *.key, *.p12, secrets/
+  - [x] No secret/credential value exists in wrangler.toml or any committed file
+  - [x] src/index.js contains no logging of full request URLs/query strings that could carry user-supplied text
+  - [x] A minimal env-var validation helper exists (requireEnvVar function)
+- **Security gate:** BASIC — all checks passed
+- **Scalability gate:** BASIC — all checks passed
+- **Regression:** Phase 1 build OK
+- **Decisions made:**
+  - [ARCH] .gitignore updated with .env, *.pem, *.key, *.p12, secrets/ patterns
+  - [INFRA] requireEnvVar helper added to src/index.js for fail-fast env var validation
+  - [OBSERVABILITY] .gitignore provides primary .env protection; pre-commit hook to be set up in Task #005
+- **Notes:** none
+- **Knowledge drift:** none
 
 ## [NEXT TASKS]
 
