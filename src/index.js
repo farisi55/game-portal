@@ -36,6 +36,7 @@ const ALLOWED_HTTP_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
 // required var is missing. Intended for the first real vars added later;
 // currently serves as a scaffold that can be expanded without changing
 // the rest of the worker code.
+// eslint-disable-next-line no-unused-vars
 function requireEnvVar(name, val) {
   if (!val) {
     throw new Error('Missing required environment variable: ' + name);

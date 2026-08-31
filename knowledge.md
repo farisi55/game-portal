@@ -1,6 +1,6 @@
 ---
 project: Gimboot
-version: 1.2.0
+version: 1.3.0
 source: prd
 last_updated: 2026-08-30
 project_shape: fullstack
@@ -25,6 +25,7 @@ simple_mode: false
 - Container orchestration: none.
 - Key third-party services: GameMonetize/GamePix — [AUDIT KODE] perannya ganda dan sebelumnya hanya tercatat sebagian: (1) ad network, diverifikasi lewat `ads.txt`; DAN (2) sumber katalog game LIVE yang di-fetch server-side oleh `src/index.js` (GameMonetize via `feed.php`, GamePix via `feeds.gamepix.com/v2/json`), digabung, lalu di-cache 30 menit di edge (Cache API). Peran (2) ini sebelumnya tidak tercatat sama sekali di knowledge.md maupun PRD.
 - Webhook providers: none. [AUDIT KODE] Catatan terkait: `js/pwa.js` menerima pesan skor via `window.postMessage` (dari game lokal dan dari game GamePix yang di-embed) — ini komunikasi in-browser, bukan webhook server-to-server, jadi baris ini tetap akurat, hanya dicatat karena berkaitan.
+- Dev tooling (Task #004, ditambahkan 2026-08-31): `package.json` + committed lockfile (`package-lock.json`) diperkenalkan. Paket devDependencies yang di-pin dengan versi eksak: `eslint@10.9.1`, `@eslint/js@10.0.1` (flat config ESLint 9+ — file `eslint.config.js`, bukan `.eslintrc`), `prettier@3.9.6` (config `.prettierrc`), `vitest@4.1.11` (test runner, config `vitest.config.js`, environment jsdom), `jsdom@26.1.0` (browser-globals shim untuk unit test `js/` files). `@cloudflare/vitest-pool-workers` untuk Worker-integration tests dipertimbangkan tapi ditunda ke Task #009 saat test `src/index.js` ditulis; saat itu paket akan diganti dengan `@cloudflare/vitest-plugin` (API saat ini per dokumentasi Cloudflare).
 
 ## 3. Architecture
 - Folder/module structure (diperbarui & diverifikasi terhadap isi repo aktual, 2026-08-28):
@@ -84,9 +85,9 @@ game-portal/
 ## 4. Code Standards
 - Naming: file kebab-case; fungsi camelCase; class/type PascalCase.
 - Error handling: [AUDIT KODE — target file dikoreksi] try-catch di boundary route handler `src/index.js` (bukan `functions/api/*`/`functions/share/*` yang non-aktif) dengan fallback response terstruktur; try-catch di sekitar setiap akses `localStorage` sisi klien (dikonfirmasi ada di tiap `games/{slug}/game.js` dan `js/pwa.js` — antisipasi private/incognito mode).
-- Formatter: Prettier (config default).
-- Linter: ESLint (preset `eslint:recommended`).
-- Testing framework: Node.js built-in test runner (`node --test`) atau Vitest. [AUDIT KODE — target dikoreksi] Target uji: `js/state.js` (favorit/recently-played, BUKAN high-score — lihat §3), `js/utils.js`, dan logika di `src/index.js` (handleApiGames/handleApiSearch/handleShareRoute/dll. — catatan: fungsi-fungsi ini belum di-export, kemungkinan perlu refactor kecil supaya testable). [DIJAWAB 2026-08-30] `functions/api/*`/`functions/share/*` TIDAK perlu ditest — developer memutuskan folder ini dihapus (lihat §9, changelog Task #002), bukan dipertahankan. Smoke-test checklist manual tetap untuk logika Canvas per game, termasuk high-score per-game yang tertanam di masing-masing `game.js`.
+- Formatter: Prettier 3.9.6 (config `.prettierrc`; ignore file `.prettierignore`). [Diperbarui Task #004 — 2026-08-31]
+- Linter: ESLint 10.9.1 dengan flat config (`eslint.config.js`, bukan `.eslintrc`). Preset `eslint:recommended` via `@eslint/js@10.0.1`. Scope: `js/`, `src/`, `games/shared/`. Rules tambahan: `no-unused-vars` (dengan `argsIgnorePattern`/`caughtErrorsIgnorePattern` `^_`), `no-shadow`, `prefer-const`, `semi`. Per-game Canvas files (`games/{slug}/`) dikecualikan dari lint pass bersama (standalone apps). [Diperbarui Task #004 — 2026-08-31]
+- Testing framework: **Vitest 4.1.11** (dipilih atas `node --test` karena kompatibilitas dengan Workers pool yang akan dibutuhkan Task #009). Config: `vitest.config.js`, environment `jsdom` (via `jsdom@26.1.0`), `passWithNoTests: true`. `@cloudflare/vitest-pool-workers` ditunda ke Task #009 — saat itu paket yang tepat adalah `@cloudflare/vitest-plugin` (API Cloudflare terkini). Target uji: `js/state.js` (favorit/recently-played, BUKAN high-score — lihat §3), `js/utils.js`, dan logika di `src/index.js` (handleApiGames/handleApiSearch/handleShareRoute/dll. — catatan: fungsi-fungsi ini belum di-export, kemungkinan perlu refactor kecil supaya testable). Smoke-test checklist manual tetap untuk logika Canvas per game. [Diperbarui Task #004 — 2026-08-31]
 - Coverage target: tidak ada persentase global — fokus pada `state.js`, `js/utils.js`, dan `src/index.js` (modul bernilai tinggi & — setelah `src/index.js` di-refactor agar handler-nya bisa di-import — mudah diuji); wajib ada test command yang terlihat + hasil pass/fail per task (syarat gate P04 Vibe Coding Flow).
 
 ## 5. API & Data Contracts

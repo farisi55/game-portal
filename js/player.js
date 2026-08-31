@@ -261,7 +261,7 @@ async function toggleFullscreen() {
     } else {
       await document.exitFullscreen();
     }
-  } catch (err) {
+  } catch (_err) {
     // Fallback: try iframe directly (older browsers may require it)
     try {
       if (!document.fullscreenElement) {
@@ -343,17 +343,17 @@ async function loadRelatedGames() {
   els.related.replaceChildren(...related.map(createRelatedCardElement));
 }
 
-function createRelatedCardElement(game) {
+function createRelatedCardElement(relatedGame) {
   const link = document.createElement('a');
-  link.href = buildGamePageUrl(game);
+  link.href = buildGamePageUrl(relatedGame);
   link.className = 'game-card game-card--compact';
 
   const thumbWrap = document.createElement('div');
   thumbWrap.className = 'game-card__thumb-wrap';
   const image = document.createElement('img');
   image.className = 'game-card__thumb';
-  image.src = String(game.thumb ?? '');
-  image.alt = `Main Game ${String(game.title ?? '')} Gratis Tanpa Install`;
+  image.src = String(relatedGame.thumb ?? '');
+  image.alt = `Main Game ${String(relatedGame.title ?? '')} Gratis Tanpa Install`;
   image.loading = 'lazy';
   image.width = 512;
   image.height = 384;
@@ -366,7 +366,7 @@ function createRelatedCardElement(game) {
   body.className = 'game-card__body';
   const titleElement = document.createElement('p');
   titleElement.className = 'game-card__title';
-  titleElement.textContent = String(game.title ?? '');
+  titleElement.textContent = String(relatedGame.title ?? '');
   body.appendChild(titleElement);
 
   link.append(thumbWrap, body);

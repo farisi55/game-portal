@@ -31,7 +31,7 @@ export function getRecentGames() {
  */
 export function toggleFavorite(gameObj) {
   if (!gameObj || !gameObj.id) return false;
-  let favs = readArray(FAV_KEY);
+  const favs = readArray(FAV_KEY);
   const index = favs.findIndex((g) => g.id === gameObj.id);
   if (index > -1) {
     favs.splice(index, 1);

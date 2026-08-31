@@ -1,0 +1,8 @@
+node_modules/
+.wrangler/
+.wrangler-dry-run/
+.kilo/
+.serena/
+.claude/
+package-lock.json
+ads.txt
