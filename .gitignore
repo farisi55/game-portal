@@ -3,3 +3,8 @@
 .wrangler-dry-run/
 .kilo/
 .serena/
+.env
+*.pem
+*.key
+*.p12
+secrets/

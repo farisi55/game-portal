@@ -30,6 +30,16 @@ const CACHE_TTL_SECONDS = 1800; // 30 menit
 const SITE_NAME = 'Gimboot';
 const ALLOWED_HTTP_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
 
+// Minimal env-var validation helper — fails fast with a clear error if a
+// required var is missing. Intended for the first real vars added later;
+// currently serves as a scaffold that can be expanded without changing
+// the rest of the worker code.
+function requireEnvVar(name, val) {
+  if (!val) {
+    throw new Error('Missing required environment variable: ' + name);
+  }
+}
+
 // `_headers` is useful for static hosting, but Worker-with-assets deployments
 // do not consistently apply it to every response. Enforce the same policy at
 // the Worker boundary so HTML, JavaScript, API, and game routes all share it.
