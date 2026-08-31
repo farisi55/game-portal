@@ -1,7 +1,7 @@
 ---
 project: Gimboot
-knowledge_version: 1.2.0
-changelog_version: 1.4.0
+knowledge_version: 1.3.0
+changelog_version: 1.0.5
 created: 2026-08-28
 status: in_progress
 milestone: 1 of 1
@@ -31,18 +31,54 @@ simple_mode: false
 
 ## [IN PROGRESS]
 
-### Task #004 — Add Dev-Tooling & Lockfile (Prettier, ESLint, Test Runner)
+### Task #005 — Configure Pre-commit Hook to Block `.env`
 - **Phase:** Phase 1 — Foundation
-- **Scope:** Introduce `package.json` with Prettier, ESLint (`eslint:recommended`), and a test runner (Vitest or `node --test`), with a committed lockfile. [AUDIT KODE] Dikonfirmasi belum ada `package.json`/lockfile/config CI apa pun di repo saat ini — task ini tetap sepenuhnya diperlukan seperti draf sebelumnya. Catatan tambahan: karena target uji utama kini mencakup `src/index.js` (lihat Task #009/#010), pertimbangkan test runner yang mendukung lingkungan Workers (mis. `@cloudflare/vitest-pool-workers`) alih-alih `node --test` polos, supaya binding/`env` ala Workers bisa di-mock dengan wajar.
-- **Files to create / modify:** `package.json`, lockfile, `.prettierrc`, `.eslintrc`
+- **Scope:** Install a pre-commit hook that runs lint and blocks any commit containing a `.env` file.
+- **Files to create / modify:** `.husky/pre-commit` (atau setara), `package.json` (scripts)
 - **Acceptance criteria:**
-  - [ ] `npm run lint` runs ESLint against `js/`, `games/`, and `src/` with zero configuration errors
-  - [ ] `npm test` runs the chosen test runner successfully (exits 0 even with zero tests present)
-  - [ ] Lockfile is committed and reproducible (`npm ci` succeeds from a clean checkout)
-- **Dependencies:** none
+  - [ ] Committing a file named `.env` is rejected by the hook with a clear error message
+  - [ ] A normal commit with no `.env` file and passing lint proceeds without being blocked
+- **Dependencies:** Task #004
 - **Decisions made:** Belum dieksekusi — isi setelah task selesai.
 
 ### [COMPLETED]
+
+### Task #004 — Add Dev-Tooling & Lockfile ✅
+- **Completed:** 2026-08-31
+- **Phase:** Phase 1
+- **Status:** OK
+- **Branch:** feat/task-004-add-dev-tooling-lockfile
+- **Files created / modified:**
+  - `package.json` — pinned devDependencies: eslint 10.9.1, @eslint/js 10.0.1, prettier 3.9.6, vitest 4.1.11, jsdom 26.1.0
+  - `package-lock.json` — committed lockfile for reproducible installs
+  - `eslint.config.js` — ESLint v9+ flat config; targets js/, src/, games/shared/; excludes per-game Canvas files
+  - `.prettierrc` — Prettier config (singleQuote, trailingComma all, printWidth 100)
+  - `.prettierignore` — excludes node_modules, tool folders, package-lock.json, ads.txt
+  - `vitest.config.js` — Vitest config; jsdom environment; passWithNoTests; excludes per-game folders
+  - `.gitignore` — added node_modules/, coverage/
+  - `.assetsignore` — added node_modules/, tooling configs, .husky/, knowledge/prd/changelog docs
+  - `js/state.js` — `let favs` → `const favs` (prefer-const fix)
+  - `js/catalog.js` — inner `list` parameter renamed to `arr` (no-shadow fix in renderGenreOptions)
+  - `js/player.js` — `catch (err)` → `catch (_err)`; `createRelatedCardElement(game)` → `createRelatedCardElement(relatedGame)` (no-shadow + no-unused-vars fixes)
+  - `src/index.js` — added `eslint-disable-next-line no-unused-vars` above `requireEnvVar` scaffold
+  - `knowledge.md` — v1.3.0: §2 updated with dev tooling stack; §4 updated with Prettier/ESLint/Vitest versions and config details
+- **Acceptance criteria met:**
+  - [x] `npm run lint` runs ESLint against `js/`, `games/shared/`, and `src/` with zero errors (exit 0)
+  - [x] `npm test` runs Vitest successfully (exit 0 even with zero tests present — `passWithNoTests: true`)
+  - [x] Lockfile is committed and reproducible (`npm ci` succeeds from clean checkout, 0 vulnerabilities)
+- **Security gate:** BASIC — all checks passed
+- **Scalability gate:** BASIC — all checks passed (all items N/A for tooling-only task)
+- **Regression:** Phase 1 build OK — `npm run lint` exit 0, `npm test` exit 0 (passWithNoTests), `npm ci` exit 0, 0 vulnerabilities
+- **Decisions made:**
+  - [ARCH] ESLint flat config (`eslint.config.js`) used instead of `.eslintrc` — ESLint 9+ dropped legacy rc format; flat config is the canonical replacement
+  - [TECH] Vitest 4.1.11 chosen over `node --test` for future Workers-pool compatibility (Task #009 will add `@cloudflare/vitest-plugin` for Worker integration tests; `@cloudflare/vitest-pool-workers` was considered but its `./config` export was removed in v0.22.0)
+  - [ARCH] `@cloudflare/vitest-pool-workers` / `@cloudflare/vitest-plugin` deferred to Task #009 — adding Worker pool before any Worker test files exist adds overhead without benefit
+  - [CODE] `jsdom` added as devDependency for browser globals (localStorage, sessionStorage, window, document) needed by js/ unit tests
+  - [CODE] `passWithNoTests: true` in vitest.config.js — valid during bootstrap; Task #007/#008/#009 will add actual test files
+  - [CODE] Minor lint fixes applied to js/state.js, js/catalog.js, js/player.js, src/index.js — all semantics-preserving (prefer-const, no-shadow, no-unused-vars; requireEnvVar scaffold retained with eslint-disable comment)
+  - [INFRA] `.assetsignore` expanded to exclude tooling configs, node_modules, and documentation files from Cloudflare static asset serving
+- **Notes:** none
+- **Knowledge drift:** UPDATE REQUIRED: @knowledge §2 — added dev tooling stack (eslint, prettier, vitest, jsdom versions and config files). UPDATE REQUIRED: @knowledge §4 — updated Formatter/Linter/Testing framework entries with installed versions and config details. Both edits applied this task (knowledge.md bumped to v1.3.0).
 
 ### Task #001 — Environment Audit & Security Baseline ✅
 - **Completed:** 2026-08-31
@@ -320,3 +356,4 @@ Satu Cloudflare Worker dengan static assets (`src/index.js`) menangani seluruh r
 > v1.3.0 (2026-08-30): developer menambahkan verifikasi line-by-line yang mengonfirmasi ketiga file `functions/*` duplikat/lebih lemah dari `src/index.js` dan aman dihapus pada model deploy saat ini (dengan catatan risiko bila nanti pindah ke Cloudflare Pages). Detail lengkap dengan sitasi baris ditambahkan ke Task #002. Masih belum ada eksekusi penghapusan file yang sebenarnya di repo.
 > v1.4.0 (2026-08-30): atas permintaan developer, ditambahkan empat entri retroaktif di atas yang merangkum fitur-fitur yang sudah live sebelum changelog ini dibuat — lihat catatan format di bagian paling atas [COMPLETED] untuk kenapa entri-entri ini tidak memakai template Task # yang sama dengan task lain di dokumen ini.
 > v1.0.5 (2026-08-31): Task #003 completed — `GET /api/health` implemented in `src/index.js` as a synchronous, no-I/O liveness endpoint returning `{ status, version, timestamp }`. `WORKER_VERSION = '1.0.4'` constant added. Knowledge drift recorded: @knowledge §5 and §8 need updating to document the live endpoint and its response shape.
+> v1.0.5 (2026-08-31): Task #004 completed — `package.json` + `package-lock.json` introduced with ESLint 10.9.1 (flat config), Prettier 3.9.6, Vitest 4.1.11, jsdom 26.1.0. `eslint.config.js`, `.prettierrc`, `.prettierignore`, `vitest.config.js` created. Minor lint fixes in `js/state.js`, `js/catalog.js`, `js/player.js`, `src/index.js`. `npm run lint` and `npm test` both exit 0; `npm ci` exits 0 (0 vulnerabilities). @knowledge v1.3.0: §2 dev tooling stack added; §4 Formatter/Linter/Testing updated with actual versions. Task #005 promoted to [IN PROGRESS].

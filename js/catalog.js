@@ -138,7 +138,7 @@ function createGenreMenu() {
 function renderGenreOptions(list, query = '') {
   const normalizedQuery = query.trim().toLowerCase();
   const categories = ['All', ...state.categories.filter((category) => category !== 'All')]
-    .filter((category, index, list) => list.indexOf(category) === index)
+    .filter((category, index, arr) => arr.indexOf(category) === index)
     .filter((category) => !normalizedQuery || category.toLowerCase().includes(normalizedQuery));
 
   if (categories.length === 0) {
