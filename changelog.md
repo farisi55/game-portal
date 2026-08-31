@@ -71,6 +71,39 @@ simple_mode: false
 - **Notes:** none
 - **Knowledge drift:** none
 
+### Task #002 — Clean-Code Audit: Remove Unused Files & Dead Code ✅
+- **Completed:** 2026-08-31
+- **Phase:** 1
+- **Status:** OK
+- **Branch:** feat/task-002-clean-code-audit-remove-unused-files-dead-code
+- **Files created / modified:**
+  - `.avicon.svg` — deleted (verified & removed after favicon.svg confirmed)
+  - `functions/api/games.js` — deleted (clean code, redundant vs src/index.js)
+  - `functions/api/search.js` — deleted (clean code, redundant vs src/index.js)
+  - `functions/share/[id].js` — deleted (clean code, redundant vs src/index.js)
+  - `src/index.js` — LOCAL_GAMES updated with Ayo Kopdes, Kejar Koruptor, Mobil MBG
+  - `index.html` — added <link rel="icon" href="/favicon.svg">
+  - `game.html` — added <link rel="icon" href="/favicon.svg">
+  - `manifest.json` — removed duplicate "narrow" screenshot entry, keeping only "wide"
+  - `README.md` — updated game roster, functions status, favicon/manifest notes
+- **Acceptance criteria met:**
+  - [x] `functions/api/games.js`, `functions/api/search.js`, `functions/share/[id].js` dihapus dari repo
+  - [x] `src/index.js`'s `LOCAL_GAMES` diperbarui agar mencakup Ayo Kopdes, Kejar Koruptor, Mobil MBG
+  - [x] `favicon.svg` diverifikasi isini & direferensikan dari index.html/game.html dan manifest.json
+  - [x] `.avicon.svg` dihapus setelah favicon.svg terverifikasi & terpasang
+  - [x] `manifest.json` memiliki screenshot "wide" (narrow entry removed, files identical)
+  - [x] No file in the repo is unreferenced by any other file, build config, or route
+- **Security gate:** BASIC — all checks passed
+- **Scalability gate:** BASIC — all checks passed
+- **Regression:** Phase 1 build OK
+- **Decisions made:**
+  - [ARCH] functions/ folder files deleted: confirmed Cloudflare Worker deploy model doesn't use Pages Functions convention
+  - [INFRA] LOCAL_GAMES sync: Ayo Kopdes, Kejar Koruptor, Mobil MBG added to src/index.js LOCAL_GAMES
+  - [OBSERVABILITY] favicon.svg wired up: confirmed as official favicon, referenced in HTML and manifest
+  - [CODE] .avicon.svg removed: candidate for removal now that favicon.svg is confirmed and wired
+- **Notes:** none
+- **Knowledge drift:** none
+
 ## [NEXT TASKS]
 
 ### Phase 1 — Foundation

@@ -6,7 +6,7 @@ The catalog is a live merge of three sources:
 
 - **GameMonetize** — fetched server-side from their game feed
 - **GamePix** — fetched server-side from their JSON feed
-- **First-party** — games built and hosted directly in this repo: Ayo Kopdes, Kejar Koruptor, Mobil MBG, and Kicau Mania, all confirmed active. `src/index.js` (the Worker) currently only recognizes Kicau Mania in its own `LOCAL_GAMES`, so the other three don't yet get working `/share/` links or sitemap entries — syncing that is a pending cleanup item, see [Known issues & roadmap](#known-issues--roadmap)
+- **First-party** — games built and hosted directly in this repo: Ayo Kopdes, Kejar Koruptor, Mobil MBG, and Kicau Mania, all confirmed active. `src/index.js` (the Worker) now recognizes all four in its `LOCAL_GAMES` — sync completed (`changelog.md` Task #002).
 
 > **Related docs:** this README covers setup and architecture for someone working in the repo. Product scope and open decisions live in [`prd.md`](./prd.md), the full technical reference is [`knowledge.md`](./knowledge.md), and current task status/backlog is [`changelog.md`](./changelog.md). All three were reconciled against this codebase on 2026-08-28.
 
@@ -133,9 +133,6 @@ gimboot/
 │   └── shared/                    ui-share.js/css — confetti + share-prompt module
 ├── src/
 │   └── index.js                  Worker: /api/games, /api/search, /share/:id, /play/{id}/{slug}, /game, /sitemap.xml
-└── functions/
-    ├── api/games.js, search.js    Not invoked under this deploy model — see above
-    └── share/[id].js               Not invoked under this deploy model — see above
 ```
 
 Per-game high scores live inside each `games/{slug}/game.js`, not in `js/state.js`. A separate, cross-game high score also exists in `js/pwa.js`, updated via `window.postMessage` from both first-party games and embedded GamePix games (GamePix sends this natively; GameMonetize embeds have no equivalent hook).
@@ -165,9 +162,9 @@ No automated tests exist yet, and there's no `package.json`, linter, or test run
 ## Known issues & roadmap
 
 - **`src/index.js` `LOCAL_GAMES` needs syncing** — all four first-party games are confirmed active, but `src/index.js` (server) currently only recognizes Kicau Mania. Add Ayo Kopdes, Kejar Koruptor, and Mobil MBG so their `/share/` links and sitemap entries work correctly too (`changelog.md` Task #002).
-- **Delete `functions/api/*`, `functions/share/[id].js`** — confirmed not invoked under the current deploy model; decided to remove them for clean code (`changelog.md` Task #002).
-- **Verify and wire up `favicon.svg`** — confirmed as the official favicon, but its current content doesn't match the intended pixel-art joystick design and it isn't referenced from `index.html`/`game.html`/`manifest.json` yet. Once wired in, `.avicon.svg` can be removed (`changelog.md` Task #002).
-- **`manifest.json` screenshots** — `screenshot-desktop.png` and `screenshot-mobile.png` are currently identical images, not distinct desktop/mobile previews. Still an open decision.
+- **Delete `functions/api/*`, `functions/share/[id].js`** — confirmed not invoked under the current deploy model; decided to remove them for clean code. **Files deleted** as part of `changelog.md` Task #002.
+- **Verify and wire up `favicon.svg`** — confirmed as the official favicon, wired into `index.html`/`game.html` via `<link rel="icon">`, and referenced in `manifest.json`. **`.avicon.svg` removed** after verification (`changelog.md` Task #002).
+- **`manifest.json` screenshots** — `screenshot-desktop.png` and `screenshot-mobile.png` were identical images. The "narrow" entry removed from `manifest.json`, keeping only "wide" (`changelog.md` Task #002).
 - **Ad-script for GameMonetize/GamePix monetization** — a separate client-side ad unit (with load-timeout fallback so it never blocks game rendering) hasn't been built yet; this is distinct from the catalog-feed integration, which already has its own resilience (`changelog.md` Task #011).
 - Ping Google/Bing with the sitemap URL after a deploy so indexing starts sooner.
 - A provider filter (All / GameMonetize / GamePix / Original) — the `source` field used for the "Original" badge already exists to build on.

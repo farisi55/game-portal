@@ -14,12 +14,6 @@
     "sizes": "1254x1254",
     "type": "image/png",
     "form_factor": "wide"
-  },
-  {
-    "src": "screenshot-mobile.png",
-    "sizes": "1254x1254",
-    "type": "image/png",
-    "form_factor": "narrow" 
   }
 ],
   "icons": [
