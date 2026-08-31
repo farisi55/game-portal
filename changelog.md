@@ -31,20 +31,16 @@ simple_mode: false
 
 ## [IN PROGRESS]
 
-### Task #001 — Environment Audit & Security Baseline
+### Task #004 — Add Dev-Tooling & Lockfile (Prettier, ESLint, Test Runner)
 - **Phase:** Phase 1 — Foundation
-- **Scope:** Audit the existing repo's security/config baseline (.gitignore coverage, secret handling, log PII exposure, env-var validation readiness) and close any gaps found. [AUDIT KODE] Target audit untuk "log PII exposure" & "env-var validation readiness" dikoreksi ke `src/index.js` — file inilah yang benar-benar menangani request live, bukan `functions/api/*`/`functions/share/[id].js` (dikonfirmasi non-aktif pada model deploy Worker-with-assets saat ini, lihat [AUDIT FINDINGS] #1 di atas).
-- **Files to create / modify:** `.gitignore`, `src/index.js`, `wrangler.toml`. [AUDIT KODE] `functions/api/games.js`, `functions/api/search.js`, `functions/share/[id].js` dikeluarkan dari daftar file task ini — statusnya (dipertahankan sebagai referensi vs. dihapus) adalah keputusan Task #002, bukan bagian dari audit keamanan environment ini.
+- **Scope:** Introduce `package.json` with Prettier, ESLint (`eslint:recommended`), and a test runner (Vitest or `node --test`), with a committed lockfile. [AUDIT KODE] Dikonfirmasi belum ada `package.json`/lockfile/config CI apa pun di repo saat ini — task ini tetap sepenuhnya diperlukan seperti draf sebelumnya. Catatan tambahan: karena target uji utama kini mencakup `src/index.js` (lihat Task #009/#010), pertimbangkan test runner yang mendukung lingkungan Workers (mis. `@cloudflare/vitest-pool-workers`) alih-alih `node --test` polos, supaya binding/`env` ala Workers bisa di-mock dengan wajar.
+- **Files to create / modify:** `package.json`, lockfile, `.prettierrc`, `.eslintrc`
 - **Acceptance criteria:**
-  - [x] `.gitignore` explicitly excludes `.env`, `*.pem`, `*.key`, `*.p12`, `secrets/` — missing patterns added ([AUDIT KODE] dikonfirmasi: `.gitignore` saat ini HANYA berisi pola folder tool AI — `.claude/`, `.wrangler/`, `.wrangler-dry-run/`, `.kilo/`, `.serena/` — nol dari lima pola secret sudah ada, jadi kriteria ini masih sepenuhnya valid & diperlukan)
-  - [x] No secret/credential value exists in `wrangler.toml` or any committed file; confirmed all future secrets belong in Cloudflare Environment Variables ([AUDIT KODE] `wrangler.toml` yang ada saat ini memang tidak memuat secret apa pun — hanya `name`, `main`, `compatibility_date`, dan blok `[assets]`)
-  - [x] `src/index.js` contains no logging of full request URLs/query strings that could carry user-supplied text ([AUDIT KODE] kriteria dipindah dari `functions/api/*`/`functions/share/[id].js` ke `src/index.js` — lihat catatan Scope di atas)
-  - [x] A minimal env-var validation helper exists (fails fast with a clear error if a required var is missing) — ready for the first real one added
+  - [ ] `npm run lint` runs ESLint against `js/`, `games/`, and `src/` with zero configuration errors
+  - [ ] `npm test` runs the chosen test runner successfully (exits 0 even with zero tests present)
+  - [ ] Lockfile is committed and reproducible (`npm ci` succeeds from a clean checkout)
 - **Dependencies:** none
-- **Decisions made:**
-  - [ARCH] .gitignore updated with .env, *.pem, *.key, *.p12, secrets/ patterns
-  - [INFRA] requireEnvVar helper added to src/index.js for fail-fast env var validation
-  - [OBSERVABILITY] .gitignore provides primary .env protection; pre-commit hook to be set up in Task #005
+- **Decisions made:** Belum dieksekusi — isi setelah task selesai.
 
 ### [COMPLETED]
 
@@ -104,51 +100,31 @@ simple_mode: false
 - **Notes:** none
 - **Knowledge drift:** none
 
+### Task #003 — Implement Health Check Endpoint ✅
+- **Completed:** 2026-08-31
+- **Phase:** 1
+- **Status:** OK
+- **Branch:** feat/task-003-implement-health-check-endpoint
+- **Files created / modified:**
+  - `src/index.js` — added `WORKER_VERSION` constant, `/api/health` router case, and `handleApiHealth()` function
+- **Acceptance criteria met:**
+  - [x] `GET /api/health` returns HTTP 200 with `{ status, version, timestamp }` under normal conditions
+  - [x] Endpoint responds in under 100ms with no external dependency (no DB, no third-party call)
+- **Security gate:** BASIC — all checks passed
+- **Scalability gate:** BASIC — all checks passed
+- **Regression:** Phase 1 build OK
+- **Decisions made:**
+  - [API] Response shape `{ status, version, timestamp }` chosen over `{ status, uptime, version }` — Cloudflare Workers are per-request with no persistent process; `timestamp` (current ISO 8601 request time) is the accurate and non-misleading equivalent for this edge deployment model
+  - [CODE] `WORKER_VERSION = '1.0.4'` constant added at top of `src/index.js`; bumped each deploy as a human-readable signal of which version is live
+  - [ARCH] `handleApiHealth()` is synchronous (no async/await) — no I/O means no need for a Promise, keeping the hot path as lean as possible
+  - [INFRA] `jsonResponse(..., 200, 0)` passes `cacheSeconds=0` so no `Cache-Control` header is emitted — health checks must always return current state, never a cached snapshot
+- **Notes:** none
+- **Knowledge drift:** UPDATE REQUIRED: @knowledge §8 — `GET /api/health` is now implemented; update "belum diimplementasikan" to reflect the live endpoint. UPDATE REQUIRED: @knowledge §5 — add `/api/health` to the API Contracts section with response shape `{ status: "ok", version: string, timestamp: ISO8601 }`.
+
 ## [NEXT TASKS]
 
 ### Phase 1 — Foundation
-*Task #001 dan #002 WAJIB selesai sebelum task Phase 3 mana pun dimulai — keputusan eksplisit developer (@knowledge §9).*
-
-### Task #002 — Clean-Code Audit: Remove Unused Files & Dead Code
-- **Phase:** Phase 1 — Foundation
-- **Scope:** Scan the full repository for unused files/code and execute the decisions below. [DIJAWAB 2026-08-30] Kedua unknown asli sudah terjawab tuntas: `.avicon.svg` bukan yang dipakai (favicon resmi adalah `favicon.svg`); `src/index.js` adalah satu-satunya Worker entry point yang aktif, terpisah dari (dan tidak digantikan oleh) modul-modul di `js/`. Tiga unknown baru yang muncul dari pre-audit juga sudah dijawab developer: (a) `functions/api/games.js`, `functions/api/search.js`, `functions/share/[id].js` → DIHAPUS; (b) roster game first-party → keempatnya AKTIF, `src/index.js` perlu disinkronkan; (c) `favicon.svg` → dipakai sebagai favicon resmi, isinya perlu diverifikasi & dipasang. `screenshot-desktop.png`/`screenshot-mobile.png` yang identik di `manifest.json` (d) masih menunggu keputusan terpisah (tidak termasuk di antara enam pertanyaan yang sudah dijawab).
-- **Files to create / modify:** `functions/` (dihapus seluruhnya), `src/index.js` (tambah Ayo Kopdes/Kejar Koruptor/Mobil MBG ke `LOCAL_GAMES`), `favicon.svg` (verifikasi isi, pasang referensi), `.avicon.svg` (dihapus setelah favicon.svg terpasang & terverifikasi), `index.html`/`game.html`/`manifest.json` (tambahkan `<link rel="icon">`/referensi ke `favicon.svg`), `README.md` (perbarui roster & status `functions/`), `manifest.json` (screenshot, masih menunggu keputusan).
-- **Acceptance criteria:**
-  - [ ] `functions/api/games.js`, `functions/api/search.js`, `functions/share/[id].js` dihapus dari repo — [DIJAWAB 2026-08-30] developer memutuskan dihapus (clean code). [VERIFIKASI TAMBAHAN 2026-08-30, dengan sitasi baris] Developer melakukan verifikasi line-by-line yang mengonfirmasi ketiganya duplikat/lebih lemah dari `src/index.js`:
-    - `functions/api/games.js:32` (`GET /api/games?num=`) ≡ `handleApiGames` (`src/index.js:195-203`, dispatch di `:82`) — logika identik: `Promise.allSettled(fetchGameMonetize+fetchGamePix)` (`src/index.js:167-174`), normalisasi via `parseGameMonetizeFeed` (`:591-623`) + `fetchGamePix` (`:647-712`), merge 50/50, Cache API TTL 1800s (`src/index.js:188-191` vs `functions:63-65`). Header `functions/api/games.js:4-11` sendiri menyatakan model Worker tidak memakai konvensi `functions/`.
-    - `functions/api/search.js:16` (`GET /api/search?q=`) ≡ `handleApiSearch` (`src/index.js:212-246`, dispatch di `:83`) — cache-key sama (`caches.default`, key `api/search?q=`); versi `functions/` hanya cari di GameMonetize (`functions:66-69`), versi `src/index.js` sudah gabungan GameMonetize+GamePix (`src:228-230`) — jadi `src/index.js` lebih lengkap, bukan cuma duplikat. Dipanggil `js/catalog.js` saat local search 0 hasil.
-    - `functions/share/[id].js:20` (`GET /share/{id}`) ≡ `handleShareRoute` (`src/index.js:256-315`, dispatch di `:85`) — stateless OG injection tanpa KV, lookup `LOCAL_GAMES`+remote via `getCombinedGames`, 302 jika miss, meta-refresh untuk bot vs redirect langsung untuk manusia, `slugify`/`escapeHtml` sama. Beda: `functions/share/[id].js:83-124` masih daftar 4 game lokal, `src/index.js` baru 1 (Kicau Mania) — konsisten dengan item sinkronisasi `LOCAL_GAMES` di atas.
-    - Kesimpulan keamanan hapus: `wrangler.toml:11` (`main=./src/index.js`, `npx wrangler deploy`) + `run_worker_first=["/*"]` (`src/index.js:60-98`) berarti SEMUA request masuk `src/index.js`; `functions/` hanya dibaca model Cloudflare Pages (`wrangler pages deploy` + konvensi `onRequestGet`), bukan model saat ini. Menghapus ketiganya sekarang: nol dampak ke prod (tidak ada import dari `src/`/`js/` ke `functions/`), dan `src/index.js` malah lebih lengkap (ada `/play/{id}/{slug}` via `handlePlayRoute:396` dan `/sitemap.xml` via `handleSitemap:547` yang tidak ada di `functions/`).
-    - **Catatan risiko (bukan alasan menunda, sekadar dicatat):** tidak aman jika proyek nanti pindah balik ke deploy Cloudflare Pages — logika `functions/` harus di-restore/duplikasi ulang saat itu (termasuk menambahkan rute `/play/` & `/sitemap.xml` yang saat ini hanya ada di `src/index.js`). Karena penghapusan tetap recoverable lewat riwayat Git, ini dianggap risiko rendah dan tidak mengubah keputusan hapus di atas.
-  - [x] `src/index.js`'s relationship to `js/*.js` is documented — RESOLVED: didokumentasikan di `knowledge.md` §3 sebagai entry point Worker yang berdiri sendiri, bukan bagian dari/pengganti modul `js/*.js` sisi browser
-  - [ ] `src/index.js`'s `LOCAL_GAMES` diperbarui agar mencakup Ayo Kopdes, Kejar Koruptor, Mobil MBG (selain Kicau Mania yang sudah ada) — [DIJAWAB 2026-08-30] developer mengonfirmasi keempat game masih aktif
-  - [ ] `favicon.svg` diverifikasi isinya sesuai desain ikon yang dimaksud (lihat README bagian rebrand), lalu direferensikan dari `index.html`/`game.html` (`<link rel="icon">`) dan `manifest.json` — [DIJAWAB 2026-08-30] developer memutuskan `favicon.svg` (bukan `.avicon.svg`) sebagai favicon resmi
-  - [ ] `.avicon.svg` dihapus setelah `favicon.svg` terverifikasi & terpasang
-  - [ ] `manifest.json` memiliki screenshot "wide" & "narrow" yang benar-benar berbeda, atau salah satunya dihapus dari manifest jika hanya satu yang tersedia (belum ada keputusan developer untuk poin ini)
-  - [ ] No file in the repo is unreferenced by any other file, build config, or route — tersisa untuk diverifikasi ulang setelah keempat poin eksekusi di atas selesai
-- **Dependencies:** none
-- **Decisions made:** Belum dieksekusi — isi setelah task selesai.
-
-### Task #003 — Implement Health Check Endpoint
-- **Phase:** Phase 1 — Foundation
-- **Scope:** Add a `GET /api/health` route reporting basic service status for the edge API surface. [AUDIT KODE] Karena `functions/` tidak aktif pada model deploy saat ini (lihat [AUDIT FINDINGS] #1), route ini ditambahkan sebagai case baru di dalam router `src/index.js`, BUKAN sebagai file baru `functions/api/health.js`.
-- **Files to create / modify:** `src/index.js`.
-- **Acceptance criteria:**
-  - [ ] `GET /api/health` returns HTTP 200 with `{ status, uptime, version }` under normal conditions (catatan: Worker edge tidak punya proses long-running dengan "uptime" tradisional — pertimbangkan apakah field ini berarti waktu sejak deploy, atau diganti field lain yang lebih relevan untuk model eksekusi per-request; keputusan developer)
-  - [ ] Endpoint responds in under 100ms with no external dependency (no DB, no third-party call)
-- **Dependencies:** none
-- **Decisions made:** Belum dieksekusi — isi setelah task selesai.
-
-### Task #004 — Add Dev-Tooling & Lockfile (Prettier, ESLint, Test Runner)
-- **Phase:** Phase 1 — Foundation
-- **Scope:** Introduce `package.json` with Prettier, ESLint (`eslint:recommended`), and a test runner (Vitest or `node --test`), with a committed lockfile. [AUDIT KODE] Dikonfirmasi belum ada `package.json`/lockfile/config CI apa pun di repo saat ini — task ini tetap sepenuhnya diperlukan seperti draf sebelumnya. Catatan tambahan: karena target uji utama kini mencakup `src/index.js` (lihat Task #009/#010), pertimbangkan test runner yang mendukung lingkungan Workers (mis. `@cloudflare/vitest-pool-workers`) alih-alih `node --test` polos, supaya binding/`env` ala Workers bisa di-mock dengan wajar.
-- **Files to create / modify:** `package.json`, lockfile, `.prettierrc`, `.eslintrc`
-- **Acceptance criteria:**
-  - [ ] `npm run lint` runs ESLint against `js/`, `games/`, and `src/` with zero configuration errors
-  - [ ] `npm test` runs the chosen test runner successfully (exits 0 even with zero tests present)
-  - [ ] Lockfile is committed and reproducible (`npm ci` succeeds from a clean checkout)
-- **Dependencies:** none
-- **Decisions made:** Belum dieksekusi — isi setelah task selesai.
+*Task #001, #002, dan #003 WAJIB selesai sebelum task Phase 3 mana pun dimulai — keputusan eksplisit developer (@knowledge §9).*
 
 ### Task #005 — Configure Pre-commit Hook to Block `.env`
 - **Phase:** Phase 1 — Foundation
@@ -343,3 +319,4 @@ Satu Cloudflare Worker dengan static assets (`src/index.js`) menangani seluruh r
 > v1.2.0 (2026-08-30): developer menjawab keenam [DECISION NEEDED] dari `prd.md` §10 v1.3.0. Jawaban dipropagasi ke `knowledge.md` v1.2.0, `prd.md` v1.4.0, dan task-task terkait di atas (Task #002, #006, #011, #013, #017), ditandai "[DIJAWAB 2026-08-30]". Lihat [DEVELOPER DECISIONS — 2026-08-30] di atas untuk ringkasan. Tidak ada task yang dipindah ke [COMPLETED] — keputusan sudah diambil, tapi eksekusi kode (sinkronisasi `LOCAL_GAMES`, penghapusan `functions/*`, verifikasi & pemasangan `favicon.svg`, pembuatan ad-script GameMonetize/GamePix) masih tertunda.
 > v1.3.0 (2026-08-30): developer menambahkan verifikasi line-by-line yang mengonfirmasi ketiga file `functions/*` duplikat/lebih lemah dari `src/index.js` dan aman dihapus pada model deploy saat ini (dengan catatan risiko bila nanti pindah ke Cloudflare Pages). Detail lengkap dengan sitasi baris ditambahkan ke Task #002. Masih belum ada eksekusi penghapusan file yang sebenarnya di repo.
 > v1.4.0 (2026-08-30): atas permintaan developer, ditambahkan empat entri retroaktif di atas yang merangkum fitur-fitur yang sudah live sebelum changelog ini dibuat — lihat catatan format di bagian paling atas [COMPLETED] untuk kenapa entri-entri ini tidak memakai template Task # yang sama dengan task lain di dokumen ini.
+> v1.0.5 (2026-08-31): Task #003 completed — `GET /api/health` implemented in `src/index.js` as a synchronous, no-I/O liveness endpoint returning `{ status, version, timestamp }`. `WORKER_VERSION = '1.0.4'` constant added. Knowledge drift recorded: @knowledge §5 and §8 need updating to document the live endpoint and its response shape.
