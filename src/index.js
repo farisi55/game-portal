@@ -18,6 +18,8 @@
 // (see wrangler.toml — `npx wrangler deploy`, not `wrangler pages deploy`).
 // ============================================================================
 
+const WORKER_VERSION = '1.0.4';
+
 const GM_FEED_BASE = 'https://gamemonetize.com/feed.php';
 const CATALOG_DEFAULT_NUM = 50;
 const CATALOG_MAX_NUM = 200;
@@ -118,6 +120,8 @@ export default {
       const httpsUrl = new URL(url);
       httpsUrl.protocol = 'https:';
       response = Response.redirect(httpsUrl.toString(), 301);
+    } else if (url.pathname === '/api/health') {
+      response = handleApiHealth();
     } else if (url.pathname === '/api/games') {
       response = await handleApiGames(url, env, ctx);
     } else if (url.pathname === '/api/search') {
@@ -137,6 +141,33 @@ export default {
     return withSecurityHeaders(response);
   },
 };
+
+// ----------------------------------------------------------------------------
+// GET /api/health — Lightweight liveness check.
+//
+// Returns immediately with no external I/O (no upstream fetch, no cache
+// lookup) so the response is always <100ms regardless of feed availability.
+// Suitable for uptime monitors and the Phase 7 load-test smoke probe.
+//
+// Response shape:
+//   { status: "ok", version: "<semver>", timestamp: "<ISO 8601>" }
+//
+// Note on "uptime": Cloudflare Workers are per-request — there is no
+// persistent process whose start time could be measured. `timestamp` (the
+// current request time) is the closest meaningful equivalent for an edge
+// deployment and avoids surfacing a misleading 0 or near-0 value.
+// ----------------------------------------------------------------------------
+function handleApiHealth() {
+  return jsonResponse(
+    {
+      status: 'ok',
+      version: WORKER_VERSION,
+      timestamp: new Date().toISOString(),
+    },
+    200,
+    0, // no-cache: health checks must reflect current state, not a stale snapshot
+  );
+}
 
 function withSecurityHeaders(response) {
   const headers = new Headers(response.headers);
