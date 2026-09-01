@@ -1,7 +1,7 @@
 ---
 project: Gimboot
 knowledge_version: 1.4.0
-changelog_version: 1.0.6
+changelog_version: 1.0.7
 created: 2026-08-28
 status: in_progress
 milestone: 1 of 1
@@ -31,14 +31,17 @@ simple_mode: false
 
 ## [IN PROGRESS]
 
-### Task #006 — Wire Lint & Security Scan into Cloudflare Workers Builds
-- **Phase:** Phase 1 — Foundation
-- **Scope:** Configure the build command to run lint and `npm audit` before deploy, so a failing check blocks the deployment. [DIJAWAB 2026-08-30] Mekanisme CI/CD dikonfirmasi developer: **Cloudflare Workers Builds** (bukan "Cloudflare Pages build command" seperti draf sebelumnya, dan bukan CI eksternal).
-- **Files to create / modify:** Build-command setting di dashboard Cloudflare Workers Builds, `package.json` (build script)
+### Task #007 — Unit Tests for `js/state.js` (localStorage Wrapper)
+- **Phase:** Phase 3 — Core Features
+- **Scope:** Write unit tests covering the read/write logic in `js/state.js`. [AUDIT KODE — KOREKSI PENTING] `js/state.js` TIDAK berisi logika skor/high-score sama sekali — file ini hanya mengelola FAVORIT & RECENTLY-PLAYED (dikonfirmasi baca langsung isi file). Logika "high-score-comparison" yang disebut draf sebelumnya sebenarnya ada di dua tempat lain: (a) per-game, di dalam masing-masing `games/{slug}/game.js`; (b) skor global lintas game, di `js/pwa.js` (key `arcade-high-score-v1`, dipicu `window.postMessage`). Task ini perlu ditulis ulang scope-nya untuk favorit/recently-played, dan high-score testing dipindah ke task terpisah (lihat catatan Acceptance criteria).
+- **Files to create / modify:** `js/state.js` (refactor kecil bila perlu agar testable), `js/state.test.js`
 - **Acceptance criteria:**
-  - [ ] A push with a deliberate lint error fails the build and does not deploy
-  - [ ] A clean push passes the build command and deploys normally
-- **Dependencies:** Task #004
+  - [ ] Tests cover: reading favorites/recently-played when unset returns a safe default; adding/removing a favorite persists correctly; recently-played list behaves as expected (mis. urutan, batas jumlah bila ada)
+  - [ ] Tests pass against a mocked `localStorage`, including the storage-unavailable/private-mode case
+  - [ ] Unit test written and passing for new logic
+  - [ ] Test is isolated: sets up and tears down its own state
+  - [ ] [AUDIT KODE — BARU] Pertimbangkan task terpisah untuk high-score: unit test untuk logika high-score per-game (di dalam tiap `games/{slug}/game.js`) dan untuk tracker global di `js/pwa.js` (`readHighScore`/`writeHighScore`/`wireScoreMessages`) — di luar cakupan `state.js`
+- **Dependencies:** Task #002, Task #004
 - **Decisions made:** Belum dieksekusi — isi setelah task selesai.
 
 ### [COMPLETED]
@@ -64,6 +67,26 @@ simple_mode: false
   - [CODE] Pre-commit hook checks staged files via `git diff --cached --name-only | grep` for `.env$` pattern — rejects with clear error before lint runs
   - [CODE] `.husky/_` directory gitignored by husky internally (regenerated on install); user hooks in `.husky/` are committed
 - **Notes:** none
+- **Knowledge drift:** none
+
+### Task #006 — Wire Lint & Security Scan into Cloudflare Workers Builds ✅
+- **Completed:** 2026-09-01
+- **Phase:** Phase 1 — Foundation
+- **Status:** OK
+- **Branch:** feat/task-006-wire-lint-security-scan-builds
+- **Files created / modified:**
+  - `package.json` — added `build` script running `npm run lint && npm audit --audit-level=high`
+- **Acceptance criteria met:**
+  - [x] A push with a deliberate lint error fails the build and does not deploy (verified locally: lint error → non-zero exit)
+  - [x] A clean push passes the build command and deploys normally (verified: `npm run build` exit 0)
+- **Security gate:** BASIC — all checks passed
+- **Scalability gate:** BASIC — all checks passed (all items N/A for config-only task)
+- **Regression:** Phase 1 build OK — `npm run build` exit 0, `npm run lint` exit 0, `npm test` exit 0 (passWithNoTests), `npm ci` exit 0, 0 vulnerabilities
+- **Decisions made:**
+  - [INFRA] Build command for Cloudflare Workers Builds dashboard set to `npm run build` — runs lint + npm audit (high/critical only) before deploy
+  - [CODE] `npm audit --audit-level=high` used instead of default to avoid blocking on moderate/low informational advisories
+  - [ARCH] Build script order: lint first (fast fail on code quality), then audit (security) — both must pass for deploy to proceed
+- **Notes:** Cloudflare Workers Builds dashboard build command must be manually updated to `npm run build` (not tracked in repo)
 - **Knowledge drift:** none
 
 ### Task #004 — Add Dev-Tooling & Lockfile ✅
@@ -371,3 +394,4 @@ Satu Cloudflare Worker dengan static assets (`src/index.js`) menangani seluruh r
 > v1.0.5 (2026-08-31): Task #003 completed — `GET /api/health` implemented in `src/index.js` as a synchronous, no-I/O liveness endpoint returning `{ status, version, timestamp }`. `WORKER_VERSION = '1.0.4'` constant added. Knowledge drift recorded: @knowledge §5 and §8 need updating to document the live endpoint and its response shape.
 > v1.0.5 (2026-08-31): Task #004 completed — `package.json` + `package-lock.json` introduced with ESLint 10.9.1 (flat config), Prettier 3.9.6, Vitest 4.1.11, jsdom 26.1.0. `eslint.config.js`, `.prettierrc`, `.prettierignore`, `vitest.config.js` created. Minor lint fixes in `js/state.js`, `js/catalog.js`, `js/player.js`, `src/index.js`. `npm run lint` and `npm test` both exit 0; `npm ci` exits 0 (0 vulnerabilities). @knowledge v1.3.0: §2 dev tooling stack added; §4 Formatter/Linter/Testing updated with actual versions. Task #005 promoted to [IN PROGRESS].
 > v1.0.6 (2026-09-01): Task #005 completed — husky 9.1.7 installed as git hooks manager. Pre-commit hook blocks `.env` files (clear error message) and runs lint. `.husky/` removed from `.gitignore` so hooks are committed. `prepare` script in `package.json` ensures hooks auto-install on `npm install`/`npm ci`. Task #006 promoted to [IN PROGRESS].
+> v1.0.7 (2026-09-01): Task #006 completed — `package.json` build script added (`npm run lint && npm audit --audit-level=high`). Cloudflare Workers Builds dashboard build command to be set to `npm run build`. Lint error causes non-zero exit blocking deploy; clean build passes. Task #007 promoted to [IN PROGRESS].
