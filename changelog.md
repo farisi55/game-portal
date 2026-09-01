@@ -1,7 +1,7 @@
 ---
 project: Gimboot
 knowledge_version: 1.3.0
-changelog_version: 1.0.5
+changelog_version: 1.0.6
 created: 2026-08-28
 status: in_progress
 milestone: 1 of 1
@@ -31,17 +31,40 @@ simple_mode: false
 
 ## [IN PROGRESS]
 
-### Task #005 — Configure Pre-commit Hook to Block `.env`
+### Task #006 — Wire Lint & Security Scan into Cloudflare Workers Builds
 - **Phase:** Phase 1 — Foundation
-- **Scope:** Install a pre-commit hook that runs lint and blocks any commit containing a `.env` file.
-- **Files to create / modify:** `.husky/pre-commit` (atau setara), `package.json` (scripts)
+- **Scope:** Configure the build command to run lint and `npm audit` before deploy, so a failing check blocks the deployment. [DIJAWAB 2026-08-30] Mekanisme CI/CD dikonfirmasi developer: **Cloudflare Workers Builds** (bukan "Cloudflare Pages build command" seperti draf sebelumnya, dan bukan CI eksternal).
+- **Files to create / modify:** Build-command setting di dashboard Cloudflare Workers Builds, `package.json` (build script)
 - **Acceptance criteria:**
-  - [ ] Committing a file named `.env` is rejected by the hook with a clear error message
-  - [ ] A normal commit with no `.env` file and passing lint proceeds without being blocked
+  - [ ] A push with a deliberate lint error fails the build and does not deploy
+  - [ ] A clean push passes the build command and deploys normally
 - **Dependencies:** Task #004
 - **Decisions made:** Belum dieksekusi — isi setelah task selesai.
 
 ### [COMPLETED]
+
+### Task #005 — Configure Pre-commit Hook to Block `.env` ✅
+- **Completed:** 2026-09-01
+- **Phase:** Phase 1
+- **Status:** OK
+- **Branch:** feat/task-005-precommit-hook-block-env
+- **Files created / modified:**
+  - `.husky/pre-commit` — pre-commit hook: blocks .env files + runs lint
+  - `package.json` — added husky 9.1.7 devDependency + `prepare` script
+  - `package-lock.json` — updated lockfile with husky dependency
+  - `.gitignore` — removed `.husky/` from ignore list (hooks now committed)
+- **Acceptance criteria met:**
+  - [x] Committing a file named `.env` is rejected by the hook with a clear error message
+  - [x] A normal commit with no `.env` file and passing lint proceeds without being blocked
+- **Security gate:** BASIC — all checks passed
+- **Scalability gate:** BASIC — all checks passed (all items N/A for tooling-only task)
+- **Regression:** Phase 1 build OK — `npm run lint` exit 0, `npm test` exit 0 (passWithNoTests), `npm ci` exit 0, 0 vulnerabilities
+- **Decisions made:**
+  - [INFRA] husky 9.1.7 chosen as git hooks manager — standard for Node.js projects, `prepare` script ensures hooks auto-install on `npm install` / `npm ci`
+  - [CODE] Pre-commit hook checks staged files via `git diff --cached --name-only | grep` for `.env$` pattern — rejects with clear error before lint runs
+  - [CODE] `.husky/_` directory gitignored by husky internally (regenerated on install); user hooks in `.husky/` are committed
+- **Notes:** none
+- **Knowledge drift:** none
 
 ### Task #004 — Add Dev-Tooling & Lockfile ✅
 - **Completed:** 2026-08-31
@@ -161,16 +184,6 @@ simple_mode: false
 
 ### Phase 1 — Foundation
 *Task #001, #002, dan #003 WAJIB selesai sebelum task Phase 3 mana pun dimulai — keputusan eksplisit developer (@knowledge §9).*
-
-### Task #005 — Configure Pre-commit Hook to Block `.env`
-- **Phase:** Phase 1 — Foundation
-- **Scope:** Install a pre-commit hook that runs lint and blocks any commit containing a `.env` file.
-- **Files to create / modify:** `.husky/pre-commit` (atau setara), `package.json` (scripts)
-- **Acceptance criteria:**
-  - [ ] Committing a file named `.env` is rejected by the hook with a clear error message
-  - [ ] A normal commit with no `.env` file and passing lint proceeds without being blocked
-- **Dependencies:** Task #004
-- **Decisions made:** Belum dieksekusi — isi setelah task selesai.
 
 ### Task #006 — Wire Lint & Security Scan into Cloudflare Workers Builds
 - **Phase:** Phase 1 — Foundation
@@ -357,3 +370,4 @@ Satu Cloudflare Worker dengan static assets (`src/index.js`) menangani seluruh r
 > v1.4.0 (2026-08-30): atas permintaan developer, ditambahkan empat entri retroaktif di atas yang merangkum fitur-fitur yang sudah live sebelum changelog ini dibuat — lihat catatan format di bagian paling atas [COMPLETED] untuk kenapa entri-entri ini tidak memakai template Task # yang sama dengan task lain di dokumen ini.
 > v1.0.5 (2026-08-31): Task #003 completed — `GET /api/health` implemented in `src/index.js` as a synchronous, no-I/O liveness endpoint returning `{ status, version, timestamp }`. `WORKER_VERSION = '1.0.4'` constant added. Knowledge drift recorded: @knowledge §5 and §8 need updating to document the live endpoint and its response shape.
 > v1.0.5 (2026-08-31): Task #004 completed — `package.json` + `package-lock.json` introduced with ESLint 10.9.1 (flat config), Prettier 3.9.6, Vitest 4.1.11, jsdom 26.1.0. `eslint.config.js`, `.prettierrc`, `.prettierignore`, `vitest.config.js` created. Minor lint fixes in `js/state.js`, `js/catalog.js`, `js/player.js`, `src/index.js`. `npm run lint` and `npm test` both exit 0; `npm ci` exits 0 (0 vulnerabilities). @knowledge v1.3.0: §2 dev tooling stack added; §4 Formatter/Linter/Testing updated with actual versions. Task #005 promoted to [IN PROGRESS].
+> v1.0.6 (2026-09-01): Task #005 completed — husky 9.1.7 installed as git hooks manager. Pre-commit hook blocks `.env` files (clear error message) and runs lint. `.husky/` removed from `.gitignore` so hooks are committed. `prepare` script in `package.json` ensures hooks auto-install on `npm install`/`npm ci`. Task #006 promoted to [IN PROGRESS].
