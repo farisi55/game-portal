@@ -8,6 +8,5 @@
 *.key
 *.p12
 secrets/
-.husky/
 node_modules/
 coverage/

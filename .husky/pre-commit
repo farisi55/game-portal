@@ -1,0 +1,11 @@
+#!/bin/sh
+
+# Block commits that include a .env file
+if git diff --cached --name-only | grep -qE '(^|\/)\.env$'; then
+  echo "❌ Commit blocked: .env file detected in staged changes."
+  echo "   Secrets must never be committed. Use Cloudflare environment variables instead."
+  exit 1
+fi
+
+# Run lint
+npm run lint

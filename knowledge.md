@@ -1,6 +1,6 @@
 ---
 project: Gimboot
-version: 1.3.0
+version: 1.4.0
 source: prd
 last_updated: 2026-08-30
 project_shape: fullstack
@@ -25,7 +25,7 @@ simple_mode: false
 - Container orchestration: none.
 - Key third-party services: GameMonetize/GamePix — [AUDIT KODE] perannya ganda dan sebelumnya hanya tercatat sebagian: (1) ad network, diverifikasi lewat `ads.txt`; DAN (2) sumber katalog game LIVE yang di-fetch server-side oleh `src/index.js` (GameMonetize via `feed.php`, GamePix via `feeds.gamepix.com/v2/json`), digabung, lalu di-cache 30 menit di edge (Cache API). Peran (2) ini sebelumnya tidak tercatat sama sekali di knowledge.md maupun PRD.
 - Webhook providers: none. [AUDIT KODE] Catatan terkait: `js/pwa.js` menerima pesan skor via `window.postMessage` (dari game lokal dan dari game GamePix yang di-embed) — ini komunikasi in-browser, bukan webhook server-to-server, jadi baris ini tetap akurat, hanya dicatat karena berkaitan.
-- Dev tooling (Task #004, ditambahkan 2026-08-31): `package.json` + committed lockfile (`package-lock.json`) diperkenalkan. Paket devDependencies yang di-pin dengan versi eksak: `eslint@10.9.1`, `@eslint/js@10.0.1` (flat config ESLint 9+ — file `eslint.config.js`, bukan `.eslintrc`), `prettier@3.9.6` (config `.prettierrc`), `vitest@4.1.11` (test runner, config `vitest.config.js`, environment jsdom), `jsdom@26.1.0` (browser-globals shim untuk unit test `js/` files). `@cloudflare/vitest-pool-workers` untuk Worker-integration tests dipertimbangkan tapi ditunda ke Task #009 saat test `src/index.js` ditulis; saat itu paket akan diganti dengan `@cloudflare/vitest-plugin` (API saat ini per dokumentasi Cloudflare).
+- Dev tooling (Task #004, ditambahkan 2026-08-31): `package.json` + committed lockfile (`package-lock.json`) diperkenalkan. Paket devDependencies yang di-pin dengan versi eksak: `eslint@10.9.1`, `@eslint/js@10.0.1` (flat config ESLint 9+ — file `eslint.config.js`, bukan `.eslintrc`), `prettier@3.9.6` (config `.prettierrc`), `vitest@4.1.11` (test runner, config `vitest.config.js`, environment jsdom), `jsdom@26.1.0` (browser-globals shim untuk unit test `js/` files). `husky@9.1.7` (git hooks manager, ditambahkan Task #005 — pre-commit hook blocks `.env` + runs lint; `prepare` script ensures hooks auto-install on `npm install`). `@cloudflare/vitest-pool-workers` untuk Worker-integration tests dipertimbangkan tapi ditunda ke Task #009 saat test `src/index.js` ditulis; saat itu paket akan diganti dengan `@cloudflare/vitest-plugin` (API saat ini per dokumentasi Cloudflare).
 
 ## 3. Architecture
 - Folder/module structure (diperbarui & diverifikasi terhadap isi repo aktual, 2026-08-28):
