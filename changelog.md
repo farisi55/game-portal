@@ -1,7 +1,7 @@
 ---
 project: Gimboot
 knowledge_version: 1.4.0
-changelog_version: 1.0.7
+changelog_version: 1.0.8
 created: 2026-08-28
 status: in_progress
 milestone: 1 of 1
@@ -31,20 +31,54 @@ simple_mode: false
 
 ## [IN PROGRESS]
 
-### Task #007 — Unit Tests for `js/state.js` (localStorage Wrapper)
+### Task #009 — Unit Tests for Catalog & Search Logic (`src/index.js`)
 - **Phase:** Phase 3 — Core Features
-- **Scope:** Write unit tests covering the read/write logic in `js/state.js`. [AUDIT KODE — KOREKSI PENTING] `js/state.js` TIDAK berisi logika skor/high-score sama sekali — file ini hanya mengelola FAVORIT & RECENTLY-PLAYED (dikonfirmasi baca langsung isi file). Logika "high-score-comparison" yang disebut draf sebelumnya sebenarnya ada di dua tempat lain: (a) per-game, di dalam masing-masing `games/{slug}/game.js`; (b) skor global lintas game, di `js/pwa.js` (key `arcade-high-score-v1`, dipicu `window.postMessage`). Task ini perlu ditulis ulang scope-nya untuk favorit/recently-played, dan high-score testing dipindah ke task terpisah (lihat catatan Acceptance criteria).
-- **Files to create / modify:** `js/state.js` (refactor kecil bila perlu agar testable), `js/state.test.js`
+- **Scope:** [AUDIT KODE — RETARGET] Draf sebelumnya menyasar `functions/api/games.js` & `functions/api/search.js`, yang terkonfirmasi non-aktif (lihat [AUDIT FINDINGS] #1). Logika yang benar-benar berjalan adalah `handleApiGames`/`handleApiSearch` di dalam `src/index.js`. Catatan penting: kedua fungsi ini saat ini belum di-`export`, jadi kemungkinan perlu (a) refactor kecil menambahkan named export, atau (b) pendekatan test yang memanggil default export `fetch` handler Worker langsung dengan `Request`/`env` tiruan (mis. via `@cloudflare/vitest-pool-workers`) — pilih salah satu sebelum menulis test.
+- **Files to create / modify:** `src/index.js` (kemungkinan perlu export tambahan), `src/index.test.js`
 - **Acceptance criteria:**
-  - [ ] Tests cover: reading favorites/recently-played when unset returns a safe default; adding/removing a favorite persists correctly; recently-played list behaves as expected (mis. urutan, batas jumlah bila ada)
-  - [ ] Tests pass against a mocked `localStorage`, including the storage-unavailable/private-mode case
+  - [ ] Test `/api/games` mengonfirmasi bentuk respons JSON (metadata game: id, judul, kategori/slug, thumbnail, url, dimensi) mencakup `LOCAL_GAMES` dan skenario ketika salah satu/kedua feed eksternal (GameMonetize/GamePix) gagal di-fetch
+  - [ ] Test `/api/search` mengonfirmasi query kosong/tidak cocok mengembalikan hasil kosong, bukan error
   - [ ] Unit test written and passing for new logic
   - [ ] Test is isolated: sets up and tears down its own state
-  - [ ] [AUDIT KODE — BARU] Pertimbangkan task terpisah untuk high-score: unit test untuk logika high-score per-game (di dalam tiap `games/{slug}/game.js`) dan untuk tracker global di `js/pwa.js` (`readHighScore`/`writeHighScore`/`wireScoreMessages`) — di luar cakupan `state.js`
-- **Dependencies:** Task #002, Task #004
+- **Dependencies:** Task #004
 - **Decisions made:** Belum dieksekusi — isi setelah task selesai.
 
 ### [COMPLETED]
+
+### Task #008 — Unit Tests for `js/utils.js` ✅
+- **Completed:** 2026-09-03
+- **Phase:** Phase 3 — Core Features
+- **Status:** OK
+- **Branch:** feat/task-008-utils-js-unit-tests
+- **Files created / modified:**
+  - `js/utils.test.js` — unit tests for all 9 exported functions in `js/utils.js`: escapeHtml, debounce, slugify, buildPlayUrl, buildGamePageUrl, isAllowedEmbedUrl, readSessionGames, writeSessionGames, fetchGameCatalog
+- **Acceptance criteria met:**
+  - [x] Every exported function has at least one passing test covering its normal case and one edge case
+  - [x] Test suite runs via `npm test` with visible pass/fail output (67 passed, 0 failed)
+  - [x] Unit test written and passing for new logic
+  - [x] Test is isolated: sets up and tears down its own state (afterEach clears sessionStorage/localStorage; debounce tests use vi.useFakeTimers)
+- **Security gate:** BASIC — all checks passed
+  - [x] No secrets hardcoded
+  - [x] Sensitive config from environment variables only
+  - [x] No eval() or exec() with external input
+  - [x] Error messages don't expose stack traces or internal paths
+  - [x] .gitignore includes .env, *.pem, *.key, *.p12
+  - [x] Pre-commit hook active (verified)
+- **Scalability gate:** BASIC — all checks passed (all items N/A for unit test file)
+  - [x] No synchronous blocking in async handlers
+  - [x] No hardcoded pool sizes/timeouts/batch limits
+  - [x] External I/O: explicit timeout values
+  - [x] No global mutable state across concurrent requests
+  - [x] Correlation ID generated at entry (N/A — client-side test file)
+  - [x] Structured logger / crash reporter initialized (N/A — test file)
+- **Regression:** Passed 67 tests, 0 failed (21 state + 46 utils)
+- **Decisions made:**
+  - [TEST] escapeHtml tests use computed expected values (matching the function's replace logic) instead of hardcoded HTML entity strings, avoiding test-file encoding ambiguity
+  - [TEST] debounce tests use `vi.useFakeTimers()` in `beforeEach` for deterministic timer control
+  - [TEST] fetchGameCatalog tests use `globalThis.fetch` mock instead of `global.fetch` to satisfy ESLint no-undef rule
+  - [TEST] isAllowedEmbedUrl tests cover local game paths, allowed HTTPS, subdomains, protocol-relative, javascript:, data:, malformed URLs, and disallowed hosts
+- **Notes:** none
+- **Knowledge drift:** none
 
 ### Task #005 — Configure Pre-commit Hook to Block `.env` ✅
 - **Completed:** 2026-09-01
@@ -246,18 +280,6 @@ simple_mode: false
 - **Dependencies:** Task #002, Task #004
 - **Decisions made:** Belum dieksekusi — isi setelah task selesai.
 
-### Task #009 — Unit Tests for Catalog & Search Logic (`src/index.js`)
-- **Phase:** Phase 3 — Core Features
-- **Scope:** [AUDIT KODE — RETARGET] Draf sebelumnya menyasar `functions/api/games.js` & `functions/api/search.js`, yang terkonfirmasi non-aktif (lihat [AUDIT FINDINGS] #1). Logika yang benar-benar berjalan adalah `handleApiGames`/`handleApiSearch` di dalam `src/index.js`. Catatan penting: kedua fungsi ini saat ini belum di-`export`, jadi kemungkinan perlu (a) refactor kecil menambahkan named export, atau (b) pendekatan test yang memanggil default export `fetch` handler Worker langsung dengan `Request`/`env` tiruan (mis. via `@cloudflare/vitest-pool-workers`) — pilih salah satu sebelum menulis test.
-- **Files to create / modify:** `src/index.js` (kemungkinan perlu export tambahan), `src/index.test.js`
-- **Acceptance criteria:**
-  - [ ] Test `/api/games` mengonfirmasi bentuk respons JSON (metadata game: id, judul, kategori/slug, thumbnail, url, dimensi) mencakup `LOCAL_GAMES` dan skenario ketika salah satu/kedua feed eksternal (GameMonetize/GamePix) gagal di-fetch
-  - [ ] Test `/api/search` mengonfirmasi query kosong/tidak cocok mengembalikan hasil kosong, bukan error
-  - [ ] Unit test written and passing for new logic
-  - [ ] Test is isolated: sets up and tears down its own state
-- **Dependencies:** Task #004
-- **Decisions made:** Belum dieksekusi — isi setelah task selesai.
-
 ### Task #010 — Harden & Test Output Encoding in `src/index.js` Share/Play Routes
 - **Phase:** Phase 3 — Core Features
 - **Scope:** [AUDIT KODE — RETARGET] Draf sebelumnya menyasar `functions/share/[id].js`, yang terkonfirmasi non-aktif. Rute yang benar-benar melayani traffic adalah `handleShareRoute`, `handlePlayRoute`, dan `handleGameRoute` di dalam `src/index.js`. Pembacaan kode langsung menunjukkan escaping (`escapeHtmlAttr`, `escapeJsonLd`) SUDAH diterapkan secara konsisten di ketiga handler ini — bagian "harden" dari task ini kemungkinan besar sudah selesai; yang tersisa terutama bagian "test" untuk membuktikannya, mencakup ketiga rute (bukan hanya `/share/`).
@@ -394,4 +416,28 @@ Satu Cloudflare Worker dengan static assets (`src/index.js`) menangani seluruh r
 > v1.0.5 (2026-08-31): Task #003 completed — `GET /api/health` implemented in `src/index.js` as a synchronous, no-I/O liveness endpoint returning `{ status, version, timestamp }`. `WORKER_VERSION = '1.0.4'` constant added. Knowledge drift recorded: @knowledge §5 and §8 need updating to document the live endpoint and its response shape.
 > v1.0.5 (2026-08-31): Task #004 completed — `package.json` + `package-lock.json` introduced with ESLint 10.9.1 (flat config), Prettier 3.9.6, Vitest 4.1.11, jsdom 26.1.0. `eslint.config.js`, `.prettierrc`, `.prettierignore`, `vitest.config.js` created. Minor lint fixes in `js/state.js`, `js/catalog.js`, `js/player.js`, `src/index.js`. `npm run lint` and `npm test` both exit 0; `npm ci` exits 0 (0 vulnerabilities). @knowledge v1.3.0: §2 dev tooling stack added; §4 Formatter/Linter/Testing updated with actual versions. Task #005 promoted to [IN PROGRESS].
 > v1.0.6 (2026-09-01): Task #005 completed — husky 9.1.7 installed as git hooks manager. Pre-commit hook blocks `.env` files (clear error message) and runs lint. `.husky/` removed from `.gitignore` so hooks are committed. `prepare` script in `package.json` ensures hooks auto-install on `npm install`/`npm ci`. Task #006 promoted to [IN PROGRESS].
+> v1.0.7 (2026-09-01): Task #006 completed — `package.json` build script added (`npm run lint && npm audit --audit-level=high`). Cloudflare Workers Builds dashboard build command to be set to `npm run build`. Lint error causes non-zero exit blocking deploy; clean build passes.
+
+### Task #007 — Unit Tests for `js/state.js` (localStorage Wrapper) ✅
+- **Completed:** 2026-09-03
+- **Phase:** Phase 3 — Core Features
+- **Status:** OK
+- **Branch:** feat/task-007-unit-tests-state-js
+- **Files created / modified:**
+  - `js/state.test.js` — unit tests for `js/state.js` localStorage wrapper, covering saveRecent, getRecentGames, toggleFavorite, getFavorites, isFavorite, removeFavorite, with mocked localStorage including storage-unavailable/private-mode edge cases
+- **Acceptance criteria met:**
+  - [x] Tests cover: reading favorites/recently-played when unset returns a safe default; adding/removing a favorite persists correctly; recently-played list behaves as expected (order, limit)
+  - [x] Tests pass against a mocked `localStorage`, including the storage-unavailable/private-mode case
+  - [x] Unit test written and passing for new logic
+  - [x] Test is isolated: sets up and tears down its own state (afterEach clears localStorage)
+  - [x] [AUDIT KODE — BARU] High-score testing considered separate task (out of `state.js` scope — per-game in `games/{slug}/game.js`, global in `js/pwa.js`)
+- **Security gate:** BASIC — all checks passed
+- **Scalability gate:** BASIC — all checks passed
+- **Regression:** Phase 3 test OK — 21 passed, 0 failed
+- **Decisions made:**
+  - [TEST] Unit test scope confirmed for `state.js` favorit/recently-played only; high-score testing deferred to separate tasks (per-game in `games/{slug}/game.js`, global in `js/pwa.js`)
+- **Notes:** none
+- **Knowledge drift:** none
+
 > v1.0.7 (2026-09-01): Task #006 completed — `package.json` build script added (`npm run lint && npm audit --audit-level=high`). Cloudflare Workers Builds dashboard build command to be set to `npm run build`. Lint error causes non-zero exit blocking deploy; clean build passes. Task #007 promoted to [IN PROGRESS].
+> v1.0.8 (2026-09-03): Task #008 completed — `js/utils.test.js` created with 46 tests covering all 9 exported functions in `js/utils.js` (escapeHtml, debounce, slugify, buildPlayUrl, buildGamePageUrl, isAllowedEmbedUrl, readSessionGames, writeSessionGames, fetchGameCatalog). All 67 tests pass (21 state + 46 utils), lint clean, build passes, 0 vulnerabilities. Task #009 promoted to [IN PROGRESS].
