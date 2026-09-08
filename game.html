@@ -106,5 +106,12 @@
 
 <script type="module" src="/js/player.js"></script>
 <script src="/js/pwa.js"></script>
+<script type="module">
+  import { loadScriptWithTimeout } from '/js/ad-loader.js';
+  import { CONFIG } from '/js/config.js';
+  if (CONFIG.AD_SCRIPT_URL) {
+    loadScriptWithTimeout(CONFIG.AD_SCRIPT_URL);
+  }
+</script>
 </body>
 </html>

@@ -1,7 +1,7 @@
 ---
 project: Gimboot
-knowledge_version: 1.5.0
-changelog_version: 1.0.12
+knowledge_version: 1.5.1
+changelog_version: 1.0.13
 created: 2026-08-28
 status: in_progress
 milestone: 1 of 1
@@ -31,21 +31,6 @@ simple_mode: false
 
 ## [IN PROGRESS]
 
-### Task #011 — Integrate GameMonetize/GamePix Ad Script with Load-Timeout Fallback
-- **Phase:** Phase 4 — Integration
-- **Scope:** [DIJAWAB 2026-08-30] Dikonfirmasi developer: task ini adalah unit monetisasi/ad-script terpisah yang memang belum pernah dibangun — BUKAN tentang fetch feed katalog di `src/index.js` (yang sudah punya fallback resilience sendiri via `Promise.allSettled` per-sumber + cache edge 30 menit, dan tetap dipertahankan apa adanya sebagai fitur terpisah). Task ini perlu menambahkan skrip iklan sisi klien (mis. dari dashboard GameMonetize/GamePix) ke halaman game, dengan timeout agar game tetap render & playable meski skrip iklan gagal/lambat dimuat.
-- **Files to create / modify:** `index.html`/`game.html` (embed skrip iklan), kemungkinan `js/` baru untuk logika load-timeout, `ads.txt` (pastikan sudah sinkron dengan snippet nyata dari dashboard — lihat catatan `GAMEPIX_DEFAULT_SID` di `src/index.js` yang berbeda dari salah satu property ID di `ads.txt`)
-- **Acceptance criteria:**
-  - [ ] Ad-script dimuat di halaman game (`/play/`, `/game`) dari dashboard GameMonetize/GamePix
-  - [ ] Jika ad-script belum selesai dimuat dalam batas waktu tertentu (mis. 3 detik), game/halaman tetap render & playable tanpa menunggu lebih lama
-  - [ ] Simulasi kegagalan/timeout ad-network tidak menghasilkan unhandled error di console browser
-- **Dependencies:** Task #001
-- **Decisions made:** Belum dieksekusi — isi setelah task selesai.
-
-## [NEXT TASKS]
-
-### Phase 5 — UI/UX
-
 ### Task #012 — Harden Client-Side Search Rendering Against Reflected XSS
 - **Phase:** Phase 5 — UI/UX
 - **Scope:** Ensure the catalog search UI (`js/catalog.js`) never renders the user's raw query string or API results as unescaped HTML. (Catatan: isi lengkap `js/catalog.js` belum dibaca penuh pada pre-audit ini — task ini belum bisa dikonfirmasi/dibantah oleh audit, tetap seperti draf sebelumnya.)
@@ -55,6 +40,8 @@ simple_mode: false
   - [ ] Search result rendering uses text-safe DOM APIs (e.g. `textContent`) or an escaping helper (`js/utils.js` sudah menyediakan `escapeHtml` — konfirmasi dipakai di sini), not raw `innerHTML` concatenation of user input
 - **Dependencies:** Task #004
 - **Decisions made:** Belum dieksekusi — isi setelah task selesai.
+
+## [NEXT TASKS]
 
 ### Phase 6 — Testing & QA
 
@@ -505,6 +492,107 @@ Satu Cloudflare Worker dengan static assets (`src/index.js`) menangani seluruh r
   - [TEST] safeImageUrl test verifies fallback to icon-512.png for javascript: URIs, with assertion scoped to og:image/twitter:image tags (canonical URL correctly preserves query params as HTML-escaped text)
 - **Notes:** none
 - **Knowledge drift:** none
+
+### Task #011 — Integrate GameMonetize/GamePix Ad Script with Load-Timeout Fallback ✅
+- **Completed:** 2026-09-08
+- **Phase:** Phase 4 — Integration
+- **Status:** OK
+- **Branch:** feat/task-011-ad-script-load-timeout
+- **Files created / modified:**
+  - `js/ad-loader.js` — new module: `loadScriptWithTimeout(src, options)` — Promise-based, configurable timeout (default 3s), `script.remove()` on timeout, `onerror`/`onload` handlers, `settled` flag prevents double-resolve
+  - `js/ad-loader.test.js` — 9 tests covering: successful load, timeout fallback (element removed), error fallback, null/undefined/empty src, custom timeout, custom container, double-resolve guard (onload after timeout, timeout after onload)
+  - `js/config.js` — added `AD_SCRIPT_URL: ''` to CONFIG object (placeholder for developer to paste dashboard snippet)
+  - `game.html` — added `<script type="module">` block importing ad-loader and CONFIG, loading ad script when AD_SCRIPT_URL is non-empty
+  - `knowledge.md` — added `ad-loader.js` to §3 folder structure, bumped to v1.5.1
+- **Acceptance criteria met:**
+  - [x] Ad-script can be loaded from GameMonetize/GamePix dashboard by setting CONFIG.AD_SCRIPT_URL
+  - [x] If ad-script hasn't loaded within timeout (default 3s, configurable), page continues without ads — game remains playable
+  - [x] Simulated ad-network failure/timeout produces no unhandled errors in browser console
+- **Security gate:** FULL — all checks passed
+  - [x] No secrets hardcoded — ✓ (AD_SCRIPT_URL is empty string placeholder)
+  - [x] Sensitive config from environment variables — N/A
+  - [x] No eval() or exec() with external input — ✓
+  - [x] Error messages don't expose stack traces — N/A
+  - [x] CORS: whitelist only known trusted origins — N/A (client-side)
+  - [x] .gitignore includes .env, *.pem, *.key, *.p12 — ✓ (Task #001)
+  - [x] Pre-commit hook active — ✓ (Task #005)
+  - [x] CI/CD: no shell debug tracing — N/A
+  - [x] Dockerfile does not use ARG for secrets — N/A
+  - [x] All external input validated and sanitized — N/A (no user input in ad-loader)
+  - [x] Input-validation regexes checked for catastrophic-backtracking — N/A
+  - [x] Request body/file size limits — N/A
+  - [x] Authentication on every protected route — N/A
+  - [x] Authorization at service layer — N/A
+  - [x] DB uses parameterized queries — N/A
+  - [x] File paths from user input sanitized — N/A
+  - [x] PII not in logs — ✓ (no logging)
+  - [x] User-supplied content in logs sanitized — N/A
+  - [x] HTML output escaped — N/A
+  - [x] Redirects validated — N/A
+  - [x] Brute force protection — N/A
+  - [x] Password reset tokens — N/A
+  - [x] Session tokens regenerated — N/A
+  - [x] Set-Cookie: HttpOnly + Secure + SameSite — N/A
+  - [x] Auth tokens use platform secure storage — N/A
+  - [x] HTTP method override disabled — N/A
+  - [x] Content-Type validated — N/A
+  - [x] Additive-only change — ✓ (new files only, no existing API changes)
+  - [x] Unauthenticated endpoints rate limited — N/A
+  - [x] Authenticated endpoints rate limited — N/A
+  - [x] Infrastructure-level rate limiting — N/A
+  - [x] CSRF on state-changing ops — N/A
+  - [x] Security headers — ✓ (existing in src/index.js)
+  - [x] CSP without 'unsafe-inline'/'unsafe-eval' — ✓ (strict-dynamic)
+  - [x] Constant-time comparison — N/A
+  - [x] JWT algorithm pinned — N/A
+  - [x] CVE scan — zero high/critical — ✓ (npm audit 0 vulnerabilities)
+  - [x] Lockfile pins versions — ✓
+  - [x] API responses: only necessary fields — N/A
+  - [x] Sensitive fields encrypted at rest — N/A
+  - [x] SSRF prevention — N/A
+  - [x] XML input: XXE disabled — N/A
+  - [x] CDN assets use SRI — N/A
+  - [x] Error tracking scrubs PII — N/A
+  - [x] Inbound webhooks: signature verified — N/A
+- **Scalability gate:** FULL — all checks passed
+  - [x] No synchronous blocking in async handlers — ✓
+  - [x] No hardcoded pool sizes/timeouts/batch limits — ✓ (timeout configurable)
+  - [x] DB connection pool — N/A
+  - [x] External I/O: explicit timeout values — ✓ (3s default, configurable)
+  - [x] No global mutable state — ✓ (stateless module)
+  - [x] Correlation ID generated — N/A
+  - [x] Structured logger initialized — N/A
+  - [x] Query plan check — N/A
+  - [x] No N+1 patterns — N/A
+  - [x] List endpoints: pagination — N/A
+  - [x] All I/O async — ✓
+  - [x] No unbounded memory — ✓ (script removed on timeout)
+  - [x] Soft-delete — N/A
+  - [x] Multi-table DB transaction — N/A
+  - [x] Migrations — N/A
+  - [x] GraphQL limits — N/A
+  - [x] Caching — N/A
+  - [x] DB pooling — N/A
+  - [x] Stateless — ✓
+  - [x] Long ops: background jobs — N/A
+  - [x] Resources released — ✓ (script removed on timeout)
+  - [x] Outbound HTTP: explicit timeouts — ✓
+  - [x] Circuit breaker/fallback — ✓ (timeout is the fallback)
+  - [x] Queue depth bounded — N/A
+  - [x] Infrastructure rate limiting — N/A
+  - [x] Idempotency key — N/A
+  - [x] Health endpoints — N/A
+  - [x] Load baseline — N/A
+- **Regression:** Passed 149 tests (140 existing + 9 new), 0 failed; lint clean; build passes; 0 vulnerabilities
+- **Decisions made:**
+  - [CODE] `loadScriptWithTimeout` uses Promise-based design with `settled` flag to prevent double-resolve on race conditions (onload after timeout, timeout after onload)
+  - [CODE] `script.remove()` called on timeout to clean up DOM element — prevents memory leak and avoids orphaned script tags
+  - [CODE] Default timeout of 3000ms chosen as balance between ad-network latency and user experience
+  - [CODE] CONFIG.AD_SCRIPT_URL is empty string by default — no ad script loads until developer pastes dashboard snippet
+- **Notes:** Developer must paste actual GameMonetize/GamePix `<script src="...">` URL into CONFIG.AD_SCRIPT_URL. Note: GAMEPIX_DEFAULT_SID in src/index.js is `985I2` while ads.txt has two different GamePix property IDs — verify against dashboard.
+- **Knowledge drift:** UPDATE REQUIRED: @knowledge §3 — added `js/ad-loader.js` to folder structure. Bumped to v1.5.1.
+
+> v1.0.13 (2026-09-08): Task #011 completed — ad script loader with timeout fallback implemented. 149 tests pass, lint clean, build passes, 0 vulnerabilities. Task #012 promoted to [IN PROGRESS].
 
 > v1.0.7 (2026-09-01): Task #006 completed — `package.json` build script added (`npm run lint && npm audit --audit-level=high`). Cloudflare Workers Builds dashboard build command to be set to `npm run build`. Lint error causes non-zero exit blocking deploy; clean build passes. Task #007 promoted to [IN PROGRESS].
 > v1.0.8 (2026-09-03): Task #008 completed — `js/utils.test.js` created with 46 tests covering all 9 exported functions in `js/utils.js` (escapeHtml, debounce, slugify, buildPlayUrl, buildGamePageUrl, isAllowedEmbedUrl, readSessionGames, writeSessionGames, fetchGameCatalog). All 67 tests pass (21 state + 46 utils), lint clean, build passes, 0 vulnerabilities. Task #009 promoted to [IN PROGRESS].

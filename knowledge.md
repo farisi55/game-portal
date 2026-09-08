@@ -1,6 +1,6 @@
 ---
 project: Gimboot
-version: 1.5.0
+version: 1.5.1
 source: prd
 last_updated: 2026-09-07
 project_shape: fullstack
@@ -44,6 +44,7 @@ game-portal/
 │   ├── mobil-mbg/{...}           # struktur sama; status "live" perlu konfirmasi ulang — lihat §7
 │   └── shared/{ui-share.css,ui-share.js}   # modul share/confetti (TIDAK menyimpan skor — lihat §3 "State management")
 ├── js/
+│   ├── ad-loader.js              # ad script loader with timeout fallback (GameMonetize/GamePix)
 │   ├── catalog.js                # render/manajemen katalog halaman utama
 │   ├── config.js                 # konfigurasi/konstanta aplikasi, termasuk LOCAL_GAMES sisi klien (lihat §7)
 │   ├── player.js                 # [AUDIT KODE] controller halaman player lengkap: resolve game dari SSR meta / query param, favorit, recently-played, fullscreen, native share/clipboard, related-games, lazy iframe load, allow-attribute per sumber game — BUKAN sekadar "loader game + kontrol audio"; tidak ada logika audio di file ini
