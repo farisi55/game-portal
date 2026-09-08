@@ -9,6 +9,9 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import {
   handleApiGames,
   handleApiSearch,
+  handleShareRoute,
+  handlePlayRoute,
+  handleGameRoute,
   clampNum,
   escapeHtmlAttr,
   escapeJsonLd,
@@ -568,5 +571,273 @@ describe('decodeEntities', () => {
 
   it('handles empty string', () => {
     expect(decodeEntities('')).toBe('');
+  });
+});
+
+// ===========================================================================
+// Output Encoding — Share/Play/Game Routes (Task #010)
+//
+// Verifies that user-controlled input (query params, malicious game data from
+// upstream feeds) is always escaped before being injected into HTML meta tags,
+// JSON-LD, or attribute values. The three handlers under test:
+//   - handleGameRoute  (/game?title=...&category=...&thumb=...)
+//   - handleShareRoute (/share/:id)
+//   - handlePlayRoute  (/play/:id/:slug)
+// ===========================================================================
+
+describe('Output Encoding — Share/Play/Game Routes', () => {
+  // -----------------------------------------------------------------------
+  // handleGameRoute — query-param attack surface
+  // -----------------------------------------------------------------------
+
+  describe('handleGameRoute', () => {
+    it('escapes < and > in title query param', async () => {
+      const malicious = '<script>alert(1)</script>';
+      const url = makeUrl(`/game?title=${encodeURIComponent(malicious)}&category=Arcade`);
+      const res = await handleGameRoute(new Request(url.toString()), url, createMockEnv());
+      const body = await res.text();
+
+      expect(body).not.toContain('<script>alert(1)</script>');
+      expect(body).toContain('&lt;script&gt;');
+    });
+
+    it('escapes " in category query param', async () => {
+      const malicious = '" onmouseover="alert(1)';
+      const url = makeUrl(`/game?title=Test&category=${encodeURIComponent(malicious)}`);
+      const res = await handleGameRoute(new Request(url.toString()), url, createMockEnv());
+      const body = await res.text();
+
+      expect(body).not.toContain('" onmouseover="alert(1)');
+      expect(body).toContain('&quot;');
+    });
+
+    it('sanitizes javascript: URI in thumb param — og:image falls back to default icon', async () => {
+      const url = makeUrl('/game?title=Test&thumb=javascript:alert(1)');
+      const res = await handleGameRoute(new Request(url.toString()), url, createMockEnv());
+      const body = await res.text();
+
+      // safeImageUrl rejects javascript: protocol, falls back to icon-512.png
+      expect(body).toContain('icon-512.png');
+      // The javascript: URI must NOT appear in any og:image or twitter:image tag
+      expect(body).not.toMatch(/og:image.*javascript:/);
+      expect(body).not.toMatch(/twitter:image.*javascript:/);
+    });
+
+    it('escapes </script> in title to prevent premature script-tag termination', async () => {
+      const malicious = '</script><script>alert(1)</script>';
+      const url = makeUrl(`/game?title=${encodeURIComponent(malicious)}`);
+      const res = await handleGameRoute(new Request(url.toString()), url, createMockEnv());
+      const body = await res.text();
+
+      expect(body).not.toContain('</script><script>alert(1)</script>');
+      expect(body).toContain('&lt;/script&gt;');
+    });
+
+    it('escapes & in title (ampersand)', async () => {
+      const malicious = 'Tom & Jerry <b>Bold</b>';
+      const url = makeUrl(`/game?title=${encodeURIComponent(malicious)}`);
+      const res = await handleGameRoute(new Request(url.toString()), url, createMockEnv());
+      const body = await res.text();
+
+      expect(body).not.toContain('Tom & Jerry <b>Bold</b>');
+      expect(body).toContain('Tom &amp; Jerry');
+    });
+  });
+
+  // -----------------------------------------------------------------------
+  // handleShareRoute — game-data attack surface (title, description)
+  // -----------------------------------------------------------------------
+
+  describe('handleShareRoute', () => {
+    it('escapes <img onerror XSS in game title', async () => {
+      const malicious = '<img src=x onerror=alert(1)>';
+
+      fetchSpy.mockImplementation(async (fetchUrl) => {
+        if (String(fetchUrl).includes('gamemonetize.com')) {
+          const xml = `<?xml version="1.0"?><rss><channel><item>
+            <id>xss1</id>
+            <title>${malicious}</title>
+            <category>Arcade</category>
+            <url>https://example.com/xss1</url>
+            <thumb>https://example.com/xss1.png</thumb>
+          </item></channel></rss>`;
+          return makeGameMonetizeResponse(xml);
+        }
+        if (String(fetchUrl).includes('gamepix.com')) return makeGamePixResponse({ items: [] });
+        return makeErrorResponse(404);
+      });
+
+      const url = makeUrl('/share/gm-xss1');
+      const res = await handleShareRoute(new Request(url.toString()), url, createMockEnv(), createMockCtx());
+      const body = await res.text();
+
+      expect(body).not.toContain('<img src=x onerror=alert(1)>');
+      expect(body).toContain('&lt;img');
+    });
+
+    it('escapes " in game title for attribute injection', async () => {
+      const malicious = 'Game" onload="alert(1)';
+
+      fetchSpy.mockImplementation(async (fetchUrl) => {
+        if (String(fetchUrl).includes('gamemonetize.com')) {
+          const xml = `<?xml version="1.0"?><rss><channel><item>
+            <id>xss2</id>
+            <title>${malicious}</title>
+            <category>Arcade</category>
+            <url>https://example.com/xss2</url>
+            <thumb>https://example.com/xss2.png</thumb>
+          </item></channel></rss>`;
+          return makeGameMonetizeResponse(xml);
+        }
+        if (String(fetchUrl).includes('gamepix.com')) return makeGamePixResponse({ items: [] });
+        return makeErrorResponse(404);
+      });
+
+      const url = makeUrl('/share/gm-xss2');
+      const res = await handleShareRoute(new Request(url.toString()), url, createMockEnv(), createMockCtx());
+      const body = await res.text();
+
+      expect(body).not.toContain('Game" onload="alert(1)');
+      expect(body).toContain('Game&quot;');
+    });
+
+    it('escapes </script> in game title for JSON context safety', async () => {
+      const malicious = '</script><script>alert(1)</script>';
+
+      fetchSpy.mockImplementation(async (fetchUrl) => {
+        if (String(fetchUrl).includes('gamemonetize.com')) {
+          const xml = `<?xml version="1.0"?><rss><channel><item>
+            <id>xss3</id>
+            <title>${malicious}</title>
+            <category>Arcade</category>
+            <url>https://example.com/xss3</url>
+            <thumb>https://example.com/xss3.png</thumb>
+          </item></channel></rss>`;
+          return makeGameMonetizeResponse(xml);
+        }
+        if (String(fetchUrl).includes('gamepix.com')) return makeGamePixResponse({ items: [] });
+        return makeErrorResponse(404);
+      });
+
+      const url = makeUrl('/share/gm-xss3');
+      const res = await handleShareRoute(new Request(url.toString()), url, createMockEnv(), createMockCtx());
+      const body = await res.text();
+
+      // The exact malicious string must not appear unescaped anywhere in the body
+      expect(body).not.toContain('</script><script>alert(1)</script>');
+      expect(body).toContain('&lt;/script&gt;');
+    });
+
+    it('redirects to / when game ID not found (no output-encoding risk)', async () => {
+      fetchSpy.mockImplementation(async () => {
+        return makeGamePixResponse({ items: [] });
+      });
+
+      const url = makeUrl('/share/nonexistent-game-id');
+      const res = await handleShareRoute(new Request(url.toString()), url, createMockEnv(), createMockCtx());
+
+      expect(res.status).toBe(302);
+      expect(res.headers.get('location')).toContain('/');
+    });
+  });
+
+  // -----------------------------------------------------------------------
+  // handlePlayRoute — game-data attack surface (title, description, JSON-LD)
+  // -----------------------------------------------------------------------
+
+  describe('handlePlayRoute', () => {
+    it('escapes <script> in game title within meta tags', async () => {
+      const malicious = '<script>alert(1)</script>';
+
+      fetchSpy.mockImplementation(async (fetchUrl) => {
+        if (String(fetchUrl).includes('gamemonetize.com')) {
+          const xml = `<?xml version="1.0"?><rss><channel><item>
+            <id>play-xss1</id>
+            <title>${malicious}</title>
+            <category>Arcade</category>
+            <url>https://example.com/px1</url>
+            <thumb>https://example.com/px1.png</thumb>
+          </item></channel></rss>`;
+          return makeGameMonetizeResponse(xml);
+        }
+        if (String(fetchUrl).includes('gamepix.com')) return makeGamePixResponse({ items: [] });
+        return makeErrorResponse(404);
+      });
+
+      const url = makeUrl('/play/gm-play-xss1/malicious-game');
+      const res = await handlePlayRoute(new Request(url.toString()), url, createMockEnv(), createMockCtx());
+      const body = await res.text();
+
+      expect(body).not.toContain('<script>alert(1)</script>');
+      expect(body).toContain('&lt;script&gt;');
+    });
+
+    it('escapes </script> in game title for JSON-LD safety', async () => {
+      const malicious = '</script><script>alert(1)</script>';
+
+      fetchSpy.mockImplementation(async (fetchUrl) => {
+        if (String(fetchUrl).includes('gamemonetize.com')) {
+          const xml = `<?xml version="1.0"?><rss><channel><item>
+            <id>play-xss2</id>
+            <title>${malicious}</title>
+            <category>Arcade</category>
+            <url>https://example.com/px2</url>
+            <thumb>https://example.com/px2.png</thumb>
+          </item></channel></rss>`;
+          return makeGameMonetizeResponse(xml);
+        }
+        if (String(fetchUrl).includes('gamepix.com')) return makeGamePixResponse({ items: [] });
+        return makeErrorResponse(404);
+      });
+
+      const url = makeUrl('/play/gm-play-xss2/script-game');
+      const res = await handlePlayRoute(new Request(url.toString()), url, createMockEnv(), createMockCtx());
+      const body = await res.text();
+
+      // The exact malicious string must not appear unescaped
+      expect(body).not.toContain('</script><script>alert(1)</script>');
+      // JSON-LD escaping uses \u003c / \u003e sequences
+      expect(body).toContain('\\u003c/script\\u003e');
+    });
+
+    it('escapes " in game title for meta attribute injection', async () => {
+      const malicious = 'Game" onload="alert(1)';
+
+      fetchSpy.mockImplementation(async (fetchUrl) => {
+        if (String(fetchUrl).includes('gamemonetize.com')) {
+          const xml = `<?xml version="1.0"?><rss><channel><item>
+            <id>play-xss3</id>
+            <title>${malicious}</title>
+            <category>Arcade</category>
+            <url>https://example.com/px3</url>
+            <thumb>https://example.com/px3.png</thumb>
+          </item></channel></rss>`;
+          return makeGameMonetizeResponse(xml);
+        }
+        if (String(fetchUrl).includes('gamepix.com')) return makeGamePixResponse({ items: [] });
+        return makeErrorResponse(404);
+      });
+
+      const url = makeUrl('/play/gm-play-xss3/quote-game');
+      const res = await handlePlayRoute(new Request(url.toString()), url, createMockEnv(), createMockCtx());
+      const body = await res.text();
+
+      expect(body).not.toContain('Game" onload="alert(1)');
+      expect(body).toContain('Game&quot;');
+    });
+
+    it('returns play-id meta when game not found (unknown ID, no crash)', async () => {
+      fetchSpy.mockImplementation(async () => {
+        return makeGamePixResponse({ items: [] });
+      });
+
+      const url = makeUrl('/play/unknown-game-id/some-slug');
+      const res = await handlePlayRoute(new Request(url.toString()), url, createMockEnv(), createMockCtx());
+      const body = await res.text();
+
+      // Should return HTML with the play-id meta, not crash
+      expect(body).toContain('gimboot-play-id');
+      expect(body).toContain('unknown-game-id');
+    });
   });
 });
