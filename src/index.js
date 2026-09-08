@@ -222,7 +222,7 @@ function buildContentSecurityPolicy(nonce) {
  * upstream requests for the same `num`. Returns the raw array — callers
  * decide how to present it (JSON response vs. HTML meta lookup).
  */
-async function getCombinedGames(num, env, ctx) {
+export async function getCombinedGames(num, env, ctx) {
   const cache = caches.default;
   const cacheKey = new Request(`https://cache.internal/api/games-balanced-v2?num=${num}`, { method: 'GET' });
   const cached = await cache.match(cacheKey);
@@ -264,7 +264,8 @@ async function getCombinedGames(num, env, ctx) {
   return { games: combined, response };
 }
 
-async function handleApiGames(url, env, ctx) {
+/** Handles GET /api/games — returns merged catalog from all sources. */
+export async function handleApiGames(url, env, ctx) {
   const num = clampNum(url.searchParams.get('num'), CATALOG_DEFAULT_NUM, CATALOG_MAX_NUM);
   const { games, response, error } = await getCombinedGames(num, env, ctx);
 
@@ -281,7 +282,8 @@ async function handleApiGames(url, env, ctx) {
 // the frontend when a local in-memory search returns zero matches.
 // ----------------------------------------------------------------------------
 
-async function handleApiSearch(url, env, ctx) {
+/** Handles GET /api/search?q={query} — filters the merged catalog by query. */
+export async function handleApiSearch(url, env, ctx) {
   const q = (url.searchParams.get('q') || '').trim();
   if (!q) {
     return jsonResponse({ error: 'Missing required query param "q"' }, 400);
@@ -386,7 +388,8 @@ async function handleShareRoute(request, url, env, ctx) {
   }
 }
 
-function clampNum(rawNum, fallback, max) {
+/** Parses a raw numeric query-param, clamps it to [1, max], or returns fallback. */
+export function clampNum(rawNum, fallback, max) {
   const n = parseInt(rawNum, 10);
   if (!Number.isFinite(n) || n <= 0) return fallback;
   return Math.min(n, max);
@@ -576,7 +579,8 @@ function absoluteUrl(maybeRelative, origin) {
   }
 }
 
-function escapeHtmlAttr(str) {
+/** Escapes a string for safe insertion into an HTML attribute. */
+export function escapeHtmlAttr(str) {
   return String(str ?? '')
     .replace(/&/g, '\u0026amp;')
     .replace(/</g, '\u0026lt;')
@@ -591,7 +595,7 @@ function escapeHtmlAttr(str) {
  * three character sequences that could prematurely terminate the script element:
  * `</script`, `<!--`, and `-->`. JSON.stringify already handles quotes/backslashes.
  */
-function escapeJsonLd(obj) {
+export function escapeJsonLd(obj) {
   return JSON.stringify(obj)
     .replace(/</g, '\\u003c')
     .replace(/>/g, '\\u003e')
@@ -599,7 +603,7 @@ function escapeJsonLd(obj) {
 }
 
 /** Mirrors js/utils.js's slugify exactly — keep the two in sync. */
-function slugify(text) {
+export function slugify(text) {
   return (
     String(text ?? '')
       .toLowerCase()
@@ -660,7 +664,8 @@ async function fetchGameMonetize(num) {
   return games;
 }
 
-function parseGameMonetizeFeed(xml) {
+/** Parses the GameMonetize RSS/XML feed into a normalized game array. */
+export function parseGameMonetizeFeed(xml) {
   const items = [];
   const itemRe = /<item>([\s\S]*?)<\/item>/g;
   let match;
@@ -702,7 +707,8 @@ const ENTITY_MAP = {
   middot: '\u00b7', bull: '\u2022', zwj: '',
 };
 
-function decodeEntities(str) {
+/** Decodes HTML entities (named + numeric) with a two-pass approach. */
+export function decodeEntities(str) {
   let out = str;
   for (let pass = 0; pass < 2; pass++) {
     out = out
