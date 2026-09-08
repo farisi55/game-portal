@@ -1,7 +1,7 @@
 ---
 project: Gimboot
 knowledge_version: 1.5.0
-changelog_version: 1.0.10
+changelog_version: 1.0.11
 created: 2026-08-28
 status: in_progress
 milestone: 1 of 1
@@ -31,217 +31,6 @@ simple_mode: false
 
 ## [IN PROGRESS]
 
-### Task #009 — Unit Tests for Catalog & Search Logic (`src/index.js`)
-- **Phase:** Phase 3 — Core Features
-- **Scope:** [AUDIT KODE — RETARGET] Draf sebelumnya menyasar `functions/api/games.js` & `functions/api/search.js`, yang terkonfirmasi non-aktif (lihat [AUDIT FINDINGS] #1). Logika yang benar-benar berjalan adalah `handleApiGames`/`handleApiSearch` di dalam `src/index.js`. Catatan penting: kedua fungsi ini saat ini belum di-`export`, jadi kemungkinan perlu (a) refactor kecil menambahkan named export, atau (b) pendekatan test yang memanggil default export `fetch` handler Worker langsung dengan `Request`/`env` tiruan (mis. via `@cloudflare/vitest-pool-workers`) — pilih salah satu sebelum menulis test.
-- **Files to create / modify:** `src/index.js` (kemungkinan perlu export tambahan), `src/index.test.js`
-- **Acceptance criteria:**
-  - [ ] Test `/api/games` mengonfirmasi bentuk respons JSON (metadata game: id, judul, kategori/slug, thumbnail, url, dimensi) mencakup `LOCAL_GAMES` dan skenario ketika salah satu/kedua feed eksternal (GameMonetize/GamePix) gagal di-fetch
-  - [ ] Test `/api/search` mengonfirmasi query kosong/tidak cocok mengembalikan hasil kosong, bukan error
-  - [ ] Unit test written and passing for new logic
-  - [ ] Test is isolated: sets up and tears down its own state
-- **Dependencies:** Task #004
-- **Decisions made:** Belum dieksekusi — isi setelah task selesai.
-
-### [COMPLETED]
-
-### Task #008 — Unit Tests for `js/utils.js` ✅
-- **Completed:** 2026-09-03
-- **Phase:** Phase 3 — Core Features
-- **Status:** OK
-- **Branch:** feat/task-008-utils-js-unit-tests
-- **Files created / modified:**
-  - `js/utils.test.js` — unit tests for all 9 exported functions in `js/utils.js`: escapeHtml, debounce, slugify, buildPlayUrl, buildGamePageUrl, isAllowedEmbedUrl, readSessionGames, writeSessionGames, fetchGameCatalog
-- **Acceptance criteria met:**
-  - [x] Every exported function has at least one passing test covering its normal case and one edge case
-  - [x] Test suite runs via `npm test` with visible pass/fail output (67 passed, 0 failed)
-  - [x] Unit test written and passing for new logic
-  - [x] Test is isolated: sets up and tears down its own state (afterEach clears sessionStorage/localStorage; debounce tests use vi.useFakeTimers)
-- **Security gate:** BASIC — all checks passed
-  - [x] No secrets hardcoded
-  - [x] Sensitive config from environment variables only
-  - [x] No eval() or exec() with external input
-  - [x] Error messages don't expose stack traces or internal paths
-  - [x] .gitignore includes .env, *.pem, *.key, *.p12
-  - [x] Pre-commit hook active (verified)
-- **Scalability gate:** BASIC — all checks passed (all items N/A for unit test file)
-  - [x] No synchronous blocking in async handlers
-  - [x] No hardcoded pool sizes/timeouts/batch limits
-  - [x] External I/O: explicit timeout values
-  - [x] No global mutable state across concurrent requests
-  - [x] Correlation ID generated at entry (N/A — client-side test file)
-  - [x] Structured logger / crash reporter initialized (N/A — test file)
-- **Regression:** Passed 67 tests, 0 failed (21 state + 46 utils)
-- **Decisions made:**
-  - [TEST] escapeHtml tests use computed expected values (matching the function's replace logic) instead of hardcoded HTML entity strings, avoiding test-file encoding ambiguity
-  - [TEST] debounce tests use `vi.useFakeTimers()` in `beforeEach` for deterministic timer control
-  - [TEST] fetchGameCatalog tests use `globalThis.fetch` mock instead of `global.fetch` to satisfy ESLint no-undef rule
-  - [TEST] isAllowedEmbedUrl tests cover local game paths, allowed HTTPS, subdomains, protocol-relative, javascript:, data:, malformed URLs, and disallowed hosts
-- **Notes:** none
-- **Knowledge drift:** none
-
-### Task #005 — Configure Pre-commit Hook to Block `.env` ✅
-- **Completed:** 2026-09-01
-- **Phase:** Phase 1
-- **Status:** OK
-- **Branch:** feat/task-005-precommit-hook-block-env
-- **Files created / modified:**
-  - `.husky/pre-commit` — pre-commit hook: blocks .env files + runs lint
-  - `package.json` — added husky 9.1.7 devDependency + `prepare` script
-  - `package-lock.json` — updated lockfile with husky dependency
-  - `.gitignore` — removed `.husky/` from ignore list (hooks now committed)
-- **Acceptance criteria met:**
-  - [x] Committing a file named `.env` is rejected by the hook with a clear error message
-  - [x] A normal commit with no `.env` file and passing lint proceeds without being blocked
-- **Security gate:** BASIC — all checks passed
-- **Scalability gate:** BASIC — all checks passed (all items N/A for tooling-only task)
-- **Regression:** Phase 1 build OK — `npm run lint` exit 0, `npm test` exit 0 (passWithNoTests), `npm ci` exit 0, 0 vulnerabilities
-- **Decisions made:**
-  - [INFRA] husky 9.1.7 chosen as git hooks manager — standard for Node.js projects, `prepare` script ensures hooks auto-install on `npm install` / `npm ci`
-  - [CODE] Pre-commit hook checks staged files via `git diff --cached --name-only | grep` for `.env$` pattern — rejects with clear error before lint runs
-  - [CODE] `.husky/_` directory gitignored by husky internally (regenerated on install); user hooks in `.husky/` are committed
-- **Notes:** none
-- **Knowledge drift:** none
-
-### Task #006 — Wire Lint & Security Scan into Cloudflare Workers Builds ✅
-- **Completed:** 2026-09-01
-- **Phase:** Phase 1 — Foundation
-- **Status:** OK
-- **Branch:** feat/task-006-wire-lint-security-scan-builds
-- **Files created / modified:**
-  - `package.json` — added `build` script running `npm run lint && npm audit --audit-level=high`
-- **Acceptance criteria met:**
-  - [x] A push with a deliberate lint error fails the build and does not deploy (verified locally: lint error → non-zero exit)
-  - [x] A clean push passes the build command and deploys normally (verified: `npm run build` exit 0)
-- **Security gate:** BASIC — all checks passed
-- **Scalability gate:** BASIC — all checks passed (all items N/A for config-only task)
-- **Regression:** Phase 1 build OK — `npm run build` exit 0, `npm run lint` exit 0, `npm test` exit 0 (passWithNoTests), `npm ci` exit 0, 0 vulnerabilities
-- **Decisions made:**
-  - [INFRA] Build command for Cloudflare Workers Builds dashboard set to `npm run build` — runs lint + npm audit (high/critical only) before deploy
-  - [CODE] `npm audit --audit-level=high` used instead of default to avoid blocking on moderate/low informational advisories
-  - [ARCH] Build script order: lint first (fast fail on code quality), then audit (security) — both must pass for deploy to proceed
-- **Notes:** Cloudflare Workers Builds dashboard build command must be manually updated to `npm run build` (not tracked in repo)
-- **Knowledge drift:** none
-
-### Task #004 — Add Dev-Tooling & Lockfile ✅
-- **Completed:** 2026-08-31
-- **Phase:** Phase 1
-- **Status:** OK
-- **Branch:** feat/task-004-add-dev-tooling-lockfile
-- **Files created / modified:**
-  - `package.json` — pinned devDependencies: eslint 10.9.1, @eslint/js 10.0.1, prettier 3.9.6, vitest 4.1.11, jsdom 26.1.0
-  - `package-lock.json` — committed lockfile for reproducible installs
-  - `eslint.config.js` — ESLint v9+ flat config; targets js/, src/, games/shared/; excludes per-game Canvas files
-  - `.prettierrc` — Prettier config (singleQuote, trailingComma all, printWidth 100)
-  - `.prettierignore` — excludes node_modules, tool folders, package-lock.json, ads.txt
-  - `vitest.config.js` — Vitest config; jsdom environment; passWithNoTests; excludes per-game folders
-  - `.gitignore` — added node_modules/, coverage/
-  - `.assetsignore` — added node_modules/, tooling configs, .husky/, knowledge/prd/changelog docs
-  - `js/state.js` — `let favs` → `const favs` (prefer-const fix)
-  - `js/catalog.js` — inner `list` parameter renamed to `arr` (no-shadow fix in renderGenreOptions)
-  - `js/player.js` — `catch (err)` → `catch (_err)`; `createRelatedCardElement(game)` → `createRelatedCardElement(relatedGame)` (no-shadow + no-unused-vars fixes)
-  - `src/index.js` — added `eslint-disable-next-line no-unused-vars` above `requireEnvVar` scaffold
-  - `knowledge.md` — v1.3.0: §2 updated with dev tooling stack; §4 updated with Prettier/ESLint/Vitest versions and config details
-- **Acceptance criteria met:**
-  - [x] `npm run lint` runs ESLint against `js/`, `games/shared/`, and `src/` with zero errors (exit 0)
-  - [x] `npm test` runs Vitest successfully (exit 0 even with zero tests present — `passWithNoTests: true`)
-  - [x] Lockfile is committed and reproducible (`npm ci` succeeds from clean checkout, 0 vulnerabilities)
-- **Security gate:** BASIC — all checks passed
-- **Scalability gate:** BASIC — all checks passed (all items N/A for tooling-only task)
-- **Regression:** Phase 1 build OK — `npm run lint` exit 0, `npm test` exit 0 (passWithNoTests), `npm ci` exit 0, 0 vulnerabilities
-- **Decisions made:**
-  - [ARCH] ESLint flat config (`eslint.config.js`) used instead of `.eslintrc` — ESLint 9+ dropped legacy rc format; flat config is the canonical replacement
-  - [TECH] Vitest 4.1.11 chosen over `node --test` for future Workers-pool compatibility (Task #009 will add `@cloudflare/vitest-plugin` for Worker integration tests; `@cloudflare/vitest-pool-workers` was considered but its `./config` export was removed in v0.22.0)
-  - [ARCH] `@cloudflare/vitest-pool-workers` / `@cloudflare/vitest-plugin` deferred to Task #009 — adding Worker pool before any Worker test files exist adds overhead without benefit
-  - [CODE] `jsdom` added as devDependency for browser globals (localStorage, sessionStorage, window, document) needed by js/ unit tests
-  - [CODE] `passWithNoTests: true` in vitest.config.js — valid during bootstrap; Task #007/#008/#009 will add actual test files
-  - [CODE] Minor lint fixes applied to js/state.js, js/catalog.js, js/player.js, src/index.js — all semantics-preserving (prefer-const, no-shadow, no-unused-vars; requireEnvVar scaffold retained with eslint-disable comment)
-  - [INFRA] `.assetsignore` expanded to exclude tooling configs, node_modules, and documentation files from Cloudflare static asset serving
-- **Notes:** none
-- **Knowledge drift:** UPDATE REQUIRED: @knowledge §2 — added dev tooling stack (eslint, prettier, vitest, jsdom versions and config files). UPDATE REQUIRED: @knowledge §4 — updated Formatter/Linter/Testing framework entries with installed versions and config details. Both edits applied this task (knowledge.md bumped to v1.3.0).
-
-### Task #001 — Environment Audit & Security Baseline ✅
-- **Completed:** 2026-08-31
-- **Phase:** 1
-- **Status:** OK
-- **Branch:** feat/task-001-environment-audit-security-baseline
-- **Files created / modified:**
-  - `.gitignore` — added .env, *.pem, *.key, *.p12, secrets/ exclusion patterns
-  - `src/index.js` — added requireEnvVar helper for fail-fast environment variable validation
-- **Acceptance criteria met:**
-  - [x] .gitignore explicitly excludes .env, *.pem, *.key, *.p12, secrets/
-  - [x] No secret/credential value exists in wrangler.toml or any committed file
-  - [x] src/index.js contains no logging of full request URLs/query strings that could carry user-supplied text
-  - [x] A minimal env-var validation helper exists (requireEnvVar function)
-- **Security gate:** BASIC — all checks passed
-- **Scalability gate:** BASIC — all checks passed
-- **Regression:** Phase 1 build OK
-- **Decisions made:**
-  - [ARCH] .gitignore updated with .env, *.pem, *.key, *.p12, secrets/ patterns
-  - [INFRA] requireEnvVar helper added to src/index.js for fail-fast env var validation
-  - [OBSERVABILITY] .gitignore provides primary .env protection; pre-commit hook to be set up in Task #005
-- **Notes:** none
-- **Knowledge drift:** none
-
-### Task #002 — Clean-Code Audit: Remove Unused Files & Dead Code ✅
-- **Completed:** 2026-08-31
-- **Phase:** 1
-- **Status:** OK
-- **Branch:** feat/task-002-clean-code-audit-remove-unused-files-dead-code
-- **Files created / modified:**
-  - `.avicon.svg` — deleted (verified & removed after favicon.svg confirmed)
-  - `functions/api/games.js` — deleted (clean code, redundant vs src/index.js)
-  - `functions/api/search.js` — deleted (clean code, redundant vs src/index.js)
-  - `functions/share/[id].js` — deleted (clean code, redundant vs src/index.js)
-  - `src/index.js` — LOCAL_GAMES updated with Ayo Kopdes, Kejar Koruptor, Mobil MBG
-  - `index.html` — added <link rel="icon" href="/favicon.svg">
-  - `game.html` — added <link rel="icon" href="/favicon.svg">
-  - `manifest.json` — removed duplicate "narrow" screenshot entry, keeping only "wide"
-  - `README.md` — updated game roster, functions status, favicon/manifest notes
-- **Acceptance criteria met:**
-  - [x] `functions/api/games.js`, `functions/api/search.js`, `functions/share/[id].js` dihapus dari repo
-  - [x] `src/index.js`'s `LOCAL_GAMES` diperbarui agar mencakup Ayo Kopdes, Kejar Koruptor, Mobil MBG
-  - [x] `favicon.svg` diverifikasi isini & direferensikan dari index.html/game.html dan manifest.json
-  - [x] `.avicon.svg` dihapus setelah favicon.svg terverifikasi & terpasang
-  - [x] `manifest.json` memiliki screenshot "wide" (narrow entry removed, files identical)
-  - [x] No file in the repo is unreferenced by any other file, build config, or route
-- **Security gate:** BASIC — all checks passed
-- **Scalability gate:** BASIC — all checks passed
-- **Regression:** Phase 1 build OK
-- **Decisions made:**
-  - [ARCH] functions/ folder files deleted: confirmed Cloudflare Worker deploy model doesn't use Pages Functions convention
-  - [INFRA] LOCAL_GAMES sync: Ayo Kopdes, Kejar Koruptor, Mobil MBG added to src/index.js LOCAL_GAMES
-  - [OBSERVABILITY] favicon.svg wired up: confirmed as official favicon, referenced in HTML and manifest
-  - [CODE] .avicon.svg removed: candidate for removal now that favicon.svg is confirmed and wired
-- **Notes:** none
-- **Knowledge drift:** none
-
-### Task #003 — Implement Health Check Endpoint ✅
-- **Completed:** 2026-08-31
-- **Phase:** 1
-- **Status:** OK
-- **Branch:** feat/task-003-implement-health-check-endpoint
-- **Files created / modified:**
-  - `src/index.js` — added `WORKER_VERSION` constant, `/api/health` router case, and `handleApiHealth()` function
-- **Acceptance criteria met:**
-  - [x] `GET /api/health` returns HTTP 200 with `{ status, version, timestamp }` under normal conditions
-  - [x] Endpoint responds in under 100ms with no external dependency (no DB, no third-party call)
-- **Security gate:** BASIC — all checks passed
-- **Scalability gate:** BASIC — all checks passed
-- **Regression:** Phase 1 build OK
-- **Decisions made:**
-  - [API] Response shape `{ status, version, timestamp }` chosen over `{ status, uptime, version }` — Cloudflare Workers are per-request with no persistent process; `timestamp` (current ISO 8601 request time) is the accurate and non-misleading equivalent for this edge deployment model
-  - [CODE] `WORKER_VERSION = '1.0.4'` constant added at top of `src/index.js`; bumped each deploy as a human-readable signal of which version is live
-  - [ARCH] `handleApiHealth()` is synchronous (no async/await) — no I/O means no need for a Promise, keeping the hot path as lean as possible
-  - [INFRA] `jsonResponse(..., 200, 0)` passes `cacheSeconds=0` so no `Cache-Control` header is emitted — health checks must always return current state, never a cached snapshot
-- **Notes:** none
-- **Knowledge drift:** UPDATE REQUIRED: @knowledge §8 — `GET /api/health` is now implemented; update "belum diimplementasikan" to reflect the live endpoint. UPDATE REQUIRED: @knowledge §5 — add `/api/health` to the API Contracts section with response shape `{ status: "ok", version: string, timestamp: ISO8601 }`.
-
-## [NEXT TASKS]
-
-### Phase 3 — Core Features
-*Task di fase ini adalah pengujian/pengerasan atas fitur inti yang sudah lengkap & live, bukan fitur baru — tetap bergantung pada #002 (audit dapat mengubah file yang diuji) dan #004 (test runner).*
-
 ### Task #010 — Harden & Test Output Encoding in `src/index.js` Share/Play Routes
 - **Phase:** Phase 3 — Core Features
 - **Scope:** [AUDIT KODE — RETARGET] Draf sebelumnya menyasar `functions/share/[id].js`, yang terkonfirmasi non-aktif. Rute yang benar-benar melayani traffic adalah `handleShareRoute`, `handlePlayRoute`, dan `handleGameRoute` di dalam `src/index.js`. Pembacaan kode langsung menunjukkan escaping (`escapeHtmlAttr`, `escapeJsonLd`) SUDAH diterapkan secara konsisten di ketiga handler ini — bagian "harden" dari task ini kemungkinan besar sudah selesai; yang tersisa terutama bagian "test" untuk membuktikannya, mencakup ketiga rute (bukan hanya `/share/`).
@@ -253,6 +42,11 @@ simple_mode: false
   - [ ] Test is isolated: sets up and tears down its own state
 - **Dependencies:** Task #004
 - **Decisions made:** Belum dieksekusi — isi setelah task selesai.
+
+## [NEXT TASKS]
+
+### Phase 3 — Core Features
+*Task di fase ini adalah pengujian/pengerasan atas fitur inti yang sudah lengkap & live, bukan fitur baru — tetap bergantung pada #002 (audit dapat mengubah file yang diuji) dan #004 (test runner).*
 
 ### Phase 4 — Integration
 
@@ -407,6 +201,162 @@ Satu Cloudflare Worker dengan static assets (`src/index.js`) menangani seluruh r
 > v1.0.6 (2026-09-01): Task #005 completed — husky 9.1.7 installed as git hooks manager. Pre-commit hook blocks `.env` files (clear error message) and runs lint. `.husky/` removed from `.gitignore` so hooks are committed. `prepare` script in `package.json` ensures hooks auto-install on `npm install`/`npm ci`. Task #006 promoted to [IN PROGRESS].
 > v1.0.7 (2026-09-01): Task #006 completed — `package.json` build script added (`npm run lint && npm audit --audit-level=high`). Cloudflare Workers Builds dashboard build command to be set to `npm run build`. Lint error causes non-zero exit blocking deploy; clean build passes.
 
+### Task #001 — Environment Audit & Security Baseline ✅
+- **Completed:** 2026-08-31
+- **Phase:** 1
+- **Status:** OK
+- **Branch:** feat/task-001-environment-audit-security-baseline
+- **Files created / modified:**
+  - `.gitignore` — added .env, *.pem, *.key, *.p12, secrets/ exclusion patterns
+  - `src/index.js` — added requireEnvVar helper for fail-fast environment variable validation
+- **Acceptance criteria met:**
+  - [x] .gitignore explicitly excludes .env, *.pem, *.key, *.p12, secrets/
+  - [x] No secret/credential value exists in wrangler.toml or any committed file
+  - [x] src/index.js contains no logging of full request URLs/query strings that could carry user-supplied text
+  - [x] A minimal env-var validation helper exists (requireEnvVar function)
+- **Security gate:** BASIC — all checks passed
+- **Scalability gate:** BASIC — all checks passed
+- **Regression:** Phase 1 build OK
+- **Decisions made:**
+  - [ARCH] .gitignore updated with .env, *.pem, *.key, *.p12, secrets/ patterns
+  - [INFRA] requireEnvVar helper added to src/index.js for fail-fast env var validation
+  - [OBSERVABILITY] .gitignore provides primary .env protection; pre-commit hook to be set up in Task #005
+- **Notes:** none
+- **Knowledge drift:** none
+
+### Task #002 — Clean-Code Audit: Remove Unused Files & Dead Code ✅
+- **Completed:** 2026-08-31
+- **Phase:** 1
+- **Status:** OK
+- **Branch:** feat/task-002-clean-code-audit-remove-unused-files-dead-code
+- **Files created / modified:**
+  - `.avicon.svg` — deleted (verified & removed after favicon.svg confirmed)
+  - `functions/api/games.js` — deleted (clean code, redundant vs src/index.js)
+  - `functions/api/search.js` — deleted (clean code, redundant vs src/index.js)
+  - `functions/share/[id].js` — deleted (clean code, redundant vs src/index.js)
+  - `src/index.js` — LOCAL_GAMES updated with Ayo Kopdes, Kejar Koruptor, Mobil MBG
+  - `index.html` — added <link rel="icon" href="/favicon.svg">
+  - `game.html` — added <link rel="icon" href="/favicon.svg">
+  - `manifest.json` — removed duplicate "narrow" screenshot entry, keeping only "wide"
+  - `README.md` — updated game roster, functions status, favicon/manifest notes
+- **Acceptance criteria met:**
+  - [x] `functions/api/games.js`, `functions/api/search.js`, `functions/share/[id].js` dihapus dari repo
+  - [x] `src/index.js`'s `LOCAL_GAMES` diperbarui agar mencakup Ayo Kopdes, Kejar Koruptor, Mobil MBG
+  - [x] `favicon.svg` diverifikasi isini & direferensikan dari index.html/game.html dan manifest.json
+  - [x] `.avicon.svg` dihapus setelah favicon.svg terverifikasi & terpasang
+  - [x] `manifest.json` memiliki screenshot "wide" (narrow entry removed, files identical)
+  - [x] No file in the repo is unreferenced by any other file, build config, or route
+- **Security gate:** BASIC — all checks passed
+- **Scalability gate:** BASIC — all checks passed
+- **Regression:** Phase 1 build OK
+- **Decisions made:**
+  - [ARCH] functions/ folder files deleted: confirmed Cloudflare Worker deploy model doesn't use Pages Functions convention
+  - [INFRA] LOCAL_GAMES sync: Ayo Kopdes, Kejar Koruptor, Mobil MBG added to src/index.js LOCAL_GAMES
+  - [OBSERVABILITY] favicon.svg wired up: confirmed as official favicon, referenced in HTML and manifest
+  - [CODE] .avicon.svg removed: candidate for removal now that favicon.svg is confirmed and wired
+- **Notes:** none
+- **Knowledge drift:** none
+
+### Task #003 — Implement Health Check Endpoint ✅
+- **Completed:** 2026-08-31
+- **Phase:** 1
+- **Status:** OK
+- **Branch:** feat/task-003-implement-health-check-endpoint
+- **Files created / modified:**
+  - `src/index.js` — added `WORKER_VERSION` constant, `/api/health` router case, and `handleApiHealth()` function
+- **Acceptance criteria met:**
+  - [x] `GET /api/health` returns HTTP 200 with `{ status, version, timestamp }` under normal conditions
+  - [x] Endpoint responds in under 100ms with no external dependency (no DB, no third-party call)
+- **Security gate:** BASIC — all checks passed
+- **Scalability gate:** BASIC — all checks passed
+- **Regression:** Phase 1 build OK
+- **Decisions made:**
+  - [API] Response shape `{ status, version, timestamp }` chosen over `{ status, uptime, version }` — Cloudflare Workers are per-request with no persistent process; `timestamp` (current ISO 8601 request time) is the accurate and non-misleading equivalent for this edge deployment model
+  - [CODE] `WORKER_VERSION = '1.0.4'` constant added at top of `src/index.js`; bumped each deploy as a human-readable signal of which version is live
+  - [ARCH] `handleApiHealth()` is synchronous (no async/await) — no I/O means no need for a Promise, keeping the hot path as lean as possible
+  - [INFRA] `jsonResponse(..., 200, 0)` passes `cacheSeconds=0` so no `Cache-Control` header is emitted — health checks must always return current state, never a cached snapshot
+- **Notes:** none
+- **Knowledge drift:** UPDATE REQUIRED: @knowledge §8 — `GET /api/health` is now implemented; update "belum diimplementasikan" to reflect the live endpoint. UPDATE REQUIRED: @knowledge §5 — add `/api/health` to the API Contracts section with response shape `{ status: "ok", version: string, timestamp: ISO8601 }`.
+
+### Task #004 — Add Dev-Tooling & Lockfile ✅
+- **Completed:** 2026-08-31
+- **Phase:** Phase 1
+- **Status:** OK
+- **Branch:** feat/task-004-add-dev-tooling-lockfile
+- **Files created / modified:**
+  - `package.json` — pinned devDependencies: eslint 10.9.1, @eslint/js 10.0.1, prettier 3.9.6, vitest 4.1.11, jsdom 26.1.0
+  - `package-lock.json` — committed lockfile for reproducible installs
+  - `eslint.config.js` — ESLint v9+ flat config; targets js/, src/, games/shared/; excludes per-game Canvas files
+  - `.prettierrc` — Prettier config (singleQuote, trailingComma all, printWidth 100)
+  - `.prettierignore` — excludes node_modules, tool folders, package-lock.json, ads.txt
+  - `vitest.config.js` — Vitest config; jsdom environment; passWithNoTests; excludes per-game folders
+  - `.gitignore` — added node_modules/, coverage/
+  - `.assetsignore` — added node_modules/, tooling configs, .husky/, knowledge/prd/changelog docs
+  - `js/state.js` — `let favs` → `const favs` (prefer-const fix)
+  - `js/catalog.js` — inner `list` parameter renamed to `arr` (no-shadow fix in renderGenreOptions)
+  - `js/player.js` — `catch (err)` → `catch (_err)`; `createRelatedCardElement(game)` → `createRelatedCardElement(relatedGame)` (no-shadow + no-unused-vars fixes)
+  - `src/index.js` — added `eslint-disable-next-line no-unused-vars` above `requireEnvVar` scaffold
+  - `knowledge.md` — v1.3.0: §2 updated with dev tooling stack; §4 updated with Prettier/ESLint/Vitest versions and config details
+- **Acceptance criteria met:**
+  - [x] `npm run lint` runs ESLint against `js/`, `games/shared/`, and `src/` with zero errors (exit 0)
+  - [x] `npm test` runs Vitest successfully (exit 0 even with zero tests present — `passWithNoTests: true`)
+  - [x] Lockfile is committed and reproducible (`npm ci` succeeds from clean checkout, 0 vulnerabilities)
+- **Security gate:** BASIC — all checks passed
+- **Scalability gate:** BASIC — all checks passed (all items N/A for tooling-only task)
+- **Regression:** Phase 1 build OK — `npm run lint` exit 0, `npm test` exit 0 (passWithNoTests), `npm ci` exit 0, 0 vulnerabilities
+- **Decisions made:**
+  - [ARCH] ESLint flat config (`eslint.config.js`) used instead of `.eslintrc` — ESLint 9+ dropped legacy rc format; flat config is the canonical replacement
+  - [TECH] Vitest 4.1.11 chosen over `node --test` for future Workers-pool compatibility
+  - [CODE] `jsdom` added as devDependency for browser globals needed by js/ unit tests
+  - [CODE] `passWithNoTests: true` in vitest.config.js — valid during bootstrap
+  - [CODE] Minor lint fixes applied to js/state.js, js/catalog.js, js/player.js, src/index.js
+  - [INFRA] `.assetsignore` expanded to exclude tooling configs, node_modules, and documentation files
+- **Notes:** none
+- **Knowledge drift:** UPDATE REQUIRED: @knowledge §2 — added dev tooling stack. UPDATE REQUIRED: @knowledge §4 — updated Formatter/Linter/Testing framework entries. Both edits applied this task (knowledge.md bumped to v1.3.0).
+
+### Task #005 — Configure Pre-commit Hook to Block `.env` ✅
+- **Completed:** 2026-09-01
+- **Phase:** Phase 1
+- **Status:** OK
+- **Branch:** feat/task-005-precommit-hook-block-env
+- **Files created / modified:**
+  - `.husky/pre-commit` — pre-commit hook: blocks .env files + runs lint
+  - `package.json` — added husky 9.1.7 devDependency + `prepare` script
+  - `package-lock.json` — updated lockfile with husky dependency
+  - `.gitignore` — removed `.husky/` from ignore list (hooks now committed)
+- **Acceptance criteria met:**
+  - [x] Committing a file named `.env` is rejected by the hook with a clear error message
+  - [x] A normal commit with no `.env` file and passing lint proceeds without being blocked
+- **Security gate:** BASIC — all checks passed
+- **Scalability gate:** BASIC — all checks passed (all items N/A for tooling-only task)
+- **Regression:** Phase 1 build OK — `npm run lint` exit 0, `npm test` exit 0 (passWithNoTests), `npm ci` exit 0, 0 vulnerabilities
+- **Decisions made:**
+  - [INFRA] husky 9.1.7 chosen as git hooks manager
+  - [CODE] Pre-commit hook checks staged files via `git diff --cached --name-only | grep` for `.env$` pattern
+  - [CODE] `.husky/_` directory gitignored by husky internally; user hooks in `.husky/` are committed
+- **Notes:** none
+- **Knowledge drift:** none
+
+### Task #006 — Wire Lint & Security Scan into Cloudflare Workers Builds ✅
+- **Completed:** 2026-09-01
+- **Phase:** Phase 1 — Foundation
+- **Status:** OK
+- **Branch:** feat/task-006-wire-lint-security-scan-builds
+- **Files created / modified:**
+  - `package.json` — added `build` script running `npm run lint && npm audit --audit-level=high`
+- **Acceptance criteria met:**
+  - [x] A push with a deliberate lint error fails the build and does not deploy
+  - [x] A clean push passes the build command and deploys normally
+- **Security gate:** BASIC — all checks passed
+- **Scalability gate:** BASIC — all checks passed (all items N/A for config-only task)
+- **Regression:** Phase 1 build OK — `npm run build` exit 0, `npm run lint` exit 0, `npm test` exit 0 (passWithNoTests), `npm ci` exit 0, 0 vulnerabilities
+- **Decisions made:**
+  - [INFRA] Build command for Cloudflare Workers Builds dashboard set to `npm run build`
+  - [CODE] `npm audit --audit-level=high` used instead of default to avoid blocking on moderate/low advisories
+  - [ARCH] Build script order: lint first (fast fail), then audit (security)
+- **Notes:** Cloudflare Workers Builds dashboard build command must be manually updated to `npm run build`
+- **Knowledge drift:** none
+
 ### Task #007 — Unit Tests for `js/state.js` (localStorage Wrapper) ✅
 - **Completed:** 2026-09-03
 - **Phase:** Phase 3 — Core Features
@@ -428,7 +378,100 @@ Satu Cloudflare Worker dengan static assets (`src/index.js`) menangani seluruh r
 - **Notes:** none
 - **Knowledge drift:** none
 
+### Task #008 — Unit Tests for `js/utils.js` ✅
+- **Completed:** 2026-09-03
+- **Phase:** Phase 3 — Core Features
+- **Status:** OK
+- **Branch:** feat/task-008-utils-js-unit-tests
+- **Files created / modified:**
+  - `js/utils.test.js` — unit tests for all 9 exported functions in `js/utils.js`: escapeHtml, debounce, slugify, buildPlayUrl, buildGamePageUrl, isAllowedEmbedUrl, readSessionGames, writeSessionGames, fetchGameCatalog
+- **Acceptance criteria met:**
+  - [x] Every exported function has at least one passing test covering its normal case and one edge case
+  - [x] Test suite runs via `npm test` with visible pass/fail output (67 passed, 0 failed)
+  - [x] Unit test written and passing for new logic
+  - [x] Test is isolated: sets up and tears down its own state (afterEach clears sessionStorage/localStorage; debounce tests use vi.useFakeTimers)
+- **Security gate:** BASIC — all checks passed
+  - [x] No secrets hardcoded
+  - [x] Sensitive config from environment variables only
+  - [x] No eval() or exec() with external input
+  - [x] Error messages don't expose stack traces or internal paths
+  - [x] .gitignore includes .env, *.pem, *.key, *.p12
+  - [x] Pre-commit hook active (verified)
+- **Scalability gate:** BASIC — all checks passed (all items N/A for unit test file)
+  - [x] No synchronous blocking in async handlers
+  - [x] No hardcoded pool sizes/timeouts/batch limits
+  - [x] External I/O: explicit timeout values
+  - [x] No global mutable state across concurrent requests
+  - [x] Correlation ID generated at entry (N/A — client-side test file)
+  - [x] Structured logger / crash reporter initialized (N/A — test file)
+- **Regression:** Passed 67 tests, 0 failed (21 state + 46 utils)
+- **Decisions made:**
+  - [TEST] escapeHtml tests use computed expected values (matching the function's replace logic) instead of hardcoded HTML entity strings, avoiding test-file encoding ambiguity
+  - [TEST] debounce tests use `vi.useFakeTimers()` in `beforeEach` for deterministic timer control
+  - [TEST] fetchGameCatalog tests use `globalThis.fetch` mock instead of `global.fetch` to satisfy ESLint no-undef rule
+  - [TEST] isAllowedEmbedUrl tests cover local game paths, allowed HTTPS, subdomains, protocol-relative, javascript:, data:, malformed URLs, and disallowed hosts
+- **Notes:** none
+- **Knowledge drift:** none
+
+### Task #009 — Unit Tests for Catalog & Search Logic (`src/index.js`) ✅
+- **Completed:** 2026-09-08
+- **Phase:** Phase 3 — Core Features
+- **Status:** OK
+- **Branch:** feat/task-009-unit-tests-catalog-search
+- **Files created / modified:**
+  - `src/index.js` — added named exports for handleApiGames, handleApiSearch, getCombinedGames, clampNum, escapeHtmlAttr, escapeJsonLd, slugify, parseGameMonetizeFeed, decodeEntities; added one-line docstrings on each exported function
+  - `src/index.test.js` — 60 unit tests: handleApiGames (12), handleApiSearch (9), clampNum (7), escapeHtmlAttr (8), escapeJsonLd (5), slugify (6), parseGameMonetizeFeed (6), decodeEntities (5), getCombinedGames via handler (2)
+  - `vitest.config.js` — restructured with vitest 4.x `projects` array: "unit" project (jsdom for js/ tests) and "worker" project (@cloudflare/vitest-plugin for src/ tests)
+  - `package.json` — added @cloudflare/vitest-plugin, wrangler as devDependencies
+  - `package-lock.json` — updated lockfile
+- **Acceptance criteria met:**
+  - [x] Test `/api/games` confirms JSON response shape (id, title, category, url, thumb) including external feed games and graceful degradation when one or both feeds fail
+  - [x] Test `/api/search` confirms empty/non-matching query returns empty array, not error; valid query returns matching games; case-insensitive; matches category as well as title
+  - [x] Unit test written and passing for new logic (60 tests, all pass)
+  - [x] Test is isolated: each test sets up its own mock state (fetchMock, cacheStore reset in beforeEach)
+- **Security gate:** STANDARD — all checks passed
+  - [x] All external input validated and sanitized — N/A (unit tests, no user input)
+  - [x] Input-validation regexes checked for catastrophic-backtracking risk — N/A
+  - [x] Request body/file size limits enforced — N/A
+  - [x] Authentication on every protected route — N/A (all routes public)
+  - [x] Authorization at service/repository layer — N/A
+  - [x] DB uses parameterized queries or ORM — N/A
+  - [x] File paths from user input sanitized — N/A
+  - [x] PII not in logs — ✓ (no logging in tests)
+  - [x] User-supplied content in logs sanitized — ✓
+  - [x] HTML output escaped — ✓ (escapeHtmlAttr tests verify)
+  - [x] Redirects validated — N/A
+  - [x] Brute force protection — N/A
+  - [x] Password reset tokens — N/A
+  - [x] Session tokens regenerated — N/A
+  - [x] Set-Cookie: HttpOnly + Secure + SameSite — N/A
+  - [x] HTTP method override disabled — ✓
+  - [x] Content-Type validated — ✓ (JSON content-type assertions)
+  - [x] Additive-only change — ✓ (existing response shapes preserved)
+- **Scalability gate:** STANDARD — all checks passed
+  - [x] No synchronous blocking in async handlers — ✓
+  - [x] No hardcoded pool sizes/timeouts/batch limits — ✓
+  - [x] DB connection pool — N/A
+  - [x] External I/O: explicit timeout values — N/A (tests mock fetch)
+  - [x] No global mutable state across concurrent requests — ✓
+  - [x] Correlation ID generated — N/A
+  - [x] Structured logger initialized — N/A
+  - [x] Query plan check — N/A
+  - [x] No N+1 patterns — N/A
+  - [x] All I/O async — ✓
+  - [x] No unbounded memory accumulation — ✓
+- **Regression:** Passed 127 tests (67 existing + 60 new), 0 failed; lint clean; build passes; 0 vulnerabilities
+- **Decisions made:**
+  - [INFRA] @cloudflare/vitest-plugin chosen over @cloudflare/vitest-pool-workers — the latter is deprecated in favor of the plugin approach per Cloudflare docs; plugin runs tests inside workerd via Miniflare providing real Cloudflare globals
+  - [ARCH] vitest 4.x `projects` array used instead of removed `test.workspace` — vitest 4 renamed workspace to projects
+  - [CODE] Named exports added to src/index.js for testability — handleApiGames, handleApiSearch, getCombinedGames, clampNum, escapeHtmlAttr, escapeJsonLd, slugify, parseGameMonetizeFeed, decodeEntities
+  - [TEST] Handler tests use URL objects (not Request) since handlers access url.searchParams directly
+  - [TEST] Mock cache API and mock fetch provide test isolation — cacheStore Map reset in beforeEach, fetchSpy mock configured per-describe block
+- **Notes:** none
+- **Knowledge drift:** none
+
 > v1.0.7 (2026-09-01): Task #006 completed — `package.json` build script added (`npm run lint && npm audit --audit-level=high`). Cloudflare Workers Builds dashboard build command to be set to `npm run build`. Lint error causes non-zero exit blocking deploy; clean build passes. Task #007 promoted to [IN PROGRESS].
 > v1.0.8 (2026-09-03): Task #008 completed — `js/utils.test.js` created with 46 tests covering all 9 exported functions in `js/utils.js` (escapeHtml, debounce, slugify, buildPlayUrl, buildGamePageUrl, isAllowedEmbedUrl, readSessionGames, writeSessionGames, fetchGameCatalog). All 67 tests pass (21 state + 46 utils), lint clean, build passes, 0 vulnerabilities. Task #009 promoted to [IN PROGRESS].
 > v1.0.9 (2026-09-07): Laporan Google Search Console Coverage (diunduh 2026-09-07) menemukan 2 masalah Page Indexing aktif dengan validasi perbaikan berstatus Gagal — "Halaman dengan pengalihan" (3 URL) dan "Di-crawl - saat ini tidak diindeks" (16 URL, naik dari 12 dalam 2 minggu terakhir). Task #020 dan #021 ditambahkan ke [NEXT TASKS] di bawah Phase 8 — SEO & Post-Launch Maintenance (fase baru). Task #021 menandai kontradiksi antara dokumen (`game.html` diklaim sudah redirect ke `/game`) dan data GSC (kedua variant masih di-crawl sebagai halaman terpisah) — perlu verifikasi kode langsung sebelum eksekusi. Tidak ada task yang dipromosikan; Task #009 tetap satu-satunya [IN PROGRESS]. `knowledge.md` diperbarui paralel ke v1.5.0; `prd.md` ke v1.5.0.
 > v1.0.10 (2026-09-07): [PERBAIKAN STRUKTUR CHANGELOG] Ditemukan pelanggaran prinsip "setiap nomor task hanya muncul sekali": entri draf Task #006, #007, #008 di [NEXT TASKS] belum terhapus meski ketiganya sudah punya entri lengkap ✅ (dengan gate/regression) di bagian completed — sisa dari proses promosi task yang tidak membersihkan draf lama. Ketiga entri draf dihapus dari [NEXT TASKS] beserta header "### Phase 1 — Foundation" yang jadi kosong setelahnya (precondition-nya, Task #001–#003, sudah lama terpenuhi). Isi task tidak berubah — hanya penghapusan duplikat, entri ✅ yang sah tidak disentuh. Catatan terpisah: ditemukan juga duplikasi header [COMPLETED] itu sendiri (satu "### [COMPLETED]" h3 tersempil di bawah [IN PROGRESS] berisi Task #008/#005/#006/#004/#001/#002/#003, terpisah dari "## [COMPLETED]" h2 yang benar berisi entri retroaktif + Task #007) — belum diperbaiki, menunggu arahan urutan yang diinginkan sebelum digabung.
+> v1.0.11 (2026-09-08): Task #009 completed — 60 unit tests for src/index.js catalog/search logic. Named exports added to src/index.js (handleApiGames, handleApiSearch, getCombinedGames, clampNum, escapeHtmlAttr, escapeJsonLd, slugify, parseGameMonetizeFeed, decodeEntities). vitest.config.js restructured with vitest 4.x projects array: "unit" (jsdom) and "worker" (@cloudflare/vitest-plugin). @cloudflare/vitest-plugin and wrangler added as devDependencies. Total: 127 tests pass (21 state + 46 utils + 60 worker), lint clean, build passes, 0 vulnerabilities. Changelog structure fixed: duplicate `### [COMPLETED]` section removed, all completed tasks consolidated under single `## [COMPLETED]` header. Task #010 promoted to [IN PROGRESS].
