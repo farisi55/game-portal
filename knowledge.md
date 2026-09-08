@@ -1,14 +1,15 @@
 ---
 project: Gimboot
-version: 1.4.0
+version: 1.5.1
 source: prd
-last_updated: 2026-08-30
+last_updated: 2026-09-07
 project_shape: fullstack
 simple_mode: false
 ---
 # simple_mode: false — PRD §6.1 6-month target adalah 10.000+ pengguna serentak (di atas ambang ≤100), sehingga syarat pertama tidak terpenuhi meski §6.4 Compliance = none
 # v1.1.0 — direvisi berdasarkan audit langsung terhadap source code (game-portal-main.zip) tanggal 2026-08-28, dibandingkan dengan v1.0.0 yang disusun dari brief/struktur repo tanpa membaca isi tiap file. Semua koreksi ditandai "[AUDIT KODE]"; item yang masih perlu keputusan developer ditandai "[AUDIT KODE — PERLU KONFIRMASI]".
 # v1.2.0 — developer menjawab keenam item [PERLU KONFIRMASI]/[DECISION NEEDED] dari v1.1.0 pada 2026-08-30 (lewat §10 Open Questions di prd.md). Jawaban ditandai "[DIJAWAB 2026-08-30]" di seluruh dokumen ini. Ringkasan lengkap ada di changelog.md bagian [COMPLETED].
+# v1.5.0 — laporan Google Search Console Coverage (2026-09-07) menemukan indikasi kuat bahwa perilaku redirect `game.html`/`game` untuk URL berquery string TIDAK sesuai dengan yang didokumentasikan di §3/§7 — ditandai "[GSC 2026-09-07]" di bawah. Belum diverifikasi lewat pembacaan kode langsung; tracked di changelog.md Task #020/#021.
 
 ## 1. Project Identity
 - Nama: Gimboot (Game Portal) — portal PWA katalog game HTML5, SEO-optimized, dengan modul viral sharing terpusat. [AUDIT KODE] Katalog live adalah GABUNGAN: (a) game first-party buatan sendiri, dan (b) katalog yang di-fetch & digabung secara real-time dari dua feed pihak ketiga (GameMonetize + GamePix) — bukan murni "katalog mini-game bertema lokal" seperti draf sebelumnya. Lihat §2 dan §3.
@@ -43,6 +44,7 @@ game-portal/
 │   ├── mobil-mbg/{...}           # struktur sama; status "live" perlu konfirmasi ulang — lihat §7
 │   └── shared/{ui-share.css,ui-share.js}   # modul share/confetti (TIDAK menyimpan skor — lihat §3 "State management")
 ├── js/
+│   ├── ad-loader.js              # ad script loader with timeout fallback (GameMonetize/GamePix)
 │   ├── catalog.js                # render/manajemen katalog halaman utama
 │   ├── config.js                 # konfigurasi/konstanta aplikasi, termasuk LOCAL_GAMES sisi klien (lihat §7)
 │   ├── player.js                 # [AUDIT KODE] controller halaman player lengkap: resolve game dari SSR meta / query param, favorit, recently-played, fullscreen, native share/clipboard, related-games, lazy iframe load, allow-attribute per sumber game — BUKAN sekadar "loader game + kontrol audio"; tidak ada logika audio di file ini
@@ -61,7 +63,7 @@ game-portal/
 ├── README.md                     # [AUDIT KODE — BARU DITEMUKAN] dokumentasi developer-facing yang sudah cukup mutakhir; jadi salah satu sumber utama audit ini. Catatan: nilai run_worker_first yang disebut README (["/api/*","/play/*","/sitemap.xml"]) sudah tidak sama dengan wrangler.toml aktual (["/*"]) — README sendiri sedikit tertinggal di titik ini.
 ├── robots.txt                    # [AUDIT KODE — BARU DITEMUKAN] mengarah ke /sitemap.xml — mengonfirmasi route sitemap dinamis di src/index.js memang disengaja & live
 ├── ads.txt                       # verifikasi GameMonetize/GamePix
-├── game.html                     # shell lama; link ke game.html kini di-301-redirect ke /game oleh src/index.js
+├── game.html                     # shell lama; link ke game.html kini di-301-redirect ke /game oleh src/index.js — [GSC 2026-09-07 — KONTRADIKSI, PERLU VERIFIKASI] laporan Google Search Console (Coverage, 2026-09-07) menunjukkan `/game.html?id=...` dan `/game?id=...` (http & https) masih di-crawl Google sebagai halaman terpisah dengan konten sendiri ("Di-crawl - saat ini tidak diindeks", 16 URL), bukan sebagai "Halaman dengan pengalihan" seperti seharusnya jika 301 di atas berlaku konsisten. Redirect kemungkinan tidak menjangkau URL dengan query string panjang — belum diverifikasi lewat pembacaan kode langsung. Dilacak di changelog.md Task #021.
 ├── index.html                    # landing page katalog
 ├── manifest.json / sw.js         # PWA manifest + service worker
 └── wrangler.toml                 # [AUDIT KODE] konfigurasi Cloudflare Worker + static assets — BUKAN konfigurasi Cloudflare Pages/Functions
@@ -133,6 +135,7 @@ game-portal/
 - Multi-environment: dev (`wrangler dev` lokal) / preview & prod — [DIJAWAB 2026-08-30] preview deployment mengikuti mekanisme bawaan Cloudflare Workers Builds (bukan "Cloudflare Pages Preview Deployment" seperti draf sebelumnya).
 - Rollback/update-channel: [AUDIT KODE — KOREKSI, diverifikasi ke dokumentasi Cloudflare terkini] BUKAN "via Cloudflare Pages dashboard". Untuk Worker, rollback dilakukan lewat `wrangler rollback` (CLI, ke deployment/version sebelumnya) atau via Cloudflare dashboard: Workers & Pages → pilih Worker → tab Deployments → menu titik-tiga pada versi tujuan → Rollback.
 - Canary/staged-rollout: target 6 bulan (10.000+) > 1.000 → berlaku. Untuk saat ini, preview deployment + rollback instan (lihat di atas) sudah cukup (Simple Mode secara operasional); canary/staged-rollout formal wajib begitu traffic actual mendekati/melewati 10.000 pengguna serentak.
+- SEO/indexing monitoring: [GSC 2026-09-07] Google Search Console (Coverage) dipantau developer secara manual — belum ada alerting otomatis. Temuan pertama (2026-09-07): 2 masalah Page Indexing aktif, validasi Gagal — lihat catatan §3 (`game.html`) dan changelog.md Task #020/#021.
 
 ## 9. Constraints & Anti-patterns
 - **Sequencing constraint (prioritas tertinggi):** audit clean-code (hapus file/kode tidak terpakai, verifikasi `.avicon.svg`) WAJIB selesai di Phase 1 SEBELUM fitur baru apa pun dikerjakan — keputusan eksplisit developer. [DIJAWAB 2026-08-30] Keputusan atas unknown Task #002 sudah lengkap: `.avicon.svg` → kandidat dihapus (favicon resmi adalah `favicon.svg`); `functions/api/*`/`functions/share/[id].js` → dihapus; roster game first-party → keempatnya aktif, `src/index.js` perlu disinkronkan. Eksekusi ketiganya (plus duplikasi screenshot di `manifest.json`) masih tertunda — dilacak di changelog.md Task #002.

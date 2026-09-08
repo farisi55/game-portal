@@ -10,3 +10,6 @@
 secrets/
 node_modules/
 coverage/
+.freebuff/
+.vscode/
+.husky/

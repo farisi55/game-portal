@@ -79,6 +79,11 @@ export const CONFIG = {
   // Aspect ratio used when a game doesn't report its own width/height.
   FALLBACK_ASPECT_RATIO: '16 / 9',
 
+  // Ad script URL from GameMonetize/GamePix dashboard.  Paste the <script src="…">
+  // value provided by the ad network here.  When empty, no ad script is loaded
+  // and the game page works normally without monetisation.
+  AD_SCRIPT_URL: '',
+
   // How many related games to show on the player page.
   RELATED_GAMES_LIMIT: 12,
 
