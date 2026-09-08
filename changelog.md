@@ -1,7 +1,7 @@
 ---
 project: Gimboot
-knowledge_version: 1.4.0
-changelog_version: 1.0.8
+knowledge_version: 1.5.0
+changelog_version: 1.0.9
 created: 2026-08-28
 status: in_progress
 milestone: 1 of 1
@@ -392,6 +392,33 @@ simple_mode: false
 - **Dependencies:** Task #009, Task #010
 - **Decisions made:** Belum dieksekusi — isi setelah task selesai.
 
+### Phase 8 — SEO & Post-Launch Maintenance
+*Fase baru, di luar 7 phase asli — ditambahkan karena temuan berasal dari monitoring pasca-launch (Google Search Console), bukan dari PRD/audit kode awal. Task #021 bergantung pada Task #020 karena keduanya menyentuh titik redirect yang sama di `src/index.js`.*
+
+### Task #020 — Fix GSC "Halaman dengan pengalihan": Single-Hop Redirect Normalization
+- **Phase:** Phase 8 — SEO & Post-Launch Maintenance
+- **Scope:** [GSC 2026-09-07] Laporan Google Search Console (Coverage, diunduh 2026-09-07) menandai 3 URL dengan validasi perbaikan berstatus **Gagal** untuk alasan "Halaman dengan pengalihan": `http://gimboot.com/index.html`, `https://gimboot.com/index.html`, `http://gimboot.com/`. Tren drilldown stabil di 3 URL sejak 2026-08-22. Dugaan penyebab (belum diverifikasi lewat pembacaan kode langsung): redirect saat ini kemungkinan lebih dari 1 hop (mis. `http://` → `https://` → strip `/index.html` sebagai langkah terpisah) dan/atau tidak konsisten menggunakan status 301. [PERLU VERIFIKASI] harus dicek langsung di `src/index.js` sebelum implementasi — jangan asumsikan struktur redirect saat ini dari deskripsi ini saja.
+- **Files to create / modify:** `src/index.js` (blok normalisasi redirect di awal fetch handler), `sitemap.xml` generator (pastikan hanya mengeluarkan `https://gimboot.com/`)
+- **Acceptance criteria:**
+  - [ ] `http://gimboot.com/`, `http://gimboot.com/index.html`, dan `https://gimboot.com/index.html` masing-masing menghasilkan TEPAT SATU response 301 langsung ke `https://gimboot.com/` (diverifikasi via `curl -I`, tanpa hop perantara)
+  - [ ] `/sitemap.xml` tidak mencantumkan varian URL selain bentuk canonical `https://gimboot.com/`
+  - [ ] Follow-up manual (di luar acceptance criteria kode): setelah deploy, klik ulang "Validasi Perbaikan" di GSC untuk masalah ini — validasi butuh beberapa hari re-crawl, tidak bisa dikonfirmasi instan
+- **Dependencies:** none
+- **Decisions made:** Belum dieksekusi — isi setelah task selesai.
+
+### Task #021 — Fix GSC "Di-crawl - saat ini tidak diindeks": Canonicalize Game Deep-Link URL Variants
+- **Phase:** Phase 8 — SEO & Post-Launch Maintenance
+- **Scope:** [GSC 2026-09-07] 16 URL berstatus validasi **Gagal** untuk alasan "Di-crawl - saat ini tidak diindeks", naik dari 12 URL (2026-08-21) ke 16 (2026-08-29, stabil sejak itu). Pola dari tabel drilldown: game yang sama muncul sebagai hingga 4 URL terpisah — `/game.html?id=X` dan `/game?id=X`, masing-masing di varian `http://` dan `https://` — dengan query string panjang (title, thumb, category, w, h ikut disematkan di URL). [KONTRADIKSI DENGAN DOKUMEN — PERLU VERIFIKASI] `knowledge.md` §3/§7 dan `prd.md` §"Sistem Clean URL & Dynamic SEO" menyatakan `game.html` sudah 301-redirect ke `/game`. Jika benar, `/game.html?id=X` seharusnya masuk kategori GSC "Halaman dengan pengalihan" (seperti Task #020), bukan "Di-crawl - saat ini tidak diindeks" — data GSC mengindikasikan kedua variant justru di-crawl langsung sebagai halaman terpisah dengan konten sendiri. Kemungkinan penyebab: redirect tidak konsisten diterapkan pada URL dengan query string panjang, dan/atau canonical tag di `/play/:id/:slug` belum cukup menyerap variant-variant lama ini. **Verifikasi kode langsung terhadap `src/index.js` wajib dilakukan sebelum eksekusi fix** — jangan asumsikan status redirect dari dokumen yang sudah ada.
+- **Files to create / modify:** `src/index.js` (verifikasi & perbaikan redirect/canonical untuk `/game` dan `/game.html` dengan query string ke bentuk `/play/:id/:slug`), `sitemap.xml` generator (pastikan hanya mengeluarkan bentuk `/play/:id/:slug`)
+- **Acceptance criteria:**
+  - [ ] Request ke `/game.html?id=X` (http maupun https) menghasilkan TEPAT SATU redirect 301 ke bentuk canonical `/play/:id/:slug` yang sesuai
+  - [ ] Request ke `/game?id=X` (tanpa `.html`) menghasilkan TEPAT SATU redirect 301 ke bentuk canonical yang sama
+  - [ ] `<link rel="canonical">` pada `/play/:id/:slug` menunjuk konsisten ke dirinya sendiri
+  - [ ] `/sitemap.xml` hanya mencantumkan bentuk `/play/:id/:slug` — tidak ada entri `/game.html?id=` atau `/game?id=`
+  - [ ] Follow-up manual (di luar acceptance criteria kode): setelah deploy, jumlah "Halaman yang terpengaruh" pada laporan GSC drilldown dipantau agar berhenti bertambah dan turun pada siklus re-crawl berikutnya
+- **Dependencies:** Task #020
+- **Decisions made:** Belum dieksekusi — isi setelah task selesai.
+
 ## [COMPLETED]
 
 > **Catatan format:** empat entri retroaktif di bawah ini BUKAN task yang dieksekusi lewat proses changelog/gate P04 ini — proses itu baru mulai berlaku sejak Task #001. Entri-entri ini disusun 2026-08-30 dari kondisi kode saat diaudit (2026-08-28) untuk mencatat bahwa produk sudah live sebelum changelog ini ada, sebagaimana disebut `knowledge.md` §1 ("Phase 1 & Phase 3 ... selesai"). Karena itu, tidak ada field "Files to create/modify", "Acceptance criteria" bercentang, atau "Dependencies" seperti task lain — tidak ada catatan asli semacam itu untuk pekerjaan ini, dan menuliskannya di sini akan memberi kesan presisi yang tidak benar-benar ada.
@@ -441,3 +468,4 @@ Satu Cloudflare Worker dengan static assets (`src/index.js`) menangani seluruh r
 
 > v1.0.7 (2026-09-01): Task #006 completed — `package.json` build script added (`npm run lint && npm audit --audit-level=high`). Cloudflare Workers Builds dashboard build command to be set to `npm run build`. Lint error causes non-zero exit blocking deploy; clean build passes. Task #007 promoted to [IN PROGRESS].
 > v1.0.8 (2026-09-03): Task #008 completed — `js/utils.test.js` created with 46 tests covering all 9 exported functions in `js/utils.js` (escapeHtml, debounce, slugify, buildPlayUrl, buildGamePageUrl, isAllowedEmbedUrl, readSessionGames, writeSessionGames, fetchGameCatalog). All 67 tests pass (21 state + 46 utils), lint clean, build passes, 0 vulnerabilities. Task #009 promoted to [IN PROGRESS].
+> v1.0.9 (2026-09-07): Laporan Google Search Console Coverage (diunduh 2026-09-07) menemukan 2 masalah Page Indexing aktif dengan validasi perbaikan berstatus Gagal — "Halaman dengan pengalihan" (3 URL) dan "Di-crawl - saat ini tidak diindeks" (16 URL, naik dari 12 dalam 2 minggu terakhir). Task #020 dan #021 ditambahkan ke [NEXT TASKS] di bawah Phase 8 — SEO & Post-Launch Maintenance (fase baru). Task #021 menandai kontradiksi antara dokumen (`game.html` diklaim sudah redirect ke `/game`) dan data GSC (kedua variant masih di-crawl sebagai halaman terpisah) — perlu verifikasi kode langsung sebelum eksekusi. Tidak ada task yang dipromosikan; Task #009 tetap satu-satunya [IN PROGRESS]. `knowledge.md` diperbarui paralel ke v1.5.0; `prd.md` ke v1.5.0.
