@@ -1,7 +1,7 @@
 ---
 project: Gimboot
 knowledge_version: 1.5.1
-changelog_version: 1.0.13
+changelog_version: 1.0.15
 created: 2026-08-28
 status: in_progress
 milestone: 1 of 1
@@ -31,17 +31,30 @@ simple_mode: false
 
 ## [IN PROGRESS]
 
+### Task #020 — Fix GSC "Halaman dengan pengalihan": Single-Hop Redirect Normalization
+- **Phase:** Phase 8 — SEO & Post-Launch Maintenance
+- **Scope:** [GSC 2026-09-07] Laporan Google Search Console (Coverage, diunduh 2026-09-07) menandai 3 URL dengan validasi perbaikan berstatus **Gagal** untuk alasan "Halaman dengan pengalihan": `http://gimboot.com/index.html`, `https://gimboot.com/index.html`, `http://gimboot.com/`. Tren drilldown stabil di 3 URL sejak 2026-08-22. Dugaan penyebab (belum diverifikasi lewat pembacaan kode langsung): redirect saat ini kemungkinan lebih dari 1 hop (mis. `http://` → `https://` → strip `/index.html` sebagai langkah terpisah) dan/atau tidak konsisten menggunakan status 301. [PERLU VERIFIKASI] harus dicek langsung di `src/index.js` sebelum implementasi — jangan asumsikan struktur redirect saat ini dari deskripsi ini saja.
+- **Files to create / modify:** `src/index.js` (blok normalisasi redirect di awal fetch handler), `sitemap.xml` generator (pastikan hanya mengeluarkan `https://gimboot.com/`)
+- **Acceptance criteria:**
+  - [ ] `http://gimboot.com/`, `http://gimboot.com/index.html`, dan `https://gimboot.com/index.html` masing-masing menghasilkan TEPAT SATU response 301 langsung ke `https://gimboot.com/` (diverifikasi via `curl -I`, tanpa hop perantara)
+  - [ ] `/sitemap.xml` tidak mencantumkan varian URL selain bentuk canonical `https://gimboot.com/`
+  - [ ] Follow-up manual (di luar acceptance criteria kode): setelah deploy, klik ulang "Validasi Perbaikan" di GSC untuk masalah ini — validasi butuh beberapa hari re-crawl, tidak bisa dikonfirmasi instan
+- **Dependencies:** none
+- **Decisions made:** Belum dieksekusi — isi setelah task selesai. [CATATAN PROMOSI] Begitu Task #020 selesai (masuk [COMPLETED]), promosikan **Task #021** ke [IN PROGRESS] terlebih dahulu — JANGAN Task #012 — karena #020 dan #021 satu paket perbaikan GSC yang sama-sama menyentuh blok redirect di `src/index.js` (lihat dependency #021 → #020 di Phase 8). Task #012 (dijeda di [NEXT TASKS], Phase 5) baru dipromosikan setelah #021 selesai, kecuali developer secara eksplisit mengubah urutan ini.
+
+## [NEXT TASKS]
+
+### Phase 5 — UI/UX
+
 ### Task #012 — Harden Client-Side Search Rendering Against Reflected XSS
 - **Phase:** Phase 5 — UI/UX
-- **Scope:** Ensure the catalog search UI (`js/catalog.js`) never renders the user's raw query string or API results as unescaped HTML. (Catatan: isi lengkap `js/catalog.js` belum dibaca penuh pada pre-audit ini — task ini belum bisa dikonfirmasi/dibantah oleh audit, tetap seperti draf sebelumnya.)
+- **Scope:** [DIJEDA 2026-09-08] Dipromosikan kembali dari `[IN PROGRESS]` ke `[NEXT TASKS]` atas permintaan developer — prioritas digeser ke Task #020/#021 (perbaikan Google Search Console). Progress saat task dijeda: 0% — audit `js/catalog.js` belum dibaca penuh, belum ada kode ditulis, tidak ada acceptance criteria yang tercentang. Tidak ada dependency lain (#013–#019) yang menunggu task ini selesai. Scope asli: Ensure the catalog search UI (`js/catalog.js`) never renders the user's raw query string or API results as unescaped HTML. (Catatan: isi lengkap `js/catalog.js` belum dibaca penuh pada pre-audit ini — task ini belum bisa dikonfirmasi/dibantah oleh audit, tetap seperti draf sebelumnya.)
 - **Files to create / modify:** `js/catalog.js`
 - **Acceptance criteria:**
   - [ ] Typing `<img src=x onerror=alert(1)>` into search and rendering results does not execute any script
   - [ ] Search result rendering uses text-safe DOM APIs (e.g. `textContent`) or an escaping helper (`js/utils.js` sudah menyediakan `escapeHtml` — konfirmasi dipakai di sini), not raw `innerHTML` concatenation of user input
 - **Dependencies:** Task #004
 - **Decisions made:** Belum dieksekusi — isi setelah task selesai.
-
-## [NEXT TASKS]
 
 ### Phase 6 — Testing & QA
 
@@ -119,18 +132,7 @@ simple_mode: false
 - **Decisions made:** Belum dieksekusi — isi setelah task selesai.
 
 ### Phase 8 — SEO & Post-Launch Maintenance
-*Fase baru, di luar 7 phase asli — ditambahkan karena temuan berasal dari monitoring pasca-launch (Google Search Console), bukan dari PRD/audit kode awal. Task #021 bergantung pada Task #020 karena keduanya menyentuh titik redirect yang sama di `src/index.js`.*
-
-### Task #020 — Fix GSC "Halaman dengan pengalihan": Single-Hop Redirect Normalization
-- **Phase:** Phase 8 — SEO & Post-Launch Maintenance
-- **Scope:** [GSC 2026-09-07] Laporan Google Search Console (Coverage, diunduh 2026-09-07) menandai 3 URL dengan validasi perbaikan berstatus **Gagal** untuk alasan "Halaman dengan pengalihan": `http://gimboot.com/index.html`, `https://gimboot.com/index.html`, `http://gimboot.com/`. Tren drilldown stabil di 3 URL sejak 2026-08-22. Dugaan penyebab (belum diverifikasi lewat pembacaan kode langsung): redirect saat ini kemungkinan lebih dari 1 hop (mis. `http://` → `https://` → strip `/index.html` sebagai langkah terpisah) dan/atau tidak konsisten menggunakan status 301. [PERLU VERIFIKASI] harus dicek langsung di `src/index.js` sebelum implementasi — jangan asumsikan struktur redirect saat ini dari deskripsi ini saja.
-- **Files to create / modify:** `src/index.js` (blok normalisasi redirect di awal fetch handler), `sitemap.xml` generator (pastikan hanya mengeluarkan `https://gimboot.com/`)
-- **Acceptance criteria:**
-  - [ ] `http://gimboot.com/`, `http://gimboot.com/index.html`, dan `https://gimboot.com/index.html` masing-masing menghasilkan TEPAT SATU response 301 langsung ke `https://gimboot.com/` (diverifikasi via `curl -I`, tanpa hop perantara)
-  - [ ] `/sitemap.xml` tidak mencantumkan varian URL selain bentuk canonical `https://gimboot.com/`
-  - [ ] Follow-up manual (di luar acceptance criteria kode): setelah deploy, klik ulang "Validasi Perbaikan" di GSC untuk masalah ini — validasi butuh beberapa hari re-crawl, tidak bisa dikonfirmasi instan
-- **Dependencies:** none
-- **Decisions made:** Belum dieksekusi — isi setelah task selesai.
+*Fase baru, di luar 7 phase asli — ditambahkan karena temuan berasal dari monitoring pasca-launch (Google Search Console), bukan dari PRD/audit kode awal. Task #020 dipromosikan ke `[IN PROGRESS]` 2026-09-08 atas permintaan developer, menggeser Task #012 (lihat Phase 5). Task #021 bergantung pada Task #020 karena keduanya menyentuh titik redirect yang sama di `src/index.js`.*
 
 ### Task #021 — Fix GSC "Di-crawl - saat ini tidak diindeks": Canonicalize Game Deep-Link URL Variants
 - **Phase:** Phase 8 — SEO & Post-Launch Maintenance
@@ -593,6 +595,8 @@ Satu Cloudflare Worker dengan static assets (`src/index.js`) menangani seluruh r
 - **Knowledge drift:** UPDATE REQUIRED: @knowledge §3 — added `js/ad-loader.js` to folder structure. Bumped to v1.5.1.
 
 > v1.0.13 (2026-09-08): Task #011 completed — ad script loader with timeout fallback implemented. 149 tests pass, lint clean, build passes, 0 vulnerabilities. Task #012 promoted to [IN PROGRESS].
+> v1.0.14 (2026-09-08): [PERGESERAN PRIORITAS] Atas permintaan developer, Task #012 dijeda dan dikembalikan ke [NEXT TASKS] (Phase 5 — UI/UX) — progress saat dijeda: 0%, audit `js/catalog.js` belum dibaca, tidak ada kode ditulis, tidak ada dependency lain (#013–#019) yang menunggu task ini. Task #020 dipromosikan ke [IN PROGRESS] menggantikannya, memprioritaskan perbaikan Google Search Console (Task #020/#021, Phase 8) di atas urutan numerik semula. Tidak ada dependency yang terganggu — dicek satu per satu: #013 (→#006–#010, semua ✅), #014 (→#002, ✅), #015 (→#010,#014), #016 (→#003,#010), #017/#018 (tidak ada dependency), #019 (→#009,#010) — tidak ada yang membutuhkan #012. #020 sendiri dependency-nya none, #021 hanya bergantung ke #020. Isi/scope semua task lain tidak berubah, hanya urutan promosi.
+> v1.0.15 (2026-09-08): Ditambahkan [CATATAN PROMOSI] eksplisit ke `Decisions made` Task #020, atas permintaan developer — begitu #020 selesai, sesi berikutnya WAJIB promosikan Task #021 lebih dulu (satu paket perbaikan GSC, dependency #021→#020), bukan Task #012, kecuali developer mengubah urutan ini secara eksplisit. Tujuannya: urutan eksekusi tidak bergantung pada ingatan sesi manapun. Tidak ada perubahan lain.
 
 > v1.0.7 (2026-09-01): Task #006 completed — `package.json` build script added (`npm run lint && npm audit --audit-level=high`). Cloudflare Workers Builds dashboard build command to be set to `npm run build`. Lint error causes non-zero exit blocking deploy; clean build passes. Task #007 promoted to [IN PROGRESS].
 > v1.0.8 (2026-09-03): Task #008 completed — `js/utils.test.js` created with 46 tests covering all 9 exported functions in `js/utils.js` (escapeHtml, debounce, slugify, buildPlayUrl, buildGamePageUrl, isAllowedEmbedUrl, readSessionGames, writeSessionGames, fetchGameCatalog). All 67 tests pass (21 state + 46 utils), lint clean, build passes, 0 vulnerabilities. Task #009 promoted to [IN PROGRESS].
