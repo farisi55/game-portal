@@ -327,7 +327,7 @@ export async function handleApiSearch(url, env, ctx) {
 // redirected to the canonical /play/{gameId}/{slug} URL.
 // ----------------------------------------------------------------------------
 
-async function handleShareRoute(request, url, env, ctx) {
+export async function handleShareRoute(request, url, env, ctx) {
   const segments = url.pathname.split('/').filter(Boolean); // ['share', '<id>']
   const gameId = segments[1] ? decodeURIComponent(segments[1]) : null;
   if (!gameId) return Response.redirect(new URL('/', url), 302);
@@ -435,7 +435,7 @@ function safeImageUrl(maybeRelative, origin) {
   return `${origin}/icon-512.png`;
 }
 
-async function handleGameRoute(request, url, env) {
+export async function handleGameRoute(request, url, env) {
   const assetResponse = await env.ASSETS.fetch(new Request('https://assets.local/game', request));
   const title = (url.searchParams.get('title') || 'Game').trim() || 'Game';
   const category = (url.searchParams.get('category') || '').trim();
@@ -468,7 +468,7 @@ async function handleGameRoute(request, url, env) {
     .transform(assetResponse);
 }
 
-async function handlePlayRoute(request, url, env, ctx) {
+export async function handlePlayRoute(request, url, env, ctx) {
   const segments = url.pathname.split('/').filter(Boolean); // ['play', '<id>', '<slug>']
   const gameId = segments[1] ? decodeURIComponent(segments[1]) : null;
 

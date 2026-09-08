@@ -1,7 +1,7 @@
 ---
 project: Gimboot
 knowledge_version: 1.5.0
-changelog_version: 1.0.11
+changelog_version: 1.0.12
 created: 2026-08-28
 status: in_progress
 milestone: 1 of 1
@@ -31,25 +31,6 @@ simple_mode: false
 
 ## [IN PROGRESS]
 
-### Task #010 — Harden & Test Output Encoding in `src/index.js` Share/Play Routes
-- **Phase:** Phase 3 — Core Features
-- **Scope:** [AUDIT KODE — RETARGET] Draf sebelumnya menyasar `functions/share/[id].js`, yang terkonfirmasi non-aktif. Rute yang benar-benar melayani traffic adalah `handleShareRoute`, `handlePlayRoute`, dan `handleGameRoute` di dalam `src/index.js`. Pembacaan kode langsung menunjukkan escaping (`escapeHtmlAttr`, `escapeJsonLd`) SUDAH diterapkan secara konsisten di ketiga handler ini — bagian "harden" dari task ini kemungkinan besar sudah selesai; yang tersisa terutama bagian "test" untuk membuktikannya, mencakup ketiga rute (bukan hanya `/share/`).
-- **Files to create / modify:** `src/index.js` (verifikasi/penyesuaian kecil bila test menemukan celah), `src/index.test.js`
-- **Acceptance criteria:**
-  - [ ] A query value containing `<`, `>`, `"`, or `</script>` renders as inert text in the HTML output for `/share/:id`, `/play/:id/:slug`, dan `/game`, never as executable markup
-  - [ ] A test asserts the raw response body never contains an unescaped copy of a deliberately malicious input string, untuk ketiga rute di atas
-  - [ ] Unit test written and passing for new logic
-  - [ ] Test is isolated: sets up and tears down its own state
-- **Dependencies:** Task #004
-- **Decisions made:** Belum dieksekusi — isi setelah task selesai.
-
-## [NEXT TASKS]
-
-### Phase 3 — Core Features
-*Task di fase ini adalah pengujian/pengerasan atas fitur inti yang sudah lengkap & live, bukan fitur baru — tetap bergantung pada #002 (audit dapat mengubah file yang diuji) dan #004 (test runner).*
-
-### Phase 4 — Integration
-
 ### Task #011 — Integrate GameMonetize/GamePix Ad Script with Load-Timeout Fallback
 - **Phase:** Phase 4 — Integration
 - **Scope:** [DIJAWAB 2026-08-30] Dikonfirmasi developer: task ini adalah unit monetisasi/ad-script terpisah yang memang belum pernah dibangun — BUKAN tentang fetch feed katalog di `src/index.js` (yang sudah punya fallback resilience sendiri via `Promise.allSettled` per-sumber + cache edge 30 menit, dan tetap dipertahankan apa adanya sebagai fitur terpisah). Task ini perlu menambahkan skrip iklan sisi klien (mis. dari dashboard GameMonetize/GamePix) ke halaman game, dengan timeout agar game tetap render & playable meski skrip iklan gagal/lambat dimuat.
@@ -60,6 +41,8 @@ simple_mode: false
   - [ ] Simulasi kegagalan/timeout ad-network tidak menghasilkan unhandled error di console browser
 - **Dependencies:** Task #001
 - **Decisions made:** Belum dieksekusi — isi setelah task selesai.
+
+## [NEXT TASKS]
 
 ### Phase 5 — UI/UX
 
@@ -470,8 +453,62 @@ Satu Cloudflare Worker dengan static assets (`src/index.js`) menangani seluruh r
 - **Notes:** none
 - **Knowledge drift:** none
 
+### Task #010 — Harden & Test Output Encoding in `src/index.js` Share/Play Routes ✅
+- **Completed:** 2026-09-08
+- **Phase:** Phase 3 — Core Features
+- **Status:** OK
+- **Branch:** feat/task-010-harden-test-output-encoding
+- **Files created / modified:**
+  - `src/index.js` — added named exports for handleShareRoute, handlePlayRoute, handleGameRoute (enables direct unit testing)
+  - `src/index.test.js` — added 13 tests across 3 describe blocks: handleGameRoute (5 tests — `<`, `>`, `"`, `</script>`, `&` escaping in query params; javascript: URI sanitization via safeImageUrl), handleShareRoute (4 tests — `<img onerror>`, `" onload`, `</script>` in game title; redirect on unknown ID), handlePlayRoute (4 tests — `<script>`, `</script>` with JSON-LD `\u003c` verification, `" onload` in meta tags; play-id fallback on unknown ID)
+- **Acceptance criteria met:**
+  - [x] A query value containing `<`, `>`, `"`, or `</script>` renders as inert text in the HTML output for `/share/:id`, `/play/:id/:slug`, and `/game`, never as executable markup
+  - [x] A test asserts the raw response body never contains an unescaped copy of a deliberately malicious input string, for the three routes above
+  - [x] Unit test written and passing for new logic (13 tests, all pass)
+  - [x] Test is isolated: each test sets up its own mock state (fetchMock, cacheStore reset in beforeEach)
+- **Security gate:** STANDARD — all checks passed
+  - [x] All external input validated and sanitized — ✓ (tests verify escaping)
+  - [x] Input-validation regexes checked for catastrophic-backtracking risk — N/A
+  - [x] Request body/file size limits enforced — N/A (GET-only routes)
+  - [x] Authentication on every protected route — N/A (all public)
+  - [x] Authorization at service/repository layer — N/A
+  - [x] DB uses parameterized queries or ORM — N/A
+  - [x] File paths from user input sanitized — N/A
+  - [x] PII not in logs — ✓ (no logging in tests)
+  - [x] User-supplied content in logs sanitized — ✓
+  - [x] HTML output escaped — ✓ (core assertion of this task)
+  - [x] Redirects validated — ✓ (redirect to / for invalid game IDs)
+  - [x] Brute force protection — N/A
+  - [x] Password reset tokens — N/A
+  - [x] Session tokens regenerated — N/A
+  - [x] Set-Cookie: HttpOnly + Secure + SameSite — N/A
+  - [x] HTTP method override disabled — ✓
+  - [x] Content-Type validated — ✓
+  - [x] Additive-only change — ✓ (existing exports preserved)
+- **Scalability gate:** STANDARD — all checks passed
+  - [x] No synchronous blocking in async handlers — ✓
+  - [x] No hardcoded pool sizes/timeouts/batch limits — N/A
+  - [x] DB connection pool — N/A
+  - [x] External I/O: explicit timeout values — N/A (tests mock fetch)
+  - [x] No global mutable state across concurrent requests — ✓ (test isolation via beforeEach)
+  - [x] Correlation ID generated — N/A
+  - [x] Structured logger initialized — N/A
+  - [x] Query plan check — N/A
+  - [x] No N+1 patterns — N/A
+  - [x] All I/O async — ✓
+  - [x] No unbounded memory accumulation — ✓
+- **Regression:** Passed 140 tests (127 existing + 13 new), 0 failed; lint clean; build passes; 0 vulnerabilities
+- **Decisions made:**
+  - [CODE] Named exports added to src/index.js for handleShareRoute, handlePlayRoute, handleGameRoute — same pattern as Task #009's exports for handleApiGames/handleApiSearch
+  - [TEST] Tests mock globalThis.fetch to control game data returned by getCombinedGames, maintaining consistency with existing test patterns (no vi.mock needed)
+  - [TEST] handleGameRoute tests pass malicious query params directly (title, category, thumb) — no upstream mock needed since this handler reads URL params, not catalog data
+  - [TEST] safeImageUrl test verifies fallback to icon-512.png for javascript: URIs, with assertion scoped to og:image/twitter:image tags (canonical URL correctly preserves query params as HTML-escaped text)
+- **Notes:** none
+- **Knowledge drift:** none
+
 > v1.0.7 (2026-09-01): Task #006 completed — `package.json` build script added (`npm run lint && npm audit --audit-level=high`). Cloudflare Workers Builds dashboard build command to be set to `npm run build`. Lint error causes non-zero exit blocking deploy; clean build passes. Task #007 promoted to [IN PROGRESS].
 > v1.0.8 (2026-09-03): Task #008 completed — `js/utils.test.js` created with 46 tests covering all 9 exported functions in `js/utils.js` (escapeHtml, debounce, slugify, buildPlayUrl, buildGamePageUrl, isAllowedEmbedUrl, readSessionGames, writeSessionGames, fetchGameCatalog). All 67 tests pass (21 state + 46 utils), lint clean, build passes, 0 vulnerabilities. Task #009 promoted to [IN PROGRESS].
 > v1.0.9 (2026-09-07): Laporan Google Search Console Coverage (diunduh 2026-09-07) menemukan 2 masalah Page Indexing aktif dengan validasi perbaikan berstatus Gagal — "Halaman dengan pengalihan" (3 URL) dan "Di-crawl - saat ini tidak diindeks" (16 URL, naik dari 12 dalam 2 minggu terakhir). Task #020 dan #021 ditambahkan ke [NEXT TASKS] di bawah Phase 8 — SEO & Post-Launch Maintenance (fase baru). Task #021 menandai kontradiksi antara dokumen (`game.html` diklaim sudah redirect ke `/game`) dan data GSC (kedua variant masih di-crawl sebagai halaman terpisah) — perlu verifikasi kode langsung sebelum eksekusi. Tidak ada task yang dipromosikan; Task #009 tetap satu-satunya [IN PROGRESS]. `knowledge.md` diperbarui paralel ke v1.5.0; `prd.md` ke v1.5.0.
 > v1.0.10 (2026-09-07): [PERBAIKAN STRUKTUR CHANGELOG] Ditemukan pelanggaran prinsip "setiap nomor task hanya muncul sekali": entri draf Task #006, #007, #008 di [NEXT TASKS] belum terhapus meski ketiganya sudah punya entri lengkap ✅ (dengan gate/regression) di bagian completed — sisa dari proses promosi task yang tidak membersihkan draf lama. Ketiga entri draf dihapus dari [NEXT TASKS] beserta header "### Phase 1 — Foundation" yang jadi kosong setelahnya (precondition-nya, Task #001–#003, sudah lama terpenuhi). Isi task tidak berubah — hanya penghapusan duplikat, entri ✅ yang sah tidak disentuh. Catatan terpisah: ditemukan juga duplikasi header [COMPLETED] itu sendiri (satu "### [COMPLETED]" h3 tersempil di bawah [IN PROGRESS] berisi Task #008/#005/#006/#004/#001/#002/#003, terpisah dari "## [COMPLETED]" h2 yang benar berisi entri retroaktif + Task #007) — belum diperbaiki, menunggu arahan urutan yang diinginkan sebelum digabung.
 > v1.0.11 (2026-09-08): Task #009 completed — 60 unit tests for src/index.js catalog/search logic. Named exports added to src/index.js (handleApiGames, handleApiSearch, getCombinedGames, clampNum, escapeHtmlAttr, escapeJsonLd, slugify, parseGameMonetizeFeed, decodeEntities). vitest.config.js restructured with vitest 4.x projects array: "unit" (jsdom) and "worker" (@cloudflare/vitest-plugin). @cloudflare/vitest-plugin and wrangler added as devDependencies. Total: 127 tests pass (21 state + 46 utils + 60 worker), lint clean, build passes, 0 vulnerabilities. Changelog structure fixed: duplicate `### [COMPLETED]` section removed, all completed tasks consolidated under single `## [COMPLETED]` header. Task #010 promoted to [IN PROGRESS].
+> v1.0.12 (2026-09-08): Task #010 completed — 13 output-encoding tests for handleShareRoute, handlePlayRoute, handleGameRoute in src/index.js. Named exports added for the three handlers. Tests verify that malicious input (`<script>`, `</script>`, `"`, `<img onerror>`, `javascript:` URI) is escaped/sanitized in HTML meta tags, JSON-LD, and attribute values across all three routes. Total: 140 tests pass (127 existing + 13 new), lint clean, build passes, 0 vulnerabilities. Task #011 promoted to [IN PROGRESS].
