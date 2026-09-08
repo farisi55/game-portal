@@ -1,7 +1,7 @@
 ---
 project: Gimboot
 knowledge_version: 1.5.0
-changelog_version: 1.0.9
+changelog_version: 1.0.10
 created: 2026-08-28
 status: in_progress
 milestone: 1 of 1
@@ -239,46 +239,8 @@ simple_mode: false
 
 ## [NEXT TASKS]
 
-### Phase 1 — Foundation
-*Task #001, #002, dan #003 WAJIB selesai sebelum task Phase 3 mana pun dimulai — keputusan eksplisit developer (@knowledge §9).*
-
-### Task #006 — Wire Lint & Security Scan into Cloudflare Workers Builds
-- **Phase:** Phase 1 — Foundation
-- **Scope:** Configure the build command to run lint and `npm audit` before deploy, so a failing check blocks the deployment. [DIJAWAB 2026-08-30] Mekanisme CI/CD dikonfirmasi developer: **Cloudflare Workers Builds** (bukan "Cloudflare Pages build command" seperti draf sebelumnya, dan bukan CI eksternal).
-- **Files to create / modify:** Build-command setting di dashboard Cloudflare Workers Builds, `package.json` (build script)
-- **Acceptance criteria:**
-  - [ ] A push with a deliberate lint error fails the build and does not deploy
-  - [ ] A clean push passes the build command and deploys normally
-- **Dependencies:** Task #004
-- **Decisions made:** Belum dieksekusi — isi setelah task selesai.
-
 ### Phase 3 — Core Features
 *Task di fase ini adalah pengujian/pengerasan atas fitur inti yang sudah lengkap & live, bukan fitur baru — tetap bergantung pada #002 (audit dapat mengubah file yang diuji) dan #004 (test runner).*
-
-### Task #007 — Unit Tests for `js/state.js` (localStorage Wrapper)
-- **Phase:** Phase 3 — Core Features
-- **Scope:** Write unit tests covering the read/write logic in `js/state.js`. [AUDIT KODE — KOREKSI PENTING] `js/state.js` TIDAK berisi logika skor/high-score sama sekali — file ini hanya mengelola FAVORIT & RECENTLY-PLAYED (dikonfirmasi baca langsung isi file). Logika "high-score-comparison" yang disebut draf sebelumnya sebenarnya ada di dua tempat lain: (a) per-game, di dalam masing-masing `games/{slug}/game.js`; (b) skor global lintas game, di `js/pwa.js` (key `arcade-high-score-v1`, dipicu `window.postMessage`). Task ini perlu ditulis ulang scope-nya untuk favorit/recently-played, dan high-score testing dipindah ke task terpisah (lihat catatan Acceptance criteria).
-- **Files to create / modify:** `js/state.js` (refactor kecil bila perlu agar testable), `js/state.test.js`
-- **Acceptance criteria:**
-  - [ ] Tests cover: reading favorites/recently-played when unset returns a safe default; adding/removing a favorite persists correctly; recently-played list behaves as expected (mis. urutan, batas jumlah bila ada)
-  - [ ] Tests pass against a mocked `localStorage`, including the storage-unavailable/private-mode case
-  - [ ] Unit test written and passing for new logic
-  - [ ] Test is isolated: sets up and tears down its own state
-  - [ ] [AUDIT KODE — BARU] Pertimbangkan task terpisah untuk high-score: unit test untuk logika high-score per-game (di dalam tiap `games/{slug}/game.js`) dan untuk tracker global di `js/pwa.js` (`readHighScore`/`writeHighScore`/`wireScoreMessages`) — di luar cakupan `state.js`
-- **Dependencies:** Task #002, Task #004
-- **Decisions made:** Belum dieksekusi — isi setelah task selesai.
-
-### Task #008 — Unit Tests for `js/utils.js`
-- **Phase:** Phase 3 — Core Features
-- **Scope:** Write unit tests for each exported utility function in `js/utils.js`. [AUDIT KODE] Dikonfirmasi 9 fungsi ter-export: `escapeHtml`, `debounce`, `slugify`, `buildPlayUrl`, `buildGamePageUrl`, `isAllowedEmbedUrl`, `readSessionGames`, `writeSessionGames`, `fetchGameCatalog` (plus `shuffleGames` privat/tidak di-export).
-- **Files to create / modify:** `js/utils.test.js`
-- **Acceptance criteria:**
-  - [ ] Every exported function has at least one passing test covering its normal case and one edge case
-  - [ ] Test suite runs via `npm test` with visible pass/fail output
-  - [ ] Unit test written and passing for new logic
-  - [ ] Test is isolated: sets up and tears down its own state
-- **Dependencies:** Task #002, Task #004
-- **Decisions made:** Belum dieksekusi — isi setelah task selesai.
 
 ### Task #010 — Harden & Test Output Encoding in `src/index.js` Share/Play Routes
 - **Phase:** Phase 3 — Core Features
@@ -469,3 +431,4 @@ Satu Cloudflare Worker dengan static assets (`src/index.js`) menangani seluruh r
 > v1.0.7 (2026-09-01): Task #006 completed — `package.json` build script added (`npm run lint && npm audit --audit-level=high`). Cloudflare Workers Builds dashboard build command to be set to `npm run build`. Lint error causes non-zero exit blocking deploy; clean build passes. Task #007 promoted to [IN PROGRESS].
 > v1.0.8 (2026-09-03): Task #008 completed — `js/utils.test.js` created with 46 tests covering all 9 exported functions in `js/utils.js` (escapeHtml, debounce, slugify, buildPlayUrl, buildGamePageUrl, isAllowedEmbedUrl, readSessionGames, writeSessionGames, fetchGameCatalog). All 67 tests pass (21 state + 46 utils), lint clean, build passes, 0 vulnerabilities. Task #009 promoted to [IN PROGRESS].
 > v1.0.9 (2026-09-07): Laporan Google Search Console Coverage (diunduh 2026-09-07) menemukan 2 masalah Page Indexing aktif dengan validasi perbaikan berstatus Gagal — "Halaman dengan pengalihan" (3 URL) dan "Di-crawl - saat ini tidak diindeks" (16 URL, naik dari 12 dalam 2 minggu terakhir). Task #020 dan #021 ditambahkan ke [NEXT TASKS] di bawah Phase 8 — SEO & Post-Launch Maintenance (fase baru). Task #021 menandai kontradiksi antara dokumen (`game.html` diklaim sudah redirect ke `/game`) dan data GSC (kedua variant masih di-crawl sebagai halaman terpisah) — perlu verifikasi kode langsung sebelum eksekusi. Tidak ada task yang dipromosikan; Task #009 tetap satu-satunya [IN PROGRESS]. `knowledge.md` diperbarui paralel ke v1.5.0; `prd.md` ke v1.5.0.
+> v1.0.10 (2026-09-07): [PERBAIKAN STRUKTUR CHANGELOG] Ditemukan pelanggaran prinsip "setiap nomor task hanya muncul sekali": entri draf Task #006, #007, #008 di [NEXT TASKS] belum terhapus meski ketiganya sudah punya entri lengkap ✅ (dengan gate/regression) di bagian completed — sisa dari proses promosi task yang tidak membersihkan draf lama. Ketiga entri draf dihapus dari [NEXT TASKS] beserta header "### Phase 1 — Foundation" yang jadi kosong setelahnya (precondition-nya, Task #001–#003, sudah lama terpenuhi). Isi task tidak berubah — hanya penghapusan duplikat, entri ✅ yang sah tidak disentuh. Catatan terpisah: ditemukan juga duplikasi header [COMPLETED] itu sendiri (satu "### [COMPLETED]" h3 tersempil di bawah [IN PROGRESS] berisi Task #008/#005/#006/#004/#001/#002/#003, terpisah dari "## [COMPLETED]" h2 yang benar berisi entri retroaktif + Task #007) — belum diperbaiki, menunggu arahan urutan yang diinginkan sebelum digabung.
