@@ -115,9 +115,29 @@ export default {
         status: 204,
         headers: { Allow: 'GET, HEAD, OPTIONS' },
       });
+    } else if (
+      (url.pathname.toLowerCase() === '/game.html' || url.pathname === '/game') &&
+      url.searchParams.has('id')
+    ) {
+      // /game.html?id=X or /game?id=X → canonical /play/:id/:slug (single 301,
+      // HTTP or HTTPS). Prevents Google from indexing these variant URLs as
+      // separate pages — the root cause of "Di-crawl - saat ini tidak
+      // diindeks" in GSC.
+      const gameId = url.searchParams.get('id');
+      const localGame = LOCAL_GAMES.find((g) => String(g.id) === gameId);
+      if (localGame) {
+        const playPath = `/play/${encodeURIComponent(localGame.id)}/${slugify(localGame.title)}`;
+        response = redirectSingleHop(url, playPath);
+      } else {
+        // Unknown game ID — fall through to handleGameRoute which will
+        // render the game shell with a play-id meta for client-side retry.
+        response = await handleGameRoute(request, url, env);
+      }
     } else if (url.pathname.toLowerCase() === '/game.html') {
-      response = redirectGameHtml(url);
+      // game.html without id → canonical /game (single-hop, HTTP or HTTPS)
+      response = redirectSingleHop(url, '/game');
     } else if (url.protocol === 'http:') {
+      // HTTP → HTTPS (non-game.html paths)
       const httpsUrl = new URL(url);
       httpsUrl.protocol = 'https:';
       response = Response.redirect(httpsUrl.toString(), 301);
@@ -409,17 +429,28 @@ export function clampNum(rawNum, fallback, max) {
 // from one shared codebase.
 // ----------------------------------------------------------------------------
 
-function redirectGameHtml(url) {
-  const clean = new URL(url);
-  clean.protocol = 'https:';
-  clean.pathname = '/game';
-  return Response.redirect(clean.toString(), 301);
+/** Single-hop redirect: HTTPS + pathname normalization in one 301. */
+export function redirectSingleHop(url, pathname) {
+  const canonical = new URL(url);
+  canonical.protocol = 'https:';
+  canonical.pathname = pathname;
+  canonical.hash = '';
+  return Response.redirect(canonical.toString(), 301);
 }
 
-function canonicalGameUrl(url) {
+function canonicalGameUrl(url, game) {
+  if (game) {
+    const playUrl = new URL(url);
+    playUrl.protocol = 'https:';
+    playUrl.pathname = `/play/${encodeURIComponent(game.id)}/${slugify(game.title)}`;
+    playUrl.search = '';
+    playUrl.hash = '';
+    return playUrl;
+  }
   const canonical = new URL(url);
   canonical.protocol = 'https:';
   canonical.pathname = '/game';
+  canonical.search = '';
   canonical.hash = '';
   return canonical;
 }
@@ -437,10 +468,12 @@ function safeImageUrl(maybeRelative, origin) {
 
 export async function handleGameRoute(request, url, env) {
   const assetResponse = await env.ASSETS.fetch(new Request('https://assets.local/game', request));
+  const gameId = url.searchParams.get('id');
   const title = (url.searchParams.get('title') || 'Game').trim() || 'Game';
   const category = (url.searchParams.get('category') || '').trim();
   const thumb = url.searchParams.get('thumb') || '';
-  const canonical = canonicalGameUrl(url);
+  const game = gameId ? LOCAL_GAMES.find((g) => String(g.id) === gameId) : null;
+  const canonical = canonicalGameUrl(url, game);
   const seoTitle = `${title} - Main Gratis di ${SITE_NAME}`;
   const seoDescription = category
     ? `Mainkan ${title}, game ${category} seru secara gratis di ${SITE_NAME}.`
@@ -624,10 +657,16 @@ async function handleSitemap(url, env, ctx) {
   const { games } = await getCombinedGames(CATALOG_MAX_NUM, env, ctx);
   const allGames = [...LOCAL_GAMES, ...(games || [])];
 
+  // Always emit HTTPS canonical URLs in the sitemap regardless of the
+  // incoming request's protocol — prevents http:// entries if the sitemap
+  // is ever fetched over plain HTTP (should not happen after redirect fix,
+  // but defense-in-depth).
+  const baseUrl = `https://${url.host}`;
+
   const urlEntries = [
-    `<url><loc>${escapeHtmlAttr(url.origin)}/</loc><changefreq>daily</changefreq><priority>1.0</priority></url>`,
+    `<url><loc>${escapeHtmlAttr(baseUrl)}/</loc><changefreq>daily</changefreq><priority>1.0</priority></url>`,
     ...allGames.map((g) => {
-      const loc = `${url.origin}/play/${encodeURIComponent(g.id)}/${slugify(g.title)}`;
+      const loc = `${baseUrl}/play/${encodeURIComponent(g.id)}/${slugify(g.title)}`;
       return `<url><loc>${escapeHtmlAttr(loc)}</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>`;
     }),
   ];

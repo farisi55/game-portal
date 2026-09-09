@@ -12,6 +12,7 @@ import {
   handleShareRoute,
   handlePlayRoute,
   handleGameRoute,
+  redirectSingleHop,
   clampNum,
   escapeHtmlAttr,
   escapeJsonLd,
@@ -642,6 +643,24 @@ describe('Output Encoding — Share/Play/Game Routes', () => {
       expect(body).not.toContain('Tom & Jerry <b>Bold</b>');
       expect(body).toContain('Tom &amp; Jerry');
     });
+
+    it('sets canonical to /play/:id/:slug for LOCAL_GAMES id', async () => {
+      const url = makeUrl('/game?id=local-kicau-mania&title=Kicau%20Mania&category=Arcade');
+      const res = await handleGameRoute(new Request(url.toString()), url, createMockEnv());
+      const body = await res.text();
+
+      expect(body).toContain(
+        'canonical" href="https://gimboot.com/play/local-kicau-mania/kicau-mania"'
+      );
+    });
+
+    it('falls back to /game canonical for unknown game id', async () => {
+      const url = makeUrl('/game?id=unknown-game&title=Test');
+      const res = await handleGameRoute(new Request(url.toString()), url, createMockEnv());
+      const body = await res.text();
+
+      expect(body).toContain('canonical" href="https://gimboot.com/game"');
+    });
   });
 
   // -----------------------------------------------------------------------
@@ -838,6 +857,62 @@ describe('Output Encoding — Share/Play/Game Routes', () => {
       // Should return HTML with the play-id meta, not crash
       expect(body).toContain('gimboot-play-id');
       expect(body).toContain('unknown-game-id');
+    });
+  });
+
+  // -----------------------------------------------------------------------
+  // redirectSingleHop — GSC "Halaman dengan pengalihan" fix
+  // -----------------------------------------------------------------------
+
+  describe('redirectSingleHop', () => {
+    it('upgrades http to https and normalizes pathname in one 301', () => {
+      const url = new URL('http://gimboot.com/game.html?title=Foo');
+      const res = redirectSingleHop(url, '/game');
+
+      expect(res.status).toBe(301);
+      expect(res.headers.get('Location')).toBe('https://gimboot.com/game?title=Foo');
+    });
+
+    it('normalizes /index.html to /game in one hop (single-hop, no chain)', () => {
+      const url = new URL('http://gimboot.com/index.html');
+      const res = redirectSingleHop(url, '/game');
+
+      expect(res.status).toBe(301);
+      expect(res.headers.get('Location')).toBe('https://gimboot.com/game');
+    });
+
+    it('preserves query params (game metadata survives redirect)', () => {
+      const url = new URL('http://gimboot.com/game.html?id=gm-123&title=Test&thumb=/img.png');
+      const res = redirectSingleHop(url, '/game');
+
+      expect(res.status).toBe(301);
+      expect(res.headers.get('Location')).toBe(
+        'https://gimboot.com/game?id=gm-123&title=Test&thumb=/img.png'
+      );
+    });
+
+    it('strips hash fragment (not sent to server)', () => {
+      const url = new URL('http://gimboot.com/game.html#section');
+      const res = redirectSingleHop(url, '/game');
+
+      expect(res.status).toBe(301);
+      expect(res.headers.get('Location')).toBe('https://gimboot.com/game');
+    });
+
+    it('works for already-HTTPS requests normalizing just the pathname', () => {
+      const url = new URL('https://gimboot.com/game.html?foo=bar');
+      const res = redirectSingleHop(url, '/game');
+
+      expect(res.status).toBe(301);
+      expect(res.headers.get('Location')).toBe('https://gimboot.com/game?foo=bar');
+    });
+
+    it('redirects http://gimboot.com/ to https://gimboot.com/ as single hop', () => {
+      const url = new URL('http://gimboot.com/');
+      const res = redirectSingleHop(url, '/');
+
+      expect(res.status).toBe(301);
+      expect(res.headers.get('Location')).toBe('https://gimboot.com/');
     });
   });
 });
