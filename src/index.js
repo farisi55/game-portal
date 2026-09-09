@@ -116,8 +116,10 @@ export default {
         headers: { Allow: 'GET, HEAD, OPTIONS' },
       });
     } else if (url.pathname.toLowerCase() === '/game.html') {
-      response = redirectGameHtml(url);
+      // game.html → canonical /game (single-hop, HTTP or HTTPS)
+      response = redirectSingleHop(url, '/game');
     } else if (url.protocol === 'http:') {
+      // HTTP → HTTPS (non-game.html paths)
       const httpsUrl = new URL(url);
       httpsUrl.protocol = 'https:';
       response = Response.redirect(httpsUrl.toString(), 301);
@@ -409,11 +411,13 @@ export function clampNum(rawNum, fallback, max) {
 // from one shared codebase.
 // ----------------------------------------------------------------------------
 
-function redirectGameHtml(url) {
-  const clean = new URL(url);
-  clean.protocol = 'https:';
-  clean.pathname = '/game';
-  return Response.redirect(clean.toString(), 301);
+/** Single-hop redirect: HTTPS + pathname normalization in one 301. */
+export function redirectSingleHop(url, pathname) {
+  const canonical = new URL(url);
+  canonical.protocol = 'https:';
+  canonical.pathname = pathname;
+  canonical.hash = '';
+  return Response.redirect(canonical.toString(), 301);
 }
 
 function canonicalGameUrl(url) {
@@ -624,10 +628,16 @@ async function handleSitemap(url, env, ctx) {
   const { games } = await getCombinedGames(CATALOG_MAX_NUM, env, ctx);
   const allGames = [...LOCAL_GAMES, ...(games || [])];
 
+  // Always emit HTTPS canonical URLs in the sitemap regardless of the
+  // incoming request's protocol — prevents http:// entries if the sitemap
+  // is ever fetched over plain HTTP (should not happen after redirect fix,
+  // but defense-in-depth).
+  const baseUrl = `https://${url.host}`;
+
   const urlEntries = [
-    `<url><loc>${escapeHtmlAttr(url.origin)}/</loc><changefreq>daily</changefreq><priority>1.0</priority></url>`,
+    `<url><loc>${escapeHtmlAttr(baseUrl)}/</loc><changefreq>daily</changefreq><priority>1.0</priority></url>`,
     ...allGames.map((g) => {
-      const loc = `${url.origin}/play/${encodeURIComponent(g.id)}/${slugify(g.title)}`;
+      const loc = `${baseUrl}/play/${encodeURIComponent(g.id)}/${slugify(g.title)}`;
       return `<url><loc>${escapeHtmlAttr(loc)}</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>`;
     }),
   ];
