@@ -643,6 +643,24 @@ describe('Output Encoding — Share/Play/Game Routes', () => {
       expect(body).not.toContain('Tom & Jerry <b>Bold</b>');
       expect(body).toContain('Tom &amp; Jerry');
     });
+
+    it('sets canonical to /play/:id/:slug for LOCAL_GAMES id', async () => {
+      const url = makeUrl('/game?id=local-kicau-mania&title=Kicau%20Mania&category=Arcade');
+      const res = await handleGameRoute(new Request(url.toString()), url, createMockEnv());
+      const body = await res.text();
+
+      expect(body).toContain(
+        'canonical" href="https://gimboot.com/play/local-kicau-mania/kicau-mania"'
+      );
+    });
+
+    it('falls back to /game canonical for unknown game id', async () => {
+      const url = makeUrl('/game?id=unknown-game&title=Test');
+      const res = await handleGameRoute(new Request(url.toString()), url, createMockEnv());
+      const body = await res.text();
+
+      expect(body).toContain('canonical" href="https://gimboot.com/game"');
+    });
   });
 
   // -----------------------------------------------------------------------

@@ -1,15 +1,16 @@
 ---
 project: Gimboot
-version: 1.5.1
+version: 1.5.2
 source: prd
-last_updated: 2026-09-07
+last_updated: 2026-09-09
 project_shape: fullstack
 simple_mode: false
 ---
 # simple_mode: false — PRD §6.1 6-month target adalah 10.000+ pengguna serentak (di atas ambang ≤100), sehingga syarat pertama tidak terpenuhi meski §6.4 Compliance = none
 # v1.1.0 — direvisi berdasarkan audit langsung terhadap source code (game-portal-main.zip) tanggal 2026-08-28, dibandingkan dengan v1.0.0 yang disusun dari brief/struktur repo tanpa membaca isi tiap file. Semua koreksi ditandai "[AUDIT KODE]"; item yang masih perlu keputusan developer ditandai "[AUDIT KODE — PERLU KONFIRMASI]".
 # v1.2.0 — developer menjawab keenam item [PERLU KONFIRMASI]/[DECISION NEEDED] dari v1.1.0 pada 2026-08-30 (lewat §10 Open Questions di prd.md). Jawaban ditandai "[DIJAWAB 2026-08-30]" di seluruh dokumen ini. Ringkasan lengkap ada di changelog.md bagian [COMPLETED].
-# v1.5.0 — laporan Google Search Console Coverage (2026-09-07) menemukan indikasi kuat bahwa perilaku redirect `game.html`/`game` untuk URL berquery string TIDAK sesuai dengan yang didokumentasikan di §3/§7 — ditandai "[GSC 2026-09-07]" di bawah. Belum diverifikasi lewat pembacaan kode langsung; tracked di changelog.md Task #020/#021.
+# v1.5.0 — laporan Google Search Console Coverage (2026-09-07) menemukan indikasi kuat bahwa perilaku redirect `game.html`/`game` untuk URL berquery string TIDAK sesuai dengan yang didokumentasikan di §3/§7 — ditandai "[GSC 2026-09-07]" di bawah. FIXED 2026-09-09: `/game.html?id=X` dan `/game?id=X` sekarang di-redirect langsung ke `/play/:id/:slug` dalam satu hop 301 (Task #021).
+# v1.5.2 — Task #021 completed: canonical game deep-link URL variants. Redirect fix for GSC "Di-crawl - saat ini tidak diindeks". Updated §3 routing docs and §3 file tree.
 
 ## 1. Project Identity
 - Nama: Gimboot (Game Portal) — portal PWA katalog game HTML5, SEO-optimized, dengan modul viral sharing terpusat. [AUDIT KODE] Katalog live adalah GABUNGAN: (a) game first-party buatan sendiri, dan (b) katalog yang di-fetch & digabung secara real-time dari dua feed pihak ketiga (GameMonetize + GamePix) — bukan murni "katalog mini-game bertema lokal" seperti draf sebelumnya. Lihat §2 dan §3.
@@ -63,7 +64,7 @@ game-portal/
 ├── README.md                     # [AUDIT KODE — BARU DITEMUKAN] dokumentasi developer-facing yang sudah cukup mutakhir; jadi salah satu sumber utama audit ini. Catatan: nilai run_worker_first yang disebut README (["/api/*","/play/*","/sitemap.xml"]) sudah tidak sama dengan wrangler.toml aktual (["/*"]) — README sendiri sedikit tertinggal di titik ini.
 ├── robots.txt                    # [AUDIT KODE — BARU DITEMUKAN] mengarah ke /sitemap.xml — mengonfirmasi route sitemap dinamis di src/index.js memang disengaja & live
 ├── ads.txt                       # verifikasi GameMonetize/GamePix
-├── game.html                     # shell lama; link ke game.html kini di-301-redirect ke /game oleh src/index.js — [GSC 2026-09-07 — KONTRADIKSI, PERLU VERIFIKASI] laporan Google Search Console (Coverage, 2026-09-07) menunjukkan `/game.html?id=...` dan `/game?id=...` (http & https) masih di-crawl Google sebagai halaman terpisah dengan konten sendiri ("Di-crawl - saat ini tidak diindeks", 16 URL), bukan sebagai "Halaman dengan pengalihan" seperti seharusnya jika 301 di atas berlaku konsisten. Redirect kemungkinan tidak menjangkau URL dengan query string panjang — belum diverifikasi lewat pembacaan kode langsung. Dilacak di changelog.md Task #021.
+├── game.html                     # shell lama; link ke game.html kini di-301-redirect ke /game oleh src/index.js — [GSC 2026-09-07 → FIXED 2026-09-09] `/game.html?id=X` dan `/game?id=X` sekarang di-redirect langsung ke `/play/:id/:slug` dalam satu hop 301 (Task #021). canonical tag di `handleGameRoute` juga diperbarui untuk menunjuk ke `/play/:id/:slug` saat game ditemukan di LOCAL_GAMES.
 ├── index.html                    # landing page katalog
 ├── manifest.json / sw.js         # PWA manifest + service worker
 └── wrangler.toml                 # [AUDIT KODE] konfigurasi Cloudflare Worker + static assets — BUKAN konfigurasi Cloudflare Pages/Functions
@@ -120,7 +121,7 @@ game-portal/
   - `README.md` proyek menyebut game yang di-host langsung "currently: Kicau Mania" (tunggal).
   - **Keputusan developer (2026-08-30): keempat game MASIH AKTIF.** `js/config.js` sudah benar; `src/index.js` yang perlu diperbarui — tambahkan Ayo Kopdes, Kejar Koruptor, Mobil MBG ke `LOCAL_GAMES` di `src/index.js` supaya link share, `/play/`, dan `sitemap.xml` juga berfungsi untuk ketiganya (belum dieksekusi — dilacak di changelog Task #002; `README.md` juga perlu diperbarui menyusul).
 - Rekor tertinggi PER-GAME disimpan terpisah di `localStorage` oleh masing-masing `game.js` (bukan oleh `js/state.js` — lihat §3); tidak ada validasi skor sisi server — skor berpotensi dimanipulasi klien, diterima sebagai batasan produk yang disengaja (bukan bug). [AUDIT KODE — BARU] Selain rekor per-game, ada pula rekor GLOBAL lintas-game (`arcade-high-score-v1`, dikelola `js/pwa.js` via `window.postMessage`) yang sebelumnya tidak tercatat di dokumen manapun.
-- Routing game via clean URL menuju halaman player dinamis — [AUDIT KODE] rute canonical saat ini adalah `/play/{id}/{slug}` (baru); `game.html` lama kini 301-redirect ke `/game`.
+- Routing game via clean URL menuju halaman player dinamis — [AUDIT KODE → FIXED 2026-09-09] rute canonical saat ini adalah `/play/{id}/{slug}`; `game.html` lama dan `/game?id=X` kini di-redirect langsung ke `/play/:id/:slug` dalam satu hop 301 (Task #021). `/game` tanpa `id` param tetap melayani game shell via `handleGameRoute`.
 - Update service worker wajib pakai strategi cache-busting/versioning agar pengguna tidak terjebak aset game versi lama setelah deploy baru.
 - Input validation: parameter URL/query pada rute dinamis `src/index.js` (`/share/:id`, `/play/:id/:slug`, `/game`) wajib divalidasi & di-escape sebelum dipakai dalam response HTML — mencegah reflected XSS. [AUDIT KODE] Sudah diimplementasikan di kode saat ini (lihat §6); perlu test otomatis untuk membuktikannya (Task #010).
 - Idempotency: seluruh route GET pada `src/index.js` read-only & stateless — idempoten by design, tanpa penanganan khusus tambahan.
