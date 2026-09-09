@@ -1,7 +1,7 @@
 ---
 project: Gimboot
 knowledge_version: 1.5.2
-changelog_version: 1.0.17
+changelog_version: 1.0.18
 created: 2026-08-28
 status: in_progress
 milestone: 1 of 1
@@ -31,21 +31,6 @@ simple_mode: false
 
 ## [IN PROGRESS]
 
-### Task #012 — Harden Client-Side Search Rendering Against Reflected XSS
-- **Phase:** Phase 5 — UI/UX
-- **Scope:** [DIJEDA 2026-09-08] Dipromosikan kembali dari `[IN PROGRESS]` ke `[NEXT TASKS]` atas permintaan developer — prioritas digeser ke Task #020/#021 (perbaikan Google Search Console). Progress saat task dijeda: 0% — audit `js/catalog.js` belum dibaca penuh, belum ada kode ditulis, tidak ada acceptance criteria yang tercentang. Tidak ada dependency lain (#013–#019) yang menunggu task ini selesai. Scope asli: Ensure the catalog search UI (`js/catalog.js`) never renders the user's raw query string or API results as unescaped HTML. (Catatan: isi lengkap `js/catalog.js` belum dibaca penuh pada pre-audit ini — task ini belum bisa dikonfirmasi/dibantah oleh audit, tetap seperti draf sebelumnya.)
-- **Files to create / modify:** `js/catalog.js`
-- **Acceptance criteria:**
-  - [ ] Typing `<img src=x onerror=alert(1)>` into search and rendering results does not execute any script
-  - [ ] Search result rendering uses text-safe DOM APIs (e.g. `textContent`) or an escaping helper (`js/utils.js` sudah menyediakan `escapeHtml` — konfirmasi dipakai di sini), not raw `innerHTML` concatenation of user input
-- **Dependencies:** Task #004
-- **Decisions made:** Belum dieksekusi — isi setelah task selesai.
-
-
-## [NEXT TASKS]
-
-### Phase 6 — Testing & QA
-
 ### Task #013 — Verify Test Suite Coverage & CI Pass/Fail Visibility
 - **Phase:** Phase 6 — Testing & QA
 - **Scope:** Run the full test suite built in Phase 3/5, confirm `state.js`/`utils.js`/`src/index.js` are covered per @knowledge §4's focus, and confirm pass/fail is visible in the build log. [DIJAWAB 2026-08-30] Build log yang dimaksud adalah log Cloudflare Workers Builds (dikonfirmasi developer sebagai mekanisme CI/CD — lihat Task #006), bukan "Cloudflare Pages build log".
@@ -55,6 +40,9 @@ simple_mode: false
   - [ ] `state.js`, `utils.js`, dan `src/index.js` (rute API & share/play) each have at least one passing test (no global % required per @knowledge §4)
 - **Dependencies:** Task #006, Task #007, Task #008, Task #009, Task #010
 - **Decisions made:** Belum dieksekusi — isi setelah task selesai.
+
+
+## [NEXT TASKS]
 
 ### Task #014 — Manual Smoke-Test Checklist for First-Party Canvas Games
 - **Phase:** Phase 6 — Testing & QA
@@ -705,6 +693,55 @@ Satu Cloudflare Worker dengan static assets (`src/index.js`) menangani seluruh r
 - **Notes:** none
 - **Knowledge drift:** none
 
-> v1.0.16 (2026-09-09): Task #020 completed — single-hop redirect normalization for GSC "Halaman dengan pengalihan" fix. `redirectSingleHop()` function exported from src/index.js; 6 new unit tests. Sitemap hardcodes HTTPS URLs. 155 tests pass, lint clean, build passes. Task #021 promoted to [IN PROGRESS].
+### Task #012 — Harden Client-Side Search Rendering Against Reflected XSS ✅
+- **Completed:** 2026-09-09
+- **Phase:** Phase 5 — UI/UX
+- **Status:** OK
+- **Branch:** feat/task-012-harden-search-xss
+- **Files created / modified:**
+  - `js/catalog.test.js` — created: 5 unit tests verifying XSS safety of catalog rendering (escapeHtml coverage, textContent usage, search query not rendered as HTML, toast safe rendering)
+- **Acceptance criteria met:**
+  - [x] Typing `<img src=x onerror=alert(1)>` into search and rendering results does not execute any script — verified by code review: all rendering uses `textContent` and DOM property assignments
+  - [x] Search result rendering uses text-safe DOM APIs (`textContent`) — `createTextElement`, `appendStatusParagraph`, `flashToast` all use `textContent`; `createCardElement` uses DOM property assignments (`image.src`, `link.href`)
+- **Security gate:** STANDARD — all checks passed
+  - [x] No secrets hardcoded — ✓
+  - [x] Sensitive config from env vars — ✓
+  - [x] No eval()/exec() with external input — ✓
+  - [x] Error messages don't expose stack traces — ✓ (console.error only)
+  - [x] CORS — N/A (client-side only)
+  - [x] .gitignore includes .env, *.pem, *.key, *.p12 — ✓ (Task #001)
+  - [x] Pre-commit hook active — ✓ (Task #005)
+  - [x] CI/CD secrets masked — ✓
+  - [x] All external input validated/sanitized — ✓ (search query URL-encoded via `encodeURIComponent`)
+  - [x] Input-validation regexes — N/A (no regexes on user input)
+  - [x] Request body/file size limits — N/A (GET-only)
+  - [x] Authentication — N/A (all public)
+  - [x] Authorization — N/A
+  - [x] DB parameterized queries — N/A
+  - [x] File paths from user input — N/A
+  - [x] PII not in logs — ✓ (no logging of user data)
+  - [x] HTML output escaped — ✓ (`textContent` prevents XSS)
+  - [x] Redirects validated — ✓ (`encodeURIComponent` on game IDs)
+  - [x] Brute force protection — N/A
+  - [x] Password reset tokens — N/A
+  - [x] Session tokens — N/A
+  - [x] Set-Cookie — N/A
+  - [x] HTTP method override — N/A (client-side only)
+  - [x] Content-Type validated — N/A (client-side only)
+  - [x] Additive-only change — ✓ (new test file only)
+- **Scalability gate:** STANDARD — all checks passed
+  - [x] No N+1 patterns — N/A (client-side filtering)
+  - [x] All I/O async — ✓ (fetch in `searchOnline` is async)
+  - [x] No unbounded memory — ✓
+  - [x] No synchronous blocking — ✓
+- **Regression:** 162 passed, 0 failed; lint clean; build passes
+- **Decisions made:**
+  - [CODE] Catalog rendering already uses safe DOM APIs (`textContent`, property assignments) — no code changes to `catalog.js` itself were needed, only tests added to verify and document this
+  - [TEST] Created `js/catalog.test.js` with 5 XSS-focused unit tests covering escapeHtml, textContent usage, search query rendering, and toast rendering
+  - [PATTERN] `escapeHtml` from `js/utils.js` confirmed available for defensive use if future code needs innerHTML
+- **Notes:** Code review confirmed all rendering in `js/catalog.js` already uses text-safe DOM APIs. The main XSS risk was from third-party game data (GameMonetize/GamePix feeds) rendered via `createCardElement`, which safely uses `textContent` for title/category and DOM property assignments for `src`/`href`.
+- **Knowledge drift:** none
+
 > v1.0.17 (2026-09-09): Task #021 completed — canonicalize game deep-link URL variants for GSC "Di-crawl - saat ini tidak diindeks" fix. `/game.html?id=X` and `/game?id=X` now redirect to `/play/:id/:slug` in single 301. `canonicalGameUrl()` updated to point to `/play/:id/:slug` for LOCAL_GAMES. 2 new unit tests. 157 tests pass, lint clean, build passes. Task #012 promoted to [IN PROGRESS].
+> v1.0.18 (2026-09-09): Task #012 completed — harden client-side search rendering against reflected XSS. Code review confirmed all rendering uses `textContent` and DOM property assignments. Created `js/catalog.test.js` with 5 XSS-focused unit tests. 162 tests pass, lint clean, build passes. Task #013 promoted to [IN PROGRESS].
 
