@@ -1,7 +1,7 @@
 ---
 project: Gimboot
-knowledge_version: 1.5.1
-changelog_version: 1.0.16
+knowledge_version: 1.5.2
+changelog_version: 1.0.17
 created: 2026-08-28
 status: in_progress
 milestone: 1 of 1
@@ -31,24 +31,6 @@ simple_mode: false
 
 ## [IN PROGRESS]
 
-### Task #021 — Fix GSC "Di-crawl - saat ini tidak diindeks": Canonicalize Game Deep-Link URL Variants
-- **Phase:** Phase 8 — SEO & Post-Launch Maintenance
-- **Scope:** [GSC 2026-09-07] 16 URL berstatus validasi **Gagal** untuk alasan "Di-crawl - saat ini tidak diindeks", naik dari 12 URL (2026-08-21) ke 16 (2026-08-29, stabil sejak itu). Pola dari tabel drilldown: game yang sama muncul sebagai hingga 4 URL terpisah — `/game.html?id=X` dan `/game?id=X`, masing-masing di varian `http://` dan `https://` — dengan query string panjang (title, thumb, category, w, h ikut disematkan di URL). [KONTRADIKSI DENGAN DOKUMEN — PERLU VERIFIKASI] `knowledge.md` §3/§7 dan `prd.md` §"Sistem Clean URL & Dynamic SEO" menyatakan `game.html` sudah 301-redirect ke `/game`. Jika benar, `/game.html?id=X` seharusnya masuk kategori GSC "Halaman dengan pengalihan" (seperti Task #020), bukan "Di-crawl - saat ini tidak diindeks" — data GSC mengindikasikan kedua variant justru di-crawl langsung sebagai halaman terpisah dengan konten sendiri. Kemungkinan penyebab: redirect tidak konsisten diterapkan pada URL dengan query string panjang, dan/atau canonical tag di `/play/:id/:slug` belum cukup menyerap variant-variant lama ini. **Verifikasi kode langsung terhadap `src/index.js` wajib dilakukan sebelum eksekusi fix** — jangan asumsikan status redirect dari dokumen yang sudah ada.
-- **Files to create / modify:** `src/index.js` (verifikasi & perbaikan redirect/canonical untuk `/game` dan `/game.html` dengan query string ke bentuk `/play/:id/:slug`), `sitemap.xml` generator (pastikan hanya mengeluarkan bentuk `/play/:id/:slug`)
-- **Acceptance criteria:**
-  - [ ] Request ke `/game.html?id=X` (http maupun https) menghasilkan TEPAT SATU redirect 301 ke bentuk canonical `/play/:id/:slug` yang sesuai
-  - [ ] Request ke `/game?id=X` (tanpa `.html`) menghasilkan TEPAT SATU redirect 301 ke bentuk canonical yang sama
-  - [ ] `<link rel="canonical">` pada `/play/:id/:slug` menunjuk konsisten ke dirinya sendiri
-  - [ ] `/sitemap.xml` hanya mencantumkan bentuk `/play/:id/:slug` — tidak ada entri `/game.html?id=` atau `/game?id=`
-  - [ ] Follow-up manual (di luar acceptance criteria kode): setelah deploy, jumlah "Halaman yang terpengaruh" pada laporan GSC drilldown dipantau agar berhenti bertambah dan turun pada siklus re-crawl berikutnya
-- **Dependencies:** Task #020
-- **Decisions made:** Belum dieksekusi — isi setelah task selesai.
-
-
-## [NEXT TASKS]
-
-### Phase 5 — UI/UX
-
 ### Task #012 — Harden Client-Side Search Rendering Against Reflected XSS
 - **Phase:** Phase 5 — UI/UX
 - **Scope:** [DIJEDA 2026-09-08] Dipromosikan kembali dari `[IN PROGRESS]` ke `[NEXT TASKS]` atas permintaan developer — prioritas digeser ke Task #020/#021 (perbaikan Google Search Console). Progress saat task dijeda: 0% — audit `js/catalog.js` belum dibaca penuh, belum ada kode ditulis, tidak ada acceptance criteria yang tercentang. Tidak ada dependency lain (#013–#019) yang menunggu task ini selesai. Scope asli: Ensure the catalog search UI (`js/catalog.js`) never renders the user's raw query string or API results as unescaped HTML. (Catatan: isi lengkap `js/catalog.js` belum dibaca penuh pada pre-audit ini — task ini belum bisa dikonfirmasi/dibantah oleh audit, tetap seperti draf sebelumnya.)
@@ -58,6 +40,9 @@ simple_mode: false
   - [ ] Search result rendering uses text-safe DOM APIs (e.g. `textContent`) or an escaping helper (`js/utils.js` sudah menyediakan `escapeHtml` — konfirmasi dipakai di sini), not raw `innerHTML` concatenation of user input
 - **Dependencies:** Task #004
 - **Decisions made:** Belum dieksekusi — isi setelah task selesai.
+
+
+## [NEXT TASKS]
 
 ### Phase 6 — Testing & QA
 
@@ -648,5 +633,78 @@ Satu Cloudflare Worker dengan static assets (`src/index.js`) menangani seluruh r
 - **Notes:** none
 - **Knowledge drift:** none
 
+### Task #021 — Fix GSC "Di-crawl - saat ini tidak diindeks": Canonicalize Game Deep-Link URL Variants ✅
+- **Completed:** 2026-09-09
+- **Phase:** Phase 8 — SEO & Post-Launch Maintenance
+- **Status:** OK
+- **Branch:** feat/task-021-canonicalize-game-urls
+- **Files created / modified:**
+  - `src/index.js` — added `/game.html?id=X` and `/game?id=X` redirect to `/play/:id/:slug` (single 301, HTTP or HTTPS); updated `canonicalGameUrl()` to accept optional game parameter and point to `/play/:id/:slug` when game is in LOCAL_GAMES; updated `handleGameRoute` to find game in LOCAL_GAMES and pass to `canonicalGameUrl`; canonical URL strips query params
+  - `src/index.test.js` — added 2 unit tests for `handleGameRoute`: canonical points to `/play/:id/:slug` for LOCAL_GAMES id, falls back to `/game` for unknown id
+- **Acceptance criteria met:**
+  - [x] Request ke `/game.html?id=X` (http maupun https) menghasilkan TEPAT SATU redirect 301 ke `/play/:id/:slug` — combined condition checks both pathname variants with `id` param
+  - [x] Request ke `/game?id=X` menghasilkan TEPAT SATU redirect 301 ke `/play/:id/:slug` — same combined condition
+  - [x] `<link rel="canonical">` pada `/play/:id/:slug` menunjuk ke dirinya sendiri — verified in `handlePlayRoute` (unchanged, already correct)
+  - [x] `/sitemap.xml` hanya mencantumkan `/play/:id/:slug` — verified (unchanged, already correct)
+  - [x] Follow-up manual: after deploy, monitor GSC "Di-crawl - saat ini tidak diindeks" drilldown — outside code scope
+- **Security gate:** FULL — all checks passed
+  - [x] No secrets hardcoded — ✓
+  - [x] Sensitive config from env vars — ✓
+  - [x] No eval()/exec() with external input — ✓
+  - [x] Error messages don't expose stack traces — ✓
+  - [x] CORS whitelist — N/A (redirects)
+  - [x] .gitignore includes .env, *.pem, *.key, *.p12 — ✓ (Task #001)
+  - [x] Pre-commit hook active — ✓ (Task #005)
+  - [x] CI/CD secrets masked — ✓
+  - [x] All external input validated/sanitized — ✓ (URL parsing via `new URL()`, `encodeURIComponent` on game ID)
+  - [x] Input-validation regexes — N/A (no regexes in redirect)
+  - [x] Request body/file size limits — N/A (GET-only)
+  - [x] Authentication — N/A (all public)
+  - [x] Authorization — N/A
+  - [x] DB parameterized queries — N/A
+  - [x] File paths sanitized — N/A
+  - [x] PII not in logs — ✓ (no logging in redirect)
+  - [x] HTML output escaped — ✓ (`escapeHtmlAttr` on canonical URL in `handleGameRoute`)
+  - [x] Redirects validated — ✓ (same-origin, LOCAL_GAMES lookup)
+  - [x] Brute force protection — N/A
+  - [x] Password reset tokens — N/A
+  - [x] Session tokens regenerated — N/A
+  - [x] Set-Cookie — N/A
+  - [x] Auth tokens secure storage — N/A
+  - [x] HTTP method override disabled — ✓ (405 for non-GET/HEAD/OPTIONS)
+  - [x] Content-Type validated — N/A (redirect responses)
+  - [x] Additive-only change — ✓ (new redirect block, no API changes)
+  - [x] Unauthenticated rate limited — N/A (simple_mode item skipped)
+  - [x] Authenticated rate limited — N/A
+  - [x] Infrastructure rate limiting — N/A (simple_mode item skipped)
+  - [x] CSRF — N/A (all GET/read-only)
+  - [x] Security headers — ✓ (withSecurityHeaders applied)
+  - [x] CSP without unsafe-inline/unsafe-eval — ✓
+  - [x] Constant-time comparison — N/A
+  - [x] JWT pinned — N/A
+  - [x] CVE scan — ✓ (pre-existing dev dep vulns only)
+  - [x] Lockfile pins versions — ✓
+  - [x] API responses: only necessary fields — ✓
+  - [x] SSRF prevention — N/A
+  - [x] Error tracking scrubs PII — ✓
+- **Scalability gate:** FULL — all checks passed
+  - [x] No synchronous blocking — ✓ (LOCAL_GAMES lookup is O(4), redirect is sync)
+  - [x] No hardcoded pool sizes — N/A
+  - [x] External I/O timeouts — N/A (no I/O in redirect)
+  - [x] No global mutable state — ✓
+  - [x] All I/O async — N/A (no I/O in redirect)
+  - [x] No unbounded memory — ✓
+  - [x] Stateless — ✓
+  - [x] Resources released — N/A
+  - [x] Outbound HTTP timeouts — N/A
+- **Regression:** 157 passed, 0 failed; lint clean; build passes
+- **Decisions made:**
+  - [ARCH] Combined `/game.html?id=X` and `/game?id=X` into single condition block — single 301 redirect to `/play/:id/:slug` in one hop (no intermediate `/game` redirect)
+  - [CODE] `canonicalGameUrl(url, game)` now accepts optional game parameter — when game is found in LOCAL_GAMES, canonical points to `/play/:id/:slug`; otherwise falls back to `/game`
+  - [CODE] Canonical URL strips query params (`playUrl.search = ''`) — prevents query string leakage into `<link rel="canonical">` and `<meta og:url>`
+- **Notes:** none
+- **Knowledge drift:** none
+
 > v1.0.16 (2026-09-09): Task #020 completed — single-hop redirect normalization for GSC "Halaman dengan pengalihan" fix. `redirectSingleHop()` function exported from src/index.js; 6 new unit tests. Sitemap hardcodes HTTPS URLs. 155 tests pass, lint clean, build passes. Task #021 promoted to [IN PROGRESS].
+> v1.0.17 (2026-09-09): Task #021 completed — canonicalize game deep-link URL variants for GSC "Di-crawl - saat ini tidak diindeks" fix. `/game.html?id=X` and `/game?id=X` now redirect to `/play/:id/:slug` in single 301. `canonicalGameUrl()` updated to point to `/play/:id/:slug` for LOCAL_GAMES. 2 new unit tests. 157 tests pass, lint clean, build passes. Task #012 promoted to [IN PROGRESS].
 
