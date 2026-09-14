@@ -1,7 +1,7 @@
 ---
 project: Gimboot
-knowledge_version: 1.5.2
-changelog_version: 1.0.18
+knowledge_version: 1.6.1
+changelog_version: 1.0.20
 created: 2026-08-28
 status: in_progress
 milestone: 1 of 1
@@ -28,6 +28,21 @@ simple_mode: false
 > 6. **Mekanisme CI/CD** → Cloudflare Workers Builds, dikonfirmasi. Lihat Task #006, #013, #017.
 >
 > Tidak ada task yang otomatis dipindah ke [COMPLETED] oleh keputusan ini — eksekusi kode (sinkronisasi `LOCAL_GAMES`, penghapusan `functions/*`, pemasangan `favicon.svg`, pembuatan ad-script) masih tertunda.
+
+## [DEVELOPER DECISIONS — 2026-09-12]
+> Fitur baru **Emulator Browser (EmulatorJS)** diusulkan developer. Request awal untuk menyertakan link download ROM ke romsgames.net/romsfun.com/retrostic.com DITOLAK oleh Claude — ketiganya mendistribusikan ROM komersial berhak cipta tanpa lisensi; berisiko men-suspend akun ad network Gimboot (kebijakan AdSense/Ad Manager) selain risiko hak cipta itu sendiri. Scope diarahkan ke "emulator-only, ROM/BIOS 100% upload klien", dengan rujukan homebrew legal (itch.io, nesdoug.com, Hagen's Alley) sebagai pengganti — disetujui developer. 9 pertanyaan diajukan sebelum spesifikasi disusun, dijawab developer di chat. Ringkasan (detail & konsekuensi di `prd.md` §10 dan §5):
+>
+> 1. **Hosting core EmulatorJS** → Self-host di `/vendor/emulatorjs/`, bukan CDN resmi.
+> 2. **BIOS sistem PS1/Saturn/dll.** → Diunggah user sendiri, sama seperti ROM; sistem ini di-exclude dari launch.
+> 3. **Wording halaman "cara dapat ROM"** → Wording lengkap + rujukan sumber legal (bukan disclaimer generik).
+> 4. **Disclaimer sebelum emulator dipakai** → Teks statis, tanpa checkbox interaktif.
+> 5. **Self-host vs CDN** → Self-host (menguatkan #1).
+> 6. **Render: DOM langsung atau iframe?** → Iframe, mengikuti pola isolasi game lain.
+> 7. **Nav placement** → Tab baru sejajar kategori game di `tab-bar`.
+> 8. **SEO per-sistem** → Belum — satu halaman `/emulator` dulu.
+> 9. **Sequencing vs Task #013–#019 (hardening)** → [DIKONFIRMASI 2026-09-12 — FINAL] Jawaban awal ambigu; developer memperjelas: *"agar tidak ada ambigu, maka fitur emulator dikerjakan terakhir, setelah hardening."* Tidak ada paralel — Task #022 dimulai hanya setelah Task #013–#019 seluruhnya selesai. `Dependencies` Task #022 diperbarui mencakup Task #013–#019 lengkap (sebelumnya hanya #017/#018 di draf tafsir sementara).
+>
+> `prd.md` diperbarui ke v1.6.0 (§3.1, §3.2, §4.1, §4.2, §5 baru, §8, §9, §10), lalu v1.6.1 setelah poin 9 dikonfirmasi final; `knowledge.md` ke v1.6.0 lalu v1.6.1 (§2, §3, §7, §9).
 
 ## [IN PROGRESS]
 
@@ -106,6 +121,30 @@ simple_mode: false
   - [ ] Manually calling each endpoint against the live/preview deployment matches what the doc describes
 - **Dependencies:** Task #009, Task #010
 - **Decisions made:** Belum dieksekusi — isi setelah task selesai.
+
+### Phase 9 — New Feature: Emulator
+
+### Task #022 — Build Emulator Feature: EmulatorJS Integration, Client-Side ROM/BIOS, Self-Hosted Core
+- **Phase:** Phase 9 — New Feature: Emulator
+- **Scope:** Bangun menu baru `/emulator` (lihat @knowledge §3 "Emulator subsystem", PRD §5): shell `emulator/index.html` (pilih sistem, upload ROM/BIOS, how-to guide, disclaimer + rujukan ROM legal) yang meng-iframe-kan `emulator/runtime.html` (boot EmulatorJS, terima `File` via `postMessage`, `createObjectURL()` lokal). Core EmulatorJS di-self-host di `/vendor/emulatorjs/` (GPL-3.0). Launch scope: NES, SNES, GB/GBC/GBA, Genesis/Mega Drive (tanpa BIOS); sistem berbasis BIOS menyusul dengan BIOS upload user. [DIJAWAB 2026-09-12] ROM & BIOS tidak boleh menyentuh `src/index.js`/server dalam bentuk apa pun — murni client-side. Nav: tab baru "Emulator" di `tab-bar` (`js/catalog.js`). [DIKONFIRMASI 2026-09-12] **Sequencing:** task ini dikerjakan TERAKHIR — tidak dimulai sebelum Task #013–#019 (seluruh hardening) selesai, tanpa pengecualian/paralel.
+- **Files to create / modify:**
+  - `emulator/index.html` — baru: UI pilih sistem, upload ROM/BIOS, how-to guide, disclaimer (teks statis) + rujukan ROM legal (wording final di PRD §5)
+  - `emulator/runtime.html` — baru: boot EmulatorJS, terima `File` ROM/BIOS via `postMessage`, `EJS_pathToData` menunjuk ke `/vendor/emulatorjs/`
+  - `vendor/emulatorjs/` — baru: core EmulatorJS self-hosted (build resmi dari repo EmulatorJS, GPL-3.0, tanpa modifikasi source)
+  - `src/index.js` — rute baru `/emulator` (static-asset serve, CSP nonce-based dari `run_worker_first` otomatis berlaku — tidak perlu wiring tambahan)
+  - `js/catalog.js` / `js/config.js` — entry tab nav baru "Emulator" di `tab-bar`
+  - `prd.md` / `knowledge.md` — sudah diperbarui ke v1.6.0 (2026-09-12); tidak perlu perubahan lanjutan kecuali ada temuan baru saat implementasi
+- **Acceptance criteria:**
+  - [ ] `/emulator` menyediakan pilihan sistem (NES, SNES, GB/GBC/GBA, Genesis di launch), upload ROM (+BIOS bila relevan), lalu memuat game via EmulatorJS
+  - [ ] ROM & BIOS tidak pernah terkirim ke server Gimboot — diverifikasi manual (tab Network kosong dari request berisi file game) sebelum rilis
+  - [ ] Halaman how-to lengkap (pilih sistem → upload → kontrol/fullscreen → save state) plus disclaimer & rujukan ROM legal (itch.io, nesdoug.com, Hagen's Alley) tampil sebagai teks statis
+  - [ ] Emulator dirender di `emulator/runtime.html`, dimuat via iframe dari `emulator/index.html` (pola isolasi sama seperti game lain di `js/player.js`)
+  - [ ] Save state EmulatorJS via IndexedDB bawaan — tidak ada write ke API Gimboot
+  - [ ] Tab "Emulator" tampil sejajar tab kategori game lain di `tab-bar`
+  - [ ] Tidak ada satu pun link ke situs distribusi ROM/BIOS berhak cipta (romsgames.net, romsfun.com, retrostic.com, atau sejenis) di halaman ini maupun di seluruh Gimboot
+- **Dependencies:** Task #013, Task #014, Task #015, Task #016, Task #017, Task #018, Task #019 — [DIKONFIRMASI 2026-09-12, FINAL] developer: *"agar tidak ada ambigu, maka fitur emulator dikerjakan terakhir, setelah hardening"*. Menggantikan draf tafsir sementara (hanya Task #017/#018) — lihat blok DEVELOPER DECISIONS 2026-09-12 di atas untuk riwayat.
+- **Decisions made:** Belum dieksekusi — isi setelah task selesai.
+
 ## [COMPLETED]
 > **Catatan format:** empat entri retroaktif di bawah ini BUKAN task yang dieksekusi lewat proses changelog/gate P04 ini — proses itu baru mulai berlaku sejak Task #001. Entri-entri ini disusun 2026-08-30 dari kondisi kode saat diaudit (2026-08-28) untuk mencatat bahwa produk sudah live sebelum changelog ini ada, sebagaimana disebut `knowledge.md` §1 ("Phase 1 & Phase 3 ... selesai"). Karena itu, tidak ada field "Files to create/modify", "Acceptance criteria" bercentang, atau "Dependencies" seperti task lain — tidak ada catatan asli semacam itu untuk pekerjaan ini, dan menuliskannya di sini akan memberi kesan presisi yang tidak benar-benar ada.
 
