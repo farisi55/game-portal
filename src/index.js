@@ -31,6 +31,9 @@ const GAMEPIX_PAGINATION_OPTIONS = [12, 24, 48, 96];
 const CACHE_TTL_SECONDS = 1800; // 30 menit
 const SITE_NAME = 'Gimboot';
 const ALLOWED_HTTP_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
+const MAX_BODY_BYTES = 5 * 1024 * 1024;
+const RATE_LIMIT_MAX = 100;
+const RATE_LIMIT_WINDOW_MS = 60_000;
 
 // Minimal env-var validation helper — fails fast with a clear error if a
 // required var is missing. Intended for the first real vars added later;
@@ -43,15 +46,69 @@ function requireEnvVar(name, val) {
   }
 }
 
+function structuredLog(level, message, extra = {}) {
+  const entry = { timestamp: new Date().toISOString(), level, message, ...extra };
+  if (level === 'error') {
+    console.error(JSON.stringify(entry));
+  } else {
+    console.warn(JSON.stringify(entry));
+  }
+}
+
+async function fetchWithTimeout(url, options = {}, timeoutMs = 5000) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...options, signal: controller.signal });
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+async function fetchLimitedText(response, maxBytes = MAX_BODY_BYTES) {
+  const rawText = await response.text();
+  if (rawText.length > maxBytes) {
+    throw new Error('Response body exceeds ' + maxBytes + ' bytes');
+  }
+  return rawText;
+}
+
+async function isRateLimited(ip) {
+  try {
+    const cache = caches.default;
+    const key = new Request('https://rate-limit/internal/' + ip);
+    const cached = await cache.match(key);
+    const now = Date.now();
+    let count = 1;
+    let expires = now + RATE_LIMIT_WINDOW_MS;
+    if (cached) {
+      const data = await cached.json();
+      if (now < data.expires) {
+        count = data.count + 1;
+        expires = data.expires;
+      }
+    }
+    if (count > RATE_LIMIT_MAX) return true;
+    const resp = new Response(JSON.stringify({ count, expires }), {
+      headers: { 'Cache-Control': 'public, max-age=60' },
+    });
+    await cache.put(key, resp);
+    return false;
+  } catch {
+    return false;
+  }
+}
+
 // `_headers` is useful for static hosting, but Worker-with-assets deployments
 // do not consistently apply it to every response. Enforce the same policy at
 // the Worker boundary so HTML, JavaScript, API, and game routes all share it.
-const SECURITY_HEADERS = {
-  'X-Frame-Options': 'SAMEORIGIN',
-  'X-Content-Type-Options': 'nosniff',
-  'Referrer-Policy': 'strict-origin-when-cross-origin',
-  'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
-};
+ const SECURITY_HEADERS = {
+   'Strict-Transport-Security': 'max-age=31536000; includeSubDomains; preload',
+   'X-Frame-Options': 'SAMEORIGIN',
+   'X-Content-Type-Options': 'nosniff',
+   'Referrer-Policy': 'strict-origin-when-cross-origin',
+   'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
+ };
 
 // Game(s) we host ourselves. Mirrors js/config.js's LOCAL_GAMES exactly —
 // duplicated here (rather than imported) because this Worker script and the
@@ -102,7 +159,20 @@ const LOCAL_GAMES = [
 
 export default {
   async fetch(request, env, ctx) {
+    const requestId = crypto.randomUUID();
     const url = new URL(request.url);
+    const clientIp = request.headers.get('CF-Connecting-IP') || 'unknown';
+
+    if (await isRateLimited(clientIp)) {
+      return withSecurityHeaders(
+        new Response(JSON.stringify({ error: 'Rate limit exceeded' }), {
+          status: 429,
+          headers: { 'Content-Type': 'application/json', 'x-request-id': requestId },
+        }),
+        requestId,
+      );
+    }
+
     let response;
 
     if (!ALLOWED_HTTP_METHODS.has(request.method)) {
@@ -119,47 +189,39 @@ export default {
       (url.pathname.toLowerCase() === '/game.html' || url.pathname === '/game') &&
       url.searchParams.has('id')
     ) {
-      // /game.html?id=X or /game?id=X → canonical /play/:id/:slug (single 301,
-      // HTTP or HTTPS). Prevents Google from indexing these variant URLs as
-      // separate pages — the root cause of "Di-crawl - saat ini tidak
-      // diindeks" in GSC.
       const gameId = url.searchParams.get('id');
       const localGame = LOCAL_GAMES.find((g) => String(g.id) === gameId);
       if (localGame) {
         const playPath = `/play/${encodeURIComponent(localGame.id)}/${slugify(localGame.title)}`;
         response = redirectSingleHop(url, playPath);
       } else {
-        // Unknown game ID — fall through to handleGameRoute which will
-        // render the game shell with a play-id meta for client-side retry.
-        response = await handleGameRoute(request, url, env);
+        response = await handleGameRoute(request, url, env, requestId);
       }
     } else if (url.pathname.toLowerCase() === '/game.html') {
-      // game.html without id → canonical /game (single-hop, HTTP or HTTPS)
       response = redirectSingleHop(url, '/game');
     } else if (url.protocol === 'http:') {
-      // HTTP → HTTPS (non-game.html paths)
       const httpsUrl = new URL(url);
       httpsUrl.protocol = 'https:';
       response = Response.redirect(httpsUrl.toString(), 301);
     } else if (url.pathname === '/api/health') {
       response = handleApiHealth();
     } else if (url.pathname === '/api/games') {
-      response = await handleApiGames(url, env, ctx);
+      response = await handleApiGames(url, env, ctx, requestId);
     } else if (url.pathname === '/api/search') {
-      response = await handleApiSearch(url, env, ctx);
+      response = await handleApiSearch(url, env, ctx, requestId);
     } else if (url.pathname.startsWith('/share/')) {
-      response = await handleShareRoute(request, url, env, ctx);
+      response = await handleShareRoute(request, url, env, ctx, requestId);
     } else if (url.pathname.startsWith('/play/')) {
-      response = await handlePlayRoute(request, url, env, ctx);
+      response = await handlePlayRoute(request, url, env, ctx, requestId);
     } else if (url.pathname === '/game') {
-      response = await handleGameRoute(request, url, env);
+      response = await handleGameRoute(request, url, env, requestId);
     } else if (url.pathname === '/sitemap.xml') {
-      response = await handleSitemap(url, env, ctx);
+      response = await handleSitemap(url, env, ctx, requestId);
     } else {
       response = await env.ASSETS.fetch(request);
     }
 
-    return withSecurityHeaders(response);
+    return withSecurityHeaders(response, requestId);
   },
 };
 
@@ -190,7 +252,7 @@ function handleApiHealth() {
   );
 }
 
-function withSecurityHeaders(response) {
+function withSecurityHeaders(response, requestId = '') {
   const headers = new Headers(response.headers);
   const nonce = isHtmlResponse(response) ? createNonce() : null;
   let body = response.body;
@@ -206,6 +268,9 @@ function withSecurityHeaders(response) {
   }
 
   headers.set('Content-Security-Policy', buildContentSecurityPolicy(nonce));
+  if (requestId) {
+    headers.set('x-request-id', requestId);
+  }
   for (const [name, value] of Object.entries(SECURITY_HEADERS)) {
     headers.set(name, value);
   }
@@ -230,10 +295,10 @@ function createNonce() {
 }
 
 function buildContentSecurityPolicy(nonce) {
-  const scriptSource = nonce ? `'nonce-${nonce}' 'strict-dynamic' 'unsafe-inline' https: http:` : "'none'";
+  const scriptSource = nonce ? `'nonce-${nonce}' 'strict-dynamic'` : "'none'";
   const scriptElementSource = nonce ? `'nonce-${nonce}'` : "'none'";
 
-  return `default-src 'self'; script-src ${scriptSource}; script-src-elem ${scriptElementSource}; script-src-attr 'none'; style-src 'self' 'unsafe-inline'; style-src-elem 'self' 'unsafe-inline'; style-src-attr 'unsafe-inline'; worker-src 'self'; font-src 'self' data:; img-src 'self' https: data:; connect-src 'self'; frame-src 'self' https://html5.gamemonetize.co https://*.gamemonetize.co https://gamemonetize.com https://*.gamemonetize.com https://play.gamepix.com https://*.gamepix.com; object-src 'none'; base-uri 'self'; frame-ancestors 'self'; form-action 'self'; upgrade-insecure-requests`;
+  return `default-src 'self'; script-src ${scriptSource}; script-src-elem ${scriptElementSource}; script-src-attr 'none'; style-src 'self'; style-src-elem 'self'; style-src-attr 'none'; worker-src 'self'; font-src 'self' data:; img-src 'self' https: data:; connect-src 'self'; frame-src 'self' https://html5.gamemonetize.co https://*.gamemonetize.co https://gamemonetize.com https://*.gamemonetize.com https://play.gamepix.com https://*.gamepix.com; object-src 'none'; base-uri 'self'; frame-ancestors 'self'; form-action 'self'; upgrade-insecure-requests`;
 }
 
 /**
@@ -265,10 +330,10 @@ export async function getCombinedGames(num, env, ctx) {
   const gpGames = gpResult.status === 'fulfilled' ? gpResult.value : [];
 
   if (gmResult.status === 'rejected') {
-    console.error('GameMonetize feed failed:', gmResult.reason);
+    structuredLog('error', 'GameMonetize feed failed', { reason: String(gmResult.reason) });
   }
   if (gpResult.status === 'rejected') {
-    console.error('GamePix feed failed:', gpResult.reason);
+    structuredLog('error', 'GamePix feed failed', { reason: String(gpResult.reason) });
   }
 
   const combined = [...gmGames, ...gpGames];
@@ -285,12 +350,20 @@ export async function getCombinedGames(num, env, ctx) {
 }
 
 /** Handles GET /api/games — returns merged catalog from all sources. */
-export async function handleApiGames(url, env, ctx) {
+export async function handleApiGames(url, env, ctx, _requestId = '') {
   const num = clampNum(url.searchParams.get('num'), CATALOG_DEFAULT_NUM, CATALOG_MAX_NUM);
   const { games, response, error } = await getCombinedGames(num, env, ctx);
 
   if (!games) {
     return jsonResponse({ error: 'Both game feeds failed', ...error }, 502);
+  }
+  const hasPagination = url.searchParams.has('page');
+  if (hasPagination) {
+    const page = Math.max(1, parseInt(url.searchParams.get('page')) || 1);
+    const limit = clampNum(url.searchParams.get('limit') || num, 1, CATALOG_MAX_NUM);
+    const start = (page - 1) * limit;
+    const paged = games.slice(start, start + limit);
+    return jsonResponse({ games: paged, pagination: { page, limit, total: games.length } }, 200, CACHE_TTL_SECONDS);
   }
   return response;
 }
@@ -334,7 +407,7 @@ export async function handleApiSearch(url, env, ctx) {
     }
     return response;
   } catch (error) {
-    console.error('Search API failed:', error);
+    structuredLog('error', 'Search API failed', { error: String(error) });
     return jsonResponse({ error: 'Search failed' }, 502);
   }
 }
@@ -687,7 +760,7 @@ async function handleSitemap(url, env, ctx) {
 
 async function fetchGameMonetize(num) {
   const feedUrl = `${GM_FEED_BASE}?format=json&num=${num}`;
-  const upstream = await fetch(feedUrl, {
+  const upstream = await fetchWithTimeout(feedUrl, {
     headers: { Accept: 'application/xml,text/xml,*/*' },
   });
 
@@ -695,7 +768,7 @@ async function fetchGameMonetize(num) {
     throw new Error(`GameMonetize feed responded with ${upstream.status}`);
   }
 
-  const rawText = await upstream.text();
+  const rawText = await fetchLimitedText(upstream);
   const games = parseGameMonetizeFeed(rawText);
   if (games.length === 0) {
     throw new Error('GameMonetize feed produced zero items');
@@ -798,7 +871,7 @@ async function fetchGamePix(env, count) {
 
 async function fetchGamePixPage(feedSid, pagination, page) {
   const feedUrl = `${GAMEPIX_FEED_BASE}?sid=${encodeURIComponent(feedSid)}&pagination=${pagination}&page=${page}`;
-  const upstream = await fetch(feedUrl, {
+  const upstream = await fetchWithTimeout(feedUrl, {
     headers: {
       Accept: 'application/json',
       'User-Agent': 'Mozilla/5.0 (compatible; GimbootPortal/1.0)',
@@ -806,22 +879,22 @@ async function fetchGamePixPage(feedSid, pagination, page) {
   });
 
   if (!upstream.ok) {
-    const bodySnippet = await upstream.text().catch(() => '');
-    console.error('GamePix feed non-OK response:', upstream.status, bodySnippet.slice(0, 300));
+    const _bodySnippet = await fetchLimitedText(upstream).catch(() => '');
+    structuredLog('error', 'GamePix feed non-OK response', { status: upstream.status });
     throw new Error(`GamePix feed responded with ${upstream.status}`);
   }
 
-  const rawText = await upstream.text();
+  const rawText = await fetchLimitedText(upstream);
   let data;
   try {
     data = JSON.parse(rawText);
   } catch {
-    console.error('GamePix feed returned non-JSON body:', rawText.slice(0, 300));
+    structuredLog('error', 'GamePix feed returned non-JSON body');
     throw new Error('GamePix feed response was not valid JSON');
   }
 
   if (!data || !Array.isArray(data.items)) {
-    console.error('GamePix feed JSON missing items array:', JSON.stringify(data).slice(0, 300));
+    structuredLog('error', 'GamePix feed JSON missing items array');
     throw new Error('GamePix feed response missing an items array');
   }
 

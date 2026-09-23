@@ -68,6 +68,9 @@ export default [
         // the confetti animation loop.
         requestAnimationFrame: 'readonly',
         cancelAnimationFrame: 'readonly',
+        // AbortController/AbortSignal for fetch timeouts
+        AbortController: 'readonly',
+        AbortSignal: 'readonly',
         // Tailwind Play CDN attaches its config object to a global `tailwind`
         // variable; js/tailwind-config.js assigns to it.
         tailwind: 'writable',

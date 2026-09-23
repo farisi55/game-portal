@@ -11,6 +11,11 @@ import { cloudflareTest } from '@cloudflare/vitest-plugin';
 import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
+  resolve: {
+    alias: {
+      'node:inspector/promises': 'unenv/dist/runtime/node/inspector/promises.mjs',
+    },
+  },
   test: {
     // Global excludes shared by both projects
     exclude: [
@@ -36,6 +41,13 @@ export default defineConfig({
           name: 'unit',
           include: ['js/**/*.test.js', 'games/shared/**/*.test.js'],
           environment: 'jsdom',
+          coverage: {
+            provider: 'v8',
+            reporter: ['text', 'html', 'json'],
+            reportsDirectory: './coverage',
+            include: ['js/**/*.js'],
+            exclude: ['js/**/*.test.js', 'games/**/*.test.js'],
+          },
         },
       },
       {

@@ -17,6 +17,7 @@
   "devDependencies": {
     "@cloudflare/vitest-plugin": "^1.1.5",
     "@eslint/js": "10.0.1",
+    "@vitest/coverage-v8": "^4.1.11",
     "eslint": "10.9.1",
     "husky": "9.1.7",
     "jsdom": "26.1.0",
