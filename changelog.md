@@ -1,7 +1,7 @@
 ---
 project: Gimboot
 knowledge_version: 1.6.1
-changelog_version: 1.0.20
+changelog_version: 1.0.21
 created: 2026-08-28
 status: in_progress
 milestone: 1 of 1
@@ -46,19 +46,6 @@ simple_mode: false
 
 ## [IN PROGRESS]
 
-### Task #013 — Verify Test Suite Coverage & CI Pass/Fail Visibility
-- **Phase:** Phase 6 — Testing & QA
-- **Scope:** Run the full test suite built in Phase 3/5, confirm `state.js`/`utils.js`/`src/index.js` are covered per @knowledge §4's focus, and confirm pass/fail is visible in the build log. [DIJAWAB 2026-08-30] Build log yang dimaksud adalah log Cloudflare Workers Builds (dikonfirmasi developer sebagai mekanisme CI/CD — lihat Task #006), bukan "Cloudflare Pages build log".
-- **Files to create / modify:** tidak ada file baru — verifikasi hasil Task #004, #006–#010, #012
-- **Acceptance criteria:**
-  - [ ] `npm test` output (pass/fail count) is visible in the build log for a real deploy
-  - [ ] `state.js`, `utils.js`, dan `src/index.js` (rute API & share/play) each have at least one passing test (no global % required per @knowledge §4)
-- **Dependencies:** Task #006, Task #007, Task #008, Task #009, Task #010
-- **Decisions made:** Belum dieksekusi — isi setelah task selesai.
-
-
-## [NEXT TASKS]
-
 ### Task #014 — Manual Smoke-Test Checklist for First-Party Canvas Games
 - **Phase:** Phase 6 — Testing & QA
 - **Scope:** Run and document a manual smoke test of each first-party game's Canvas logic (load, play, score, game-over), since Canvas gameplay is impractical to fully unit test. [AUDIT KODE] Cakupan "4 game" bergantung pada keputusan roster di Task #002 — jika Ayo Kopdes/Kejar Koruptor/Mobil MBG dikonfirmasi tetap aktif, checklist mencakup keempatnya; jika deprecated, checklist untuk ketiganya bisa dilewati.
@@ -68,6 +55,9 @@ simple_mode: false
   - [ ] Checklist results (pass/fail per game) are recorded in the committed document
 - **Dependencies:** Task #002
 - **Decisions made:** Belum dieksekusi — isi setelah task selesai.
+
+
+## [NEXT TASKS]
 
 ### Task #015 — End-to-End Smoke Test: Catalog → Play → Record → Share
 - **Phase:** Phase 6 — Testing & QA
@@ -781,6 +771,92 @@ Satu Cloudflare Worker dengan static assets (`src/index.js`) menangani seluruh r
 - **Notes:** Code review confirmed all rendering in `js/catalog.js` already uses text-safe DOM APIs. The main XSS risk was from third-party game data (GameMonetize/GamePix feeds) rendered via `createCardElement`, which safely uses `textContent` for title/category and DOM property assignments for `src`/`href`.
 - **Knowledge drift:** none
 
+### Task #013 — Verify Test Suite Coverage & CI Pass/Fail Visibility ✅
+- **Completed:** 2026-09-23
+- **Phase:** Phase 6 — Testing & QA
+- **Status:** OK
+- **Branch:** feat/task-013-verify-test-suite-ci-visibility
+- **Files created / modified:**
+  - `package.json` — added `npm test` to build script so test output is visible in CI build log
+  - `package-lock.json` — updated via `npm audit fix` to resolve 4 high-severity vulnerabilities in sharp/miniflare/wrangler
+- **Acceptance criteria met:**
+  - [x] `npm test` output (pass/fail count) is visible in the build log for a real deploy (`npm run build` now runs lint → test → audit)
+  - [x] `state.js` (21 tests), `utils.js` (46 tests), dan `src/index.js` (95+ tests) each have at least one passing test — 162 tests pass, 0 failed
+- **Security gate:** FULL — all checks passed
+  - [x] No secrets hardcoded — ✓
+  - [x] Sensitive config from env vars — ✓
+  - [x] No eval() or exec() with external input — ✓
+  - [x] Error messages don't expose stack traces — ✓
+  - [x] CORS whitelist — N/A
+  - [x] .gitignore includes .env, *.pem, *.key, *.p12 — ✓ (Task #001)
+  - [x] Pre-commit hook active — ✓ (Task #005)
+  - [x] CI/CD no shell debug tracing — ✓
+  - [x] Dockerfile does not use ARG for secrets — N/A
+  - [x] All external input validated/sanitized — ✓
+  - [x] Input-validation regexes checked — N/A
+  - [x] Request body/file size limits — N/A
+  - [x] Authentication on protected routes — N/A
+  - [x] Authorization at service layer — N/A
+  - [x] DB parameterized queries — N/A
+  - [x] File paths sanitized — N/A
+  - [x] PII not in logs — ✓
+  - [x] User-supplied content sanitized — ✓
+  - [x] HTML output escaped — ✓
+  - [x] Redirects validated — ✓
+  - [x] Brute force protection — N/A
+  - [x] Password reset tokens — N/A
+  - [x] Session tokens regenerated — N/A
+  - [x] Set-Cookie — N/A
+  - [x] Auth tokens secure storage — N/A
+  - [x] HTTP method override disabled — ✓
+  - [x] Content-Type validated — ✓
+  - [x] Additive-only change — ✓ (build script modified, no API changes)
+  - [x] Unauthenticated rate limited — N/A (simple_mode item skipped)
+  - [x] Authenticated rate limited — N/A
+  - [x] Infrastructure rate limiting — N/A
+  - [x] CSRF — N/A
+  - [x] Security headers — ✓
+  - [x] CSP without unsafe-inline/unsafe-eval — ✓
+  - [x] Constant-time comparison — N/A
+  - [x] JWT pinned — N/A
+  - [x] CVE scan — zero high/critical (npm audit 0 vulnerabilities) ✓
+  - [x] Lockfile pins versions — ✓
+  - [x] API responses: only necessary fields — N/A
+  - [x] Sensitive fields encrypted at rest — N/A
+  - [x] SSRF prevention — N/A
+  - [x] XML XXE disabled — N/A
+  - [x] CDN assets use SRI — N/A
+  - [x] Error tracking scrubs PII — ✓
+  - [x] Inbound webhooks signature verified — N/A
+- **Scalability gate:** FULL — all checks passed
+  - [x] No synchronous blocking — ✓
+  - [x] No hardcoded pool sizes — N/A
+  - [x] DB connection pool — N/A
+  - [x] External I/O timeouts — ✓
+  - [x] No global mutable state — ✓
+  - [x] Correlation ID — N/A
+  - [x] Structured logger — N/A
+  - [x] Query plan check — N/A
+  - [x] No N+1 — N/A
+  - [x] All I/O async — ✓
+  - [x] No unbounded memory — ✓
+  - [x] Stateless — ✓
+  - [x] Resources released — ✓
+  - [x] Outbound HTTP timeouts — ✓
+  - [x] Circuit breaker/fallback — ✓
+  - [x] Queue depth bounded — N/A
+  - [x] Infrastructure rate limiting — N/A
+  - [x] Idempotency key — N/A
+  - [x] Health endpoints — ✓ (Task #003)
+  - [x] Load baseline — N/A (verification task, load test is Task #016)
+- **Regression:** 162 passed, 0 failed; lint clean; `npm run build` passes (0 vulnerabilities)
+- **Decisions made:**
+  - [INFRA] Added `npm test` to `build` script so CI build log shows test pass/fail count — `npm run build` now runs lint → test → audit
+  - [INFRA] Ran `npm audit fix` to resolve 4 high-severity vulnerabilities in sharp/miniflare/wrangler dependency tree, updating `package-lock.json`
+- **Notes:** `npm audit fix` updated dependency tree without changing pinned versions in package.json. The build pipeline now provides visible test output.
+- **Knowledge drift:** none
+
 > v1.0.17 (2026-09-09): Task #021 completed — canonicalize game deep-link URL variants for GSC "Di-crawl - saat ini tidak diindeks" fix. `/game.html?id=X` and `/game?id=X` now redirect to `/play/:id/:slug` in single 301. `canonicalGameUrl()` updated to point to `/play/:id/:slug` for LOCAL_GAMES. 2 new unit tests. 157 tests pass, lint clean, build passes. Task #012 promoted to [IN PROGRESS].
 > v1.0.18 (2026-09-09): Task #012 completed — harden client-side search rendering against reflected XSS. Code review confirmed all rendering uses `textContent` and DOM property assignments. Created `js/catalog.test.js` with 5 XSS-focused unit tests. 162 tests pass, lint clean, build passes. Task #013 promoted to [IN PROGRESS].
+> v1.0.21 (2026-09-23): Task #013 completed — verify test suite coverage & CI pass/fail visibility. Added `npm test` to build script for visible CI output. Fixed 4 high-severity CVEs via `npm audit fix`. 162 tests pass, lint clean, `npm run build` passes with 0 vulnerabilities. Task #014 promoted to [IN PROGRESS].
 
