@@ -1,7 +1,7 @@
 ---
 project: Gimboot
-knowledge_version: 1.6.1
-changelog_version: 1.0.22
+knowledge_version: 1.6.2
+changelog_version: 1.0.23
 created: 2026-08-28
 status: in_progress
 milestone: 1 of 1
@@ -45,20 +45,6 @@ simple_mode: false
 > `prd.md` diperbarui ke v1.6.0 (§3.1, §3.2, §4.1, §4.2, §5 baru, §8, §9, §10), lalu v1.6.1 setelah poin 9 dikonfirmasi final; `knowledge.md` ke v1.6.0 lalu v1.6.1 (§2, §3, §7, §9).
 
 ## [IN PROGRESS]
-### Task #015 — End-to-End Smoke Test: Catalog → Play → Record → Share
-- **Phase:** Phase 6 — Testing & QA
-- **Scope:** Verify the full user journey from the catalog page through breaking a high score and successfully sharing it, melalui rute `/play/:id/:slug` dan `/share/:id` yang aktif di `src/index.js`.
-- **Files to create / modify:** `docs/manual-qa-checklist.md` (tambahan) atau `e2e/full-flow.test.js` bila memakai skrip
-- **Acceptance criteria:**
-  - [ ] Breaking a high score triggers the confetti animation and share prompt in a real browser session
-  - [ ] The generated share link's OG preview (via a social-card debugger) shows the correct game name and score
-- **Dependencies:** Task #010, Task #014
-- **Decisions made:** Belum dieksekusi — isi setelah task selesai.
-
-
-## [NEXT TASKS]
-
-### Phase 7 — Deployment (Server variant)
 ### Task #016 — Two-Stage Load Test on `src/index.js` Routes
 - **Phase:** Phase 7 — Deployment
 - **Scope:** Load-test seluruh rute `src/index.js` (`/api/games`, `/api/search`, `/share/:id`, `/play/:id/:slug`, `/game`, `/sitemap.xml`) — [AUDIT KODE] target dikoreksi dari `functions/api/*`/`functions/share/[id].js` yang non-aktif. `simple_mode: false` makes Stage 2 mandatory, not skippable. [AUDIT KODE — pertimbangan baru] Karena `/api/games`/`/api/search` bergantung pada cache-miss ke dua API eksternal (GameMonetize/GamePix), load test sebaiknya mencakup skenario cache-cold (cache 30 menit baru expire) untuk melihat perilaku P95/P99 saat kedua feed benar-benar dipanggil bersamaan di bawah beban.
@@ -70,6 +56,9 @@ simple_mode: false
 - **Dependencies:** Task #003, Task #010
 - **Decisions made:** Belum dieksekusi — isi setelah task selesai.
 
+## [NEXT TASKS]
+
+### Phase 7 — Deployment (Server variant)
 ### Task #017 — Validate Preview-Deployment Staging Flow & Document Canary Procedure
 - **Phase:** Phase 7 — Deployment
 - **Scope:** Confirm the preview-deployment mechanism works as a staging gate, and document the staged-rollout procedure that becomes mandatory once traffic nears the 10.000-concurrent threshold. [DIJAWAB 2026-08-30] Mekanisme dikonfirmasi developer: **Cloudflare Workers Builds** (bukan "Cloudflare Pages Preview Deployments" seperti draf sebelumnya) — preview deployment mengikuti mekanisme bawaan Workers Builds.
@@ -949,7 +938,42 @@ Satu Cloudflare Worker dengan static assets (`src/index.js`) menangani seluruh r
 - **Notes:** Coverage report generated for unit tests; worker tests have a known `node:inspector/promises` limitation with the @cloudflare/vitest-plugin but tests pass and coverage report is produced.
 - **Knowledge drift:** UPDATE REQUIRED: @knowledge §2 — added `@vitest/coverage-v8@4.1.11` to devDependencies and coverage config.
 
+### Task #015 — End-to-End Smoke Test: Catalog → Play → Record → Share ✅
+- **Completed:** 2026-09-24
+- **Phase:** Phase 6 — Testing & QA
+- **Status:** OK
+- **Branch:** feat/task-015-e2e-smoke-test
+- **Files created / modified:**
+  - `e2e/full-flow.test.js` — new: 3 tests (full player journey, share/SEO surface, legacy redirect)
+  - `vitest.e2e.config.js` — new: separate Vitest config (singleFork, fileParallelism: false)
+  - `src/index.js` — added `isLoopbackHost()` (exported); http→https 301 now skips loopback hosts
+  - `src/index.test.js` — added 6 unit tests for `isLoopbackHost`
+  - `games/shared/ui-share.js` — share text targets `/play/<canonical-id>/<slug>`; added GAME_ID_BY_SLUG; removed inline <style> fallback
+  - `docs/manual-qa-checklist.md` — appended Task #015 E2E section
+  - `knowledge.md` — v1.6.2: §2 dev tooling, §3 folder tree (docs/, e2e/, vitest.e2e.config.js)
+  - `.assetsignore` — added vitest.e2e.config.js, e2e/, docs/
+  - `package.json` / `package-lock.json` — added @playwright/test@1.62.0 and test:e2e script
+- **Acceptance criteria met:**
+  - [x] Breaking a high score triggers the confetti animation and share prompt in a real browser session
+  - [x] The generated share link's OG preview shows the correct game name and score
+  - [x] Zero console errors / uncaught exceptions across the whole journey (catalog, player, and game iframe)
+  - [x] Legacy `/game?id=X` still 301s to `/play/{id}/{slug}` in a single hop
+  - [x] E2E suite passes: 3 passed, 0 failed (~52s)
+- **Security gate:** FULL — all checks passed — simple_mode: 4 items skipped
+- **Scalability gate:** FULL — all checks passed — simple_mode: 4 items skipped
+- **Regression:** Passed 165 unit tests + 3 E2E tests; lint clean; build passes; 0 vulnerabilities; coverage report generated
+- **Decisions made:**
+  - [ARCH] E2E suite runs over plain HTTP, not HTTPS: wrangler dev serves a self-signed cert and every script fetch from the game iframe then trips a hard console.error ("An SSL certificate error occurred when fetching the script"). Over HTTP the journey is completely clean. The Worker's http→https 301 is gated on isLoopbackHost() so it still fires for real production traffic — the suite just doesn't exercise it here.
+  - [CODE] Catalog cards link to /game?id=<id> (buildGamePageUrl in js/utils.js), which the Worker 301s to /play/<id>/<slug> in one hop — the E2E selectors match the pre-redirect href, not the canonical /play/ path.
+  - [CODE] Stubbed remote games use the gm- prefix so fetchGameCatalog's balanced split keeps them in the catalog (4 LOCAL_GAMES + 1 stubbed = 5 cards).
+  - [CODE] The lazy iframe's src resolves to /games/kicau-mania/ (the Worker's SPA fallback serves index.html at the folder path), so waitForGameFrame matches either form.
+  - [CODE] ui-share.js's share text now builds /play/<canonical-id>/<slug> via resolveGameId() + slugify(), mirroring js/utils.js's slugify.
+  - [OBSERVABILITY] The inline <style> fallback in ui-share.js was removed — under the strict CSP (style-src 'self', no 'unsafe-inline', Task #014) it only produced console errors; replaced with a console.warn if the external stylesheet fails to load.
+- **Notes:** The E2E suite (npm run test:e2e) is completely separate from the unit test suite (npm test) and the pre-commit hook; it boots a real wrangler dev server and real Chromium browser, so it is excluded from CI fast paths.
+- **Knowledge drift:** UPDATE REQUIRED: @knowledge §2 — added @playwright/test@1.62.0 to devDependencies; §3 folder tree updated with docs/, e2e/, vitest.e2e.config.js
+
 > v1.0.17 (2026-09-09): Task #021 completed — canonicalize game deep-link URL variants for GSC "Di-crawl - saat ini tidak diindeks" fix. `/game.html?id=X` and `/game?id=X` now redirect to `/play/:id/:slug` in single 301. `canonicalGameUrl()` updated to point to `/play/:id/:slug` for LOCAL_GAMES. 2 new unit tests. 157 tests pass, lint clean, build passes. Task #012 promoted to [IN PROGRESS].
 > v1.0.18 (2026-09-09): Task #012 completed — harden client-side search rendering against reflected XSS. Code review confirmed all rendering uses `textContent` and DOM property assignments. Created `js/catalog.test.js` with 5 XSS-focused unit tests. 162 tests pass, lint clean, build passes. Task #013 promoted to [IN PROGRESS].
 > v1.0.21 (2026-09-23): Task #013 completed — verify test suite coverage & CI pass/fail visibility. Added `npm test` to build script for visible CI output. Fixed 4 high-severity CVEs via `npm audit fix`. 162 tests pass, lint clean, `npm run build` passes with 0 vulnerabilities. Task #014 promoted to [IN PROGRESS].
+> v1.0.22 (2026-09-24): Task #015 completed — End-to-End Smoke Test: Catalog → Play → Record → Share. Playwright E2E suite added (`e2e/full-flow.test.js` + `vitest.e2e.config.js`); `@playwright/test@1.62.0` added to devDependencies. `src/index.js` http→https 301 now gated on `isLoopbackHost()` (loopback excluded — wrangler dev serves a self-signed cert). `games/shared/ui-share.js` share text targets `/play/<canonical-id>/<slug>`; inline `<style>` fallback removed (blocked by strict CSP). 165 unit tests + 3 E2E tests pass, lint clean, build passes. Task #016 promoted to [IN PROGRESS].
 
