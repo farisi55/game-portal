@@ -1,6 +1,6 @@
 ---
 doc_id: PRD-GIMBOOT-001
-version: 1.5.0
+version: 1.6.1
 status: ready
 created: 2026-08-28
 flow_compatibility: vibe-coding-v1.7
@@ -9,7 +9,7 @@ project_shape: fullstack
 
 # Gimboot (Game Portal) — Product Requirements Document
 
-*Catatan: dokumen ini mendokumentasikan Gimboot yang sudah berjalan/dalam pengembangan aktif — bukan proyek baru dari nol. Detail struktur teknis mengacu pada kondisi repository saat ini (lihat §4.2). Versi 1.3.0 mengintegrasikan hasil audit langsung terhadap source code (`game-portal-main.zip`, 2026-08-28). Versi ini (1.4.0) mengintegrasikan jawaban developer atas keenam [DECISION NEEDED] di §10 Open Questions v1.3.0 (dijawab 2026-08-30) — lihat perubahan bertanda "[DIJAWAB 2026-08-30]" di seluruh dokumen.*
+*Catatan: dokumen ini mendokumentasikan Gimboot yang sudah berjalan/dalam pengembangan aktif — bukan proyek baru dari nol. Detail struktur teknis mengacu pada kondisi repository saat ini (lihat §4.2). Versi 1.3.0 mengintegrasikan hasil audit langsung terhadap source code (`game-portal-main.zip`, 2026-08-28). Versi 1.4.0 mengintegrasikan jawaban developer atas keenam [DECISION NEEDED] di §10 Open Questions v1.3.0 (dijawab 2026-08-30). Versi 1.6.0 menambahkan spesifikasi fitur baru **Emulator Browser (EmulatorJS)**, hasil sesi planning 2026-09-12 — 9 pertanyaan diajukan ke developer sebelum penyusunan, dijawab langsung di chat (bukan di §10 file ini seperti ronde sebelumnya); jawaban ditandai "[DIJAWAB 2026-09-12]" di seluruh dokumen. Satu catatan dari sesi planning ini: request awal developer meminta link download ke situs ROM pihak ketiga (romsgames.net, romsfun.com, retrostic.com) — DITOLAK karena ketiganya mendistribusikan ROM komersial berhak cipta tanpa lisensi; scope fitur diarahkan ke "emulator-only, ROM/BIOS 100% diunggah sendiri oleh pengguna", dengan rujukan homebrew legal sebagai gantinya (lihat §5, Feature: Emulator Browser). Versi ini (1.6.1) menyelesaikan satu-satunya item [DECISION NEEDED] yang tersisa dari ronde 1.6.0 (§10 poin 9, sequencing Emulator vs hardening) — developer mengonfirmasi 2026-09-12: Emulator dikerjakan TERAKHIR, setelah seluruh hardening (Task #013–#019) selesai, tanpa paralel.*
 
 ## 1. Executive Summary
 - **Project Shape:** Fullstack (varian edge/serverless — tidak ada server persisten). [AUDIT KODE — KOREKSI] Backend BUKAN Cloudflare Pages Functions — dikonfirmasi via `wrangler.toml`, backend aktual adalah satu Cloudflare Worker (`src/index.js`) dengan static assets, di-deploy dengan `wrangler deploy`. Lihat §4.1/§4.2.
@@ -35,6 +35,7 @@ project_shape: fullstack
 | Viral Sharing & High Score System | P0 — MVP | Modul `ui-share.js`: animasi confetti saat rekor pecah + Web Share API dengan copywriting dinamis |
 | PWA (Progressive Web App) | P0 — MVP | Instalasi ke home screen + offline caching via `manifest.json` & `sw.js` |
 | Serverless API Backend | P0 — MVP | [AUDIT KODE] Endpoint edge untuk katalog & pencarian game, serta generator meta-sharing/play dinamis — seluruhnya dilayani satu Cloudflare Worker (`src/index.js`), BUKAN `functions/api/`/`functions/share/` (dikonfirmasi non-aktif pada model deploy saat ini) |
+| Emulator Browser (EmulatorJS) | P1 | [DIJAWAB 2026-09-12] Menu baru `/emulator`: emulator berbasis EmulatorJS (self-hosted) untuk sistem yang tidak butuh BIOS (NES, SNES, GB/GBC/GBA, Genesis/Mega Drive) di launch; sistem berbasis BIOS (PS1, Saturn, dll.) menyusul dengan BIOS diunggah user sendiri. ROM & BIOS 100% client-side (`URL.createObjectURL`/`postMessage`, tidak pernah dikirim ke server Gimboot). Termasuk halaman how-to lengkap + rujukan sumber ROM legal (homebrew). Lihat spesifikasi penuh di §5. **Digate [DIKONFIRMASI 2026-09-12]:** dikerjakan TERAKHIR — seluruh hardening Task #013–#019 (§9 Phase 6–7) harus selesai lebih dulu, tanpa paralel. Lihat §9 Development Phases (Phase 9) dan changelog Task #022. |
 
 Catatan prioritas: [AUDIT KODE — KOREKSI] premis "katalog baru berisi 4 judul" pada draf sebelumnya sudah tidak akurat — katalog live saat ini mencakup hingga ~200 judul gabungan (first-party + GameMonetize + GamePix), sehingga fitur pencarian (`search.js`/`handleApiSearch`) justru lebih relevan dipertahankan di P0, bukan kandidat penurunan ke P1.
 
@@ -42,6 +43,7 @@ Catatan prioritas: [AUDIT KODE — KOREKSI] premis "katalog baru berisi 4 judul"
 - Fitur multiplayer online real-time.
 - Penyimpanan cloud untuk progres profil pengguna atau sistem login/otentikasi.
 - Pembuatan aset atau rendering 3D kompleks (hanya 2D dan pseudo-3D).
+- [DIJAWAB 2026-09-12 — HARD RULE] Gimboot TIDAK PERNAH meng-hosting, mendistribusikan, atau menautkan (link) ke file ROM/BIOS konsol berhak cipta, maupun ke situs pihak ketiga yang melakukannya (mis. romsgames.net, romsfun.com, retrostic.com, atau situs sejenis). Fitur Emulator (§5) hanya menyediakan tool emulator; ROM/BIOS 100% tanggung jawab & unggahan pengguna sendiri. Lihat §8 Constraints untuk alasan (risiko takedown, kebijakan ad network) dan §5 untuk rujukan sumber ROM legal (homebrew) sebagai pengganti.
 
 ### 3.3 Future Considerations
 *(usulan — belum divalidasi developer, kecuali item audit clean-code yang diminta langsung oleh developer)*
@@ -60,6 +62,7 @@ Catatan prioritas: [AUDIT KODE — KOREKSI] premis "katalog baru berisi 4 judul"
 - **Infrastructure:** [AUDIT KODE — KOREKSI] BUKAN "Cloudflare Pages + Cloudflare Pages Functions". Dikonfirmasi via `wrangler.toml`: satu Cloudflare Worker dengan static assets (`main = "./src/index.js"`, `[assets]`, `run_worker_first = ["/*"]`), di-deploy dengan `npx wrangler deploy` — file `wrangler.toml` itu sendiri secara eksplisit menyatakan `wrangler pages deploy` tidak berlaku untuk konfigurasi ini.
 - **Container orchestration:** none (edge/serverless, bukan berbasis container).
 - **Key third-party services:** GameMonetize/GamePix — [AUDIT KODE] perannya ganda, sebelumnya hanya tercatat sebagian: (1) jaringan iklan, diverifikasi via `ads.txt`; DAN (2) sumber katalog game LIVE yang di-fetch server-side oleh `src/index.js` (GameMonetize via `feed.php`, GamePix via `feeds.gamepix.com/v2/json`), digabung dengan game first-party, lalu di-cache di edge. Peran (2) sebelumnya tidak tercatat di PRD versi manapun.
+- **Key third-party library (baru, [DIJAWAB 2026-09-12]):** [EmulatorJS](https://github.com/emulatorjs/emulatorjs) — lisensi GPL-3.0, self-hosted (bukan CDN resmi `cdn.emulatorjs.org`) di bawah `/vendor/emulatorjs/`, konsisten dengan prinsip zero-external-dependency proyek ini. Aman dipakai apa adanya (include tanpa modifikasi source); modifikasi source core-nya sendiri di masa depan akan kena kewajiban copyleft GPLv3 — dicatat sebagai batasan, bukan blocker untuk scope saat ini.
 - **Webhook providers:** none — `ads.txt` adalah file verifikasi statis, bukan penerima webhook.
 - **Frontend framework (if applicable):** none (Vanilla JS + utility class Tailwind; tanpa React/Vue/Svelte).
 
@@ -71,6 +74,9 @@ Catatan prioritas: [AUDIT KODE — KOREKSI] premis "katalog baru berisi 4 judul"
 game-portal/
 ├── css/
 │   └── style.css                 # style global shell portal
+├── emulator/                     # [DIJAWAB 2026-09-12 — BARU] fitur Emulator Browser, lihat §5
+│   ├── index.html                 # shell/chrome: pilih sistem, upload ROM/BIOS, how-to guide, disclaimer, rujukan ROM legal
+│   └── runtime.html               # halaman minimal yang di-iframe-kan oleh index.html; boot EmulatorJS setelah menerima File ROM/BIOS via postMessage dari parent (isolasi CSS/DOM dari EmulatorJS, sama pola iframe-nya dengan games/{slug}/)
 ├── functions/                    # [DIJAWAB 2026-08-30] Konvensi Cloudflare Pages Functions, TIDAK aktif pada model deploy Worker-with-assets saat ini — developer memutuskan folder ini DIHAPUS (clean code); lihat changelog Task #002 untuk status eksekusi.
 │   ├── api/
 │   │   ├── games.js              # akan dihapus — logika yang jalan ada di src/index.js (handleApiGames)
@@ -113,6 +119,8 @@ game-portal/
 ├── robots.txt                    # mengarah ke /sitemap.xml — mengonfirmasi route sitemap dinamis memang disengaja
 ├── screenshot-desktop.png / screenshot-mobile.png  # [AUDIT KODE — BARU DITEMUKAN] checksum identik, sama-sama 1254×1254px persegi — bukan dua screenshot desktop/mobile yang berbeda
 ├── sw.js                         # service worker (offline caching)
+├── vendor/
+│   └── emulatorjs/                # [DIJAWAB 2026-09-12 — BARU] core EmulatorJS di-self-host (GPL-3.0), bukan CDN cdn.emulatorjs.org — lihat §4.1
 └── wrangler.toml                 # [AUDIT KODE] konfigurasi Cloudflare Worker + static assets — BUKAN Cloudflare Pages/Functions
 ```
 
@@ -125,6 +133,7 @@ game-portal/
   4. Meta tag dinamis via Worker (`src/index.js`, [AUDIT KODE] bukan `functions/share/[id].js` yang non-aktif) dibanding halaman HTML statis terpisah per game — menghindari duplikasi N halaman sambil tetap mendapat OG tag/canonical link presisi per game/rute untuk keperluan SEO & viral sharing.
   5. Tailwind CSS utility-first dibanding framework SPA (React/Vue) untuk shell portal — bundel tetap tipis, konsisten dengan constraint "tanpa reactive framework" pada game.
   6. [AUDIT KODE — BARU, sebelumnya tidak tercatat] Agregasi katalog live dari GameMonetize + GamePix dibanding kurasi manual murni — memperbesar jumlah judul yang bisa ditawarkan tanpa menambah beban development per game, dengan trade-off ketergantungan pada uptime dua API eksternal (dimitigasi `Promise.allSettled` per-sumber + cache edge 30 menit, belum diuji beban — lihat §9 Phase 7).
+  7. [DIJAWAB 2026-09-12 — BARU] `emulator/index.html` (shell) mengirim objek `File` ROM/BIOS ke `emulator/runtime.html` via `window.postMessage` ke iframe yang sudah dimuat, BUKAN membuat `URL.createObjectURL()` di parent lalu mengoper string blob URL lewat query string — `File`/`Blob` bisa di-structured-clone lewat `postMessage`, dan `runtime.html` yang memanggil `createObjectURL()` sendiri secara lokal. Ini menghindari isu partisi blob URL lintas-frame yang sudah berlaku/berubah di sebagian browser modern (harus diverifikasi lagi saat implementasi, browser support bisa berubah). Sejalan dengan pola isolasi iframe yang sudah dipakai `js/player.js` untuk semua game lain.
 
 ### 4.3 Code Standards
 - **Naming — files:** kebab-case (dikonfirmasi dari struktur asli: `ayo-kopdes`, `kejar-koruptor`, `ui-share.js`).
@@ -203,6 +212,35 @@ Diomit sesuai aturan template: §4.1 Database = "none", sehingga Phase 2 (Domain
 - **UI notes:** Tidak ada UI langsung — dikonsumsi oleh `js/catalog.js` dan tautan share/play.
 - **Priority:** P0 (mendukung Fitur 2 & 3); [AUDIT KODE — KOREKSI] sub-fitur pencarian TIDAK lagi kandidat penurunan ke P1 — lihat catatan §3.1.
 
+### Feature: Emulator Browser (EmulatorJS) [DIJAWAB 2026-09-12 — BARU]
+- **User story:** Sebagai pengguna yang punya koleksi ROM/BIOS legal sendiri (dump cartridge sendiri atau game homebrew), saya ingin memainkannya langsung di browser tanpa install software emulator terpisah, sehingga saya bisa main game retro semudah main game lain di Gimboot.
+- **Acceptance criteria:**
+  - [ ] Halaman `/emulator` menyediakan pilihan sistem (launch: NES, SNES, GB/GBC/GBA, Genesis/Mega Drive — tidak butuh BIOS), tombol upload ROM (dan upload BIOS untuk sistem yang membutuhkannya di fase berikutnya), lalu memuat game via EmulatorJS.
+  - [ ] ROM & BIOS tidak pernah terkirim/di-upload ke server Gimboot dalam bentuk apa pun — diverifikasi manual (tab Network kosong dari request berisi file game) sebelum rilis.
+  - [ ] Halaman berisi panduan cara pakai lengkap dari awal (pilih sistem → upload ROM/BIOS → kontrol & fullscreen → save state) sampai selesai, ditambah daftar sistem yang didukung.
+  - [ ] Disclaimer & rujukan sumber ROM/BIOS legal (lihat blok wording di bawah) tampil sebagai teks statis di halaman — [DIJAWAB 2026-09-12] tanpa checkbox/acknowledgment interaktif.
+  - [ ] Emulator (EmulatorJS) dirender di `emulator/runtime.html`, dimuat via iframe dari `emulator/index.html` — pola isolasi CSS/DOM sama seperti game lain (lihat `js/player.js`).
+  - [ ] Save state EmulatorJS memakai IndexedDB bawaannya — tidak ada write ke server/API Gimboot mana pun.
+  - [ ] Tab baru "Emulator" muncul sejajar tab kategori game lain di `tab-bar` (`js/catalog.js`).
+- **Business rules:**
+  - ROM & BIOS 100% tanggung jawab pengguna, ditangani 100% client-side (`File` → `postMessage` ke iframe → `URL.createObjectURL()` lokal di `emulator/runtime.html`; lihat §4.2 architectural decision #7). Gimboot tidak pernah menyimpan, meng-cache, atau meneruskan file ini ke pihak mana pun.
+  - [HARD RULE, lihat §3.2 & §8] Gimboot tidak menautkan ke situs distribusi ROM/BIOS komersial berhak cipta dalam bentuk apa pun.
+  - Core EmulatorJS di-self-host di `/vendor/emulatorjs/` (GPL-3.0, dipakai apa adanya tanpa modifikasi source) — bukan CDN resmi mereka, supaya CSP (`connect-src 'self'`) tidak perlu diubah.
+  - Sistem berbasis BIOS (PS1, Sega Saturn, dll.) di-exclude dari launch; masuk fase berikutnya dengan BIOS diunggah user sendiri juga (sama seperti ROM) — bukan disediakan Gimboot.
+  - **Konten halaman "Cara Mendapatkan ROM & BIOS" (wording final, [DIJAWAB 2026-09-12]):**
+    > Gimboot Emulator hanya menyediakan tool emulator (EmulatorJS) — kami tidak menghosting, menjual, atau membagikan file ROM atau BIOS apa pun. Kamu bertanggung jawab penuh atas legalitas file yang kamu unggah sendiri.
+    >
+    > ROM/BIOS yang sah untuk dipakai di sini:
+    > - Dump dari cartridge/disc fisik yang kamu miliki sendiri (mis. pakai alat dumping seperti Retrode untuk cartridge, atau software ripping untuk disc yang kamu punya).
+    > - Game homebrew — game orisinal buatan developer independen yang memang sengaja dirilis gratis atau bayar-seikhlasnya:
+    >   - **itch.io** — cari tag "NES homebrew", "GBA homebrew", "SNES homebrew", dsb. Ada ratusan game orisinal, sebagian besar gratis/name-your-own-price, dan file ROM-nya legal diunduh langsung dari halaman game masing-masing pembuatnya.
+    >   - **nesdoug.com** dan **Hagen's Alley** — blog komunitas berisi daftar & ulasan game homebrew NES yang bagus untuk menemukan judul rekomendasi; link unduhan tetap merujuk ke halaman resmi pembuat game/itch.io, bukan file di-hosting blog itu sendiri.
+    > - ROM public domain/freeware yang penciptanya secara eksplisit merilis dengan lisensi terbuka (CC0, GPL, dsb.).
+    >
+    > Gimboot tidak menautkan ke situs ROM game komersial (Nintendo, Sega, Sony, dll.) dalam bentuk apa pun — mendistribusikan ROM tersebut tanpa izin melanggar hak cipta pemegangnya.
+- **UI notes:** Tab nav sejajar kategori game (bukan link terpisah di header — [DIJAWAB 2026-09-12]); satu halaman `/emulator` untuk semua sistem di launch, tanpa landing page SEO per-sistem (`/emulator/nes`, dst. — ditunda, bisa direvisit di §3.3 Future Considerations bila traffic membenarkan).
+- **Priority:** P1 — bukan MVP. **Gate implementasi/deploy [DIKONFIRMASI 2026-09-12]:** dikerjakan TERAKHIR, setelah seluruh hardening Task #013–#019 selesai — tidak paralel. Keputusan ini menggantikan tafsir sementara "paralel jika tidak mengganggu #017/#018" di draf 1.6.0 (lihat §10 poin 9 untuk riwayat).
+
 ## 6. Non-Functional Requirements
 
 ### 6.1 Performance & Scale
@@ -268,9 +306,11 @@ Diomit sesuai aturan template: §4.1 Database = "none", sehingga Phase 2 (Domain
 - Tidak boleh menyimpan kredensial/API key pihak ketiga (mis. GameMonetize) di source code — gunakan Cloudflare environment variable ([AUDIT KODE] bukan spesifik "Cloudflare Pages").
 - Tidak boleh mengandalkan `localStorage` sebagai sumber kebenaran terverifikasi untuk fitur kompetitif publik (leaderboard global) di masa depan — perlu backend bila suatu saat dibutuhkan.
 - Hindari CORS wildcard (`*`) pada endpoint yang mengharuskan otentikasi atau mengubah state. [DIJAWAB 2026-08-30 — HARD RULE DIREVISI] `src/index.js` mengirim `Access-Control-Allow-Origin: '*'` pada `/api/games` dan `/api/search`; developer memutuskan ini DITERIMA sebagai kebijakan yang sah, karena keduanya publik, read-only, tanpa data sensitif/otentikasi. Aturan sebelumnya ("hindari wildcard pada `functions/api/`") direvisi menjadi: wildcard boleh untuk endpoint publik read-only seperti ini; wildcard TETAP dilarang untuk endpoint apa pun di masa depan yang butuh otentikasi atau menulis state.
+- [DIJAWAB 2026-09-12 — HARD RULE, fitur Emulator] Dilarang menautkan (link) atau menyematkan (embed) ke situs distribusi ROM/BIOS konsol berhak cipta tanpa lisensi, termasuk namun tidak terbatas pada romsgames.net, romsfun.com, retrostic.com. Emulator (EmulatorJS) hanya boleh menerima ROM/BIOS via upload lokal pengguna (`<input type="file">`), tidak pernah lewat URL yang di-hardcode ke situs distribusi ROM. Rujukan yang DIIZINKAN: platform homebrew resmi (itch.io) dan blog kurasi komunitas homebrew (nesdoug.com, Hagen's Alley) — lihat §5 untuk wording final.
+- Modifikasi source code EmulatorJS sendiri (bukan sekadar include/self-host apa adanya) tunduk pada copyleft GPL-3.0 — hindari fork/modifikasi kecuali sudah dievaluasi implikasi lisensinya.
 
 ### Known Third-Party Limitations
-- GameMonetize sempat menolak pengajuan portal ini sebelumnya, yang menjadi alasan ditambahkannya game first-party (termasuk Kicau Mania). Saat menambah game baru atau resubmit ke ad network, pastikan rasio konten orisinal tetap memadai agar tidak ditolak ulang.
+- GameMonetize sempat menolak pengajuan portal ini sebelumnya, yang menjadi alasan ditambahkannya game first-party (termasuk Kicau Mania). Saat menambah game baru atau resubmit ke ad network, pastikan rasio konten orisinal tetap memadai agar tidak ditolak ulang. [DIJAWAB 2026-09-12 — relevan untuk fitur Emulator] Kebijakan program AdSense/Ad Manager (ads.txt Gimboot mencantumkan sertifikasi `pub-xxxx, DIRECT, f08c47fec0942fa0`) secara eksplisit melarang situs yang memfasilitasi unduhan konten berhak cipta tanpa izin — pelanggaran ini berisiko men-suspend seluruh akun iklan, bukan cuma satu halaman. Ini alasan utama hard rule "tanpa link ROM/BIOS pihak ketiga" di atas, di luar risiko hak cipta itu sendiri.
 - Rate limit/kebijakan spesifik GameMonetize/GamePix lainnya belum dicantumkan di brief — ini pengingat untuk dicek manual ke dokumentasi resmi sebelum integrasi lanjutan, bukan keputusan yang perlu dijawab di sini.
 
 ### Security Hard Rules
@@ -289,6 +329,8 @@ Diomit sesuai aturan template: §4.1 Database = "none", sehingga Phase 2 (Domain
 | Phase 5 | UI/UX | Screens/components + XSS/output encoding + SRI | Project Shape has UI | `css/style.css` & `games/shared/ui-share.css` sudah ada. [AUDIT KODE] Output encoding sudah diverifikasi diimplementasikan pada `src/index.js` (bukan `functions/share/[id].js` yang akan dihapus); yang masih perlu adalah test otomatis yang membuktikannya. |
 | Phase 6 | Testing & QA | Integration + E2E + coverage check | Always | Belum ada test file terlihat pada struktur — pendekatan di §4.3 (node --test/Vitest) belum diimplementasikan |
 | Phase 7 | Deployment | Varian per shape | Always | [DIJAWAB 2026-08-30] CI/CD dikonfirmasi via Cloudflare Workers Builds (bukan "Cloudflare Pages Git integration"). Simple Mode berlaku sampai traffic mendekati 10.000 pengguna serentak; canary/staged-rollout formal (di luar preview deployment bawaan Workers Builds) baru wajib diterapkan begitu ambang itu terlampaui (lihat §6.1). |
+| Phase 8 | SEO & Post-Launch Maintenance | Perbaikan indexing/SEO pasca-launch berdasarkan data monitoring nyata (bukan audit kode) | Muncul saat monitoring (mis. GSC) menemukan masalah | Task #020 & #021 (fix GSC "Halaman dengan pengalihan" dan "Di-crawl - saat ini tidak diindeks") — keduanya ✅ selesai 2026-09-09. |
+| Phase 9 | New Feature: Emulator | Fitur baru di luar loop katalog/sharing/SEO inti — EmulatorJS, lihat §5 | Ditambahkan 2026-09-12 | [DIKONFIRMASI 2026-09-12] Spesifikasi selesai (§5); implementasi belum dimulai. **Dikerjakan TERAKHIR** — setelah seluruh Task #013–#019 (Phase 6–7) selesai, tanpa paralel. Lihat changelog Task #022. |
 
 ## 10. Open Questions
 
@@ -305,6 +347,24 @@ Tidak ada pertanyaan baru yang muncul dari proses menjawab keenam poin di atas. 
 
 **Status:** Seluruh keputusan produk/teknis yang tersisa dari audit kode 2026-08-28 sudah dijawab. `knowledge.md` dan `changelog.md` diperbarui paralel (ke v1.2.0) mengikuti jawaban yang sama di dokumen ini, sehingga ketiganya tetap sinkron. Sejumlah tindak lanjut masih berupa PEKERJAAN KODE yang belum dieksekusi (sinkronisasi `LOCAL_GAMES`, penghapusan `functions/*`, verifikasi & pemasangan `favicon.svg`, pembuatan ad-script) — status pekerjaan ini dilacak di `changelog.md`, bukan di sini.
 
+### Ronde 2026-09-12 — Fitur Emulator Browser (EmulatorJS)
+
+9 pertanyaan diajukan sebelum spesifikasi fitur Emulator disusun (lihat §5); developer menjawab langsung di chat (bukan di file ini seperti ronde 2026-08-30) — jawaban & konsekuensinya sudah disebar ke §3, §4, §5, §8, §9, ditandai "[DIJAWAB 2026-09-12]". Dicatat di sini untuk riwayat:
+
+1. **Hosting core EmulatorJS** → Self-host di `/vendor/emulatorjs/`, bukan CDN resmi mereka. → §4.1.
+2. **BIOS untuk sistem yang membutuhkannya (PS1/Saturn/dll.)** → Diunggah user sendiri, sama seperti ROM; sistem ini di-exclude dari launch. → §5.
+3. **Wording halaman "cara dapat ROM"** → Wording lengkap + rujukan sumber legal (bukan disclaimer generik saja). → §5.
+4. **Disclaimer/acknowledgment sebelum emulator dipakai** → Teks statis, tanpa checkbox interaktif. → §5.
+5. **Self-host vs CDN EmulatorJS** → Self-host (menguatkan jawaban #1). → §4.1.
+6. **Render emulator: DOM langsung atau iframe?** → Iframe, mengikuti pola isolasi yang sudah dipakai semua game lain. → §4.2 (architectural decision #7), §5.
+7. **Nav placement** → Tab baru sejajar kategori game di `tab-bar`, bukan link terpisah di header. → §5.
+8. **Programmatic SEO per-sistem** (`/emulator/nes`, dst.) → Belum — satu halaman `/emulator` dulu untuk launch. → §5.
+9. **Sequencing vs Task #013–#019 (hardening)** → Jawaban awal developer ambigu: *"tunggu hardening, jika hardening tidak terimpact, kalau terimpact jalankan emulator terlebih dahulu."* Tafsir sementara yang sempat dipakai: paralel jika tidak mengganggu Task #017/#018. **[DIKONFIRMASI 2026-09-12 — FINAL]** Developer memperjelas langsung: *"agar tidak ada ambigu, maka fitur emulator dikerjakan terakhir, setelah hardening."* Jadi: TIDAK ada pengerjaan paralel dalam bentuk apa pun — Emulator (Task #022) dimulai hanya setelah seluruh Task #013–#019 selesai. → §3.1, §5, §9 Phase 9, `changelog.md` Task #022 (Dependencies diperbarui mencakup Task #013–#019 lengkap).
+
+Catatan tambahan (bukan pertanyaan bernomor, dari request awal developer sebelum sesi tanya-jawab): permintaan awal untuk menyertakan link download ROM ke romsgames.net/romsfun.com/retrostic.com DITOLAK — ketiganya mendistribusikan ROM komersial berhak cipta tanpa lisensi. Lihat §3.2 & §8 untuk hard rule yang dihasilkan, dan §5 untuk rujukan homebrew legal sebagai gantinya (disetujui developer sebagai pengganti).
+
+**Status ronde ini:** 9 dari 9 item terjawab final, tidak ada [DECISION NEEDED] yang tersisa untuk fitur Emulator. `knowledge.md` diperbarui paralel ke v1.6.1; `changelog.md` ke v1.0.20 dengan Dependencies Task #022 diperbarui.
+
 ## 11. Revision History
 
 | Version | Date | Author | Changes |
@@ -315,3 +375,5 @@ Tidak ada pertanyaan baru yang muncul dari proses menjawab keenam poin di atas. 
 | 1.3.0 | 2026-08-28 | Banu (via audit Claude atas `game-portal-main.zip`) | Audit langsung terhadap source code menemukan beberapa klaim teknis v1.2.0 sudah tidak sesuai kode berjalan: model deploy aktual adalah Cloudflare Worker + static assets (bukan Pages Functions); `functions/api/*`/`functions/share/[id].js` non-aktif; GameMonetize/GamePix juga berperan sebagai sumber katalog live (bukan hanya ad network); rute baru `/play/:id/:slug`, `/game`, `/sitemap.xml` sebelumnya tidak tercatat; CORS wildcard ditemukan di `/api/games`/`/api/search`; roster game first-party tidak konsisten antar `js/config.js` dan `src/index.js`; `js/state.js` tidak menyimpan skor (hanya favorit/recently-played); tidak ditemukan kode install-prompt PWA. Enam item baru ditambahkan ke §10 Open Questions sebagai [DECISION NEEDED]. `knowledge.md` diperbarui paralel ke v1.1.0; `changelog.md` diperbarui ke v1.1.0 dengan koreksi target file pada task-task yang terdampak. |
 | 1.4.0 | 2026-08-30 | Banu | Keenam [DECISION NEEDED] dari §10 v1.3.0 dijawab langsung di file PRD: (1) keempat game first-party dikonfirmasi aktif; (2) `functions/api/*`/`functions/share/[id].js` dikonfirmasi dihapus; (3) `favicon.svg` dikonfirmasi sebagai favicon resmi; (4) hard rule CORS di §8 direvisi untuk mengizinkan wildcard pada endpoint publik read-only; (5) Task #011 dikonfirmasi butuh unit monetisasi/ad-script terpisah yang belum dibangun; (6) CI/CD dikonfirmasi Cloudflare Workers Builds. Jawaban disebar ke §1, §4.2, §5, §7, §8, §9; §10 tidak memuat pertanyaan baru. `knowledge.md` diperbarui paralel ke v1.2.0; `changelog.md` diperbarui ke v1.2.0 dengan task-task terkait disesuaikan. |
 | 1.5.0 | 2026-09-07 | Banu (dari laporan Google Search Console) | Laporan GSC Coverage (2026-09-07) menemukan 2 masalah Page Indexing aktif dengan validasi Gagal: "Halaman dengan pengalihan" (3 URL homepage) dan "Di-crawl - saat ini tidak diindeks" (16 URL varian `/game.html?id=`/`/game?id=`). Kriteria acceptance fitur "Sistem Clean URL & Dynamic SEO" (§5) ditandai belum sepenuhnya terpenuhi. Temuan kedua berkontradiksi dengan dokumentasi redirect `game.html` → `/game` yang sudah ada — perlu verifikasi kode langsung. `knowledge.md` diperbarui paralel ke v1.5.0; `changelog.md` ke v1.0.9 dengan Task #020 dan #021 ditambahkan ke [NEXT TASKS] (Phase 8 — SEO & Post-Launch Maintenance, fase baru). |
+| 1.6.0 | 2026-09-12 | Banu (via sesi planning Claude) | Fitur baru **Emulator Browser (EmulatorJS)** ditambahkan: request awal developer untuk link download ROM ke romsgames.net/romsfun.com/retrostic.com DITOLAK (distribusi ROM komersial tanpa lisensi); scope diarahkan ke emulator-only dengan ROM/BIOS 100% upload klien. 9 pertanyaan diajukan & dijawab developer di chat sebelum spesifikasi disusun (log lengkap di §10 Ronde 2026-09-12) — mencakup self-host EmulatorJS (`/vendor/emulatorjs/`, GPL-3.0), isolasi iframe + transfer `File` via `postMessage`, scope sistem (BIOS-free dulu), wording halaman ROM/BIOS lengkap dengan rujukan homebrew legal (itch.io, nesdoug.com, Hagen's Alley), nav placement, dan sequencing vs hardening Task #013–#019 (1 item masih perlu konfirmasi ulang — lihat §10 poin #9). Perubahan disebar ke §3.1, §3.2, §4.1, §4.2, §5 (feature spec baru), §8, §9 (Phase 9 baru). `knowledge.md` diperbarui paralel ke v1.6.0; `changelog.md` ke v1.0.19 dengan Task #022 ditambahkan ke [NEXT TASKS]. |
+| 1.6.1 | 2026-09-12 | Banu | Menyelesaikan satu-satunya [DECISION NEEDED] tersisa dari v1.6.0 (§10 poin 9): developer mengonfirmasi Emulator dikerjakan TERAKHIR, setelah seluruh hardening Task #013–#019 selesai (bukan paralel seperti tafsir sementara sebelumnya). Diperbarui: §3.1 (gating note), §5 (Priority/gate), §9 Phase 9, §10 poin 9 (status final). `knowledge.md` ke v1.6.1; `changelog.md` ke v1.0.20 dengan `Dependencies` Task #022 diperluas mencakup Task #013–#019 penuh. |

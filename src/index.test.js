@@ -19,6 +19,7 @@ import {
   slugify,
   parseGameMonetizeFeed,
   decodeEntities,
+  isLoopbackHost,
 } from './index.js';
 
 // ---------------------------------------------------------------------------
@@ -913,6 +914,32 @@ describe('Output Encoding — Share/Play/Game Routes', () => {
 
       expect(res.status).toBe(301);
       expect(res.headers.get('Location')).toBe('https://gimboot.com/');
+    });
+  });
+
+  describe('isLoopbackHost', () => {
+    // Production hardening (upgrade-insecure-requests + the unconditional
+    // http→https 301) must never fire on loopback hosts: wrangler dev binds
+    // to 127.0.0.1 and serves a self-signed cert, so forcing HTTPS there
+    // breaks local development and the E2E suite.
+    it('recognizes the four loopback literals', () => {
+      expect(isLoopbackHost('localhost')).toBe(true);
+      expect(isLoopbackHost('127.0.0.1')).toBe(true);
+      expect(isLoopbackHost('::1')).toBe(true);
+      expect(isLoopbackHost('[::1]')).toBe(true);
+    });
+
+    it('rejects production hostnames (case-insensitive)', () => {
+      expect(isLoopbackHost('gimboot.com')).toBe(false);
+      expect(isLoopbackHost('GIMBOOT.COM')).toBe(false);
+      expect(isLoopbackHost('www.gimboot.com')).toBe(false);
+      expect(isLoopbackHost('example.org')).toBe(false);
+    });
+
+    it('treats empty/null/undefined as non-loopback', () => {
+      expect(isLoopbackHost('')).toBe(false);
+      expect(isLoopbackHost(null)).toBe(false);
+      expect(isLoopbackHost(undefined)).toBe(false);
     });
   });
 });
