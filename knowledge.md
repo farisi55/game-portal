@@ -1,12 +1,13 @@
 ---
 project: Gimboot
-version: 1.6.1
+version: 1.6.2
 source: prd
-last_updated: 2026-09-12
+last_updated: 2026-09-24
 project_shape: fullstack
 simple_mode: false
 ---
 # simple_mode: false — PRD §6.1 6-month target adalah 10.000+ pengguna serentak (di atas ambang ≤100), sehingga syarat pertama tidak terpenuhi meski §6.4 Compliance = none
+# v1.6.2 — Task #015 (2026-09-24): Playwright E2E suite added (`e2e/full-flow.test.js` + `vitest.e2e.config.js`); `@playwright/test@1.62.0` added to devDependencies. `docs/` + `e2e/` + `vitest.e2e.config.js` added to `.assetsignore`. `src/index.js` http→https 301 now gated on `isLoopbackHost()` (loopback hosts excluded — wrangler dev serves a self-signed cert, so forcing HTTPS there breaks local dev and the E2E suite). `games/shared/ui-share.js` share text targets `/play/<canonical-id>/<slug>`; inline `<style>` fallback removed (blocked by strict CSP, only produced console errors). §3 folder tree updated with `docs/`, `e2e/`, `vitest.e2e.config.js`.
 # v1.1.0 — direvisi berdasarkan audit langsung terhadap source code (game-portal-main.zip) tanggal 2026-08-28, dibandingkan dengan v1.0.0 yang disusun dari brief/struktur repo tanpa membaca isi tiap file. Semua koreksi ditandai "[AUDIT KODE]"; item yang masih perlu keputusan developer ditandai "[AUDIT KODE — PERLU KONFIRMASI]".
 # v1.2.0 — developer menjawab keenam item [PERLU KONFIRMASI]/[DECISION NEEDED] dari v1.1.0 pada 2026-08-30 (lewat §10 Open Questions di prd.md). Jawaban ditandai "[DIJAWAB 2026-08-30]" di seluruh dokumen ini. Ringkasan lengkap ada di changelog.md bagian [COMPLETED].
 # v1.5.0 — laporan Google Search Console Coverage (2026-09-07) menemukan indikasi kuat bahwa perilaku redirect `game.html`/`game` untuk URL berquery string TIDAK sesuai dengan yang didokumentasikan di §3/§7 — ditandai "[GSC 2026-09-07]" di bawah. FIXED 2026-09-09: `/game.html?id=X` dan `/game?id=X` sekarang di-redirect langsung ke `/play/:id/:slug` dalam satu hop 301 (Task #021).
@@ -31,6 +32,8 @@ simple_mode: false
 - Webhook providers: none. [AUDIT KODE] Catatan terkait: `js/pwa.js` menerima pesan skor via `window.postMessage` (dari game lokal dan dari game GamePix yang di-embed) — ini komunikasi in-browser, bukan webhook server-to-server, jadi baris ini tetap akurat, hanya dicatat karena berkaitan.
 - Key third-party library (baru, [DIJAWAB 2026-09-12]): [EmulatorJS](https://github.com/emulatorjs/emulatorjs) — lisensi GPL-3.0, self-hosted di `/vendor/emulatorjs/` (bukan CDN resmi `cdn.emulatorjs.org`), konsisten dengan prinsip zero-external-dependency proyek ini. Dipakai apa adanya tanpa modifikasi source (menghindari kewajiban copyleft GPLv3). Lihat §7 untuk domain rules & PRD §5 untuk spesifikasi fitur lengkap.
 - Dev tooling (Task #004, ditambahkan 2026-08-31): `package.json` + committed lockfile (`package-lock.json`) diperkenalkan. Paket devDependencies yang di-pin dengan versi eksak: `eslint@10.9.1`, `@eslint/js@10.0.1` (flat config ESLint 9+ — file `eslint.config.js`, bukan `.eslintrc`), `prettier@3.9.6` (config `.prettierrc`), `vitest@4.1.11` (test runner, config `vitest.config.js`, environment jsdom), `jsdom@26.1.0` (browser-globals shim untuk unit test `js/` files). `husky@9.1.7` (git hooks manager, ditambahkan Task #005 — pre-commit hook blocks `.env` + runs lint; `prepare` script ensures hooks auto-install on `npm install`). `@cloudflare/vitest-pool-workers` untuk Worker-integration tests dipertimbangkan tapi ditunda ke Task #009 saat test `src/index.js` ditulis; saat itu paket akan diganti dengan `@cloudflare/vitest-plugin` (API saat ini per dokumentasi Cloudflare).
+- Dev tooling (Task #014, 2026-09-23): `@vitest/coverage-v8@4.1.11` (coverage) ditambahkan, dikonfigurasi di `vitest.config.js`.
+- Dev tooling (Task #015, 2026-09-24): `@playwright/test@1.62.0` (real Chromium browser driver) ditambahkan untuk E2E suite. Config terpisah `vitest.e2e.config.js` (Vitest 4 top-level `singleFork`, bukan `poolOptions` yang sudah di-remove) mengelola suite ini; di-run via `npm run test:e2e` dan TIDAK pernah dijalankan oleh `npm test` / pre-commit hook (E2E boot server + browser, lama).
 
 ## 3. Architecture
 - Folder/module structure (diperbarui & diverifikasi terhadap isi repo aktual, 2026-08-28):
@@ -70,6 +73,10 @@ game-portal/
 ├── README.md                     # [AUDIT KODE — BARU DITEMUKAN] dokumentasi developer-facing yang sudah cukup mutakhir; jadi salah satu sumber utama audit ini. Catatan: nilai run_worker_first yang disebut README (["/api/*","/play/*","/sitemap.xml"]) sudah tidak sama dengan wrangler.toml aktual (["/*"]) — README sendiri sedikit tertinggal di titik ini.
 ├── robots.txt                    # [AUDIT KODE — BARU DITEMUKAN] mengarah ke /sitemap.xml — mengonfirmasi route sitemap dinamis di src/index.js memang disengaja & live
 ├── ads.txt                       # verifikasi GameMonetize/GamePix
+├── docs/                         # [BARU, Task #014] manual QA checklist
+│   └── manual-qa-checklist.md    # smoke-test results for all 4 first-party Canvas games
+├── e2e/                          # [BARU, Task #015] Playwright E2E suite
+│   └── full-flow.test.js         # catalog → play → record → share, real wrangler dev + Chromium
 ├── game.html                     # shell lama; link ke game.html kini di-301-redirect ke /game oleh src/index.js — [GSC 2026-09-07 → FIXED 2026-09-09] `/game.html?id=X` dan `/game?id=X` sekarang di-redirect langsung ke `/play/:id/:slug` dalam satu hop 301 (Task #021). canonical tag di `handleGameRoute` juga diperbarui untuk menunjuk ke `/play/:id/:slug` saat game ditemukan di LOCAL_GAMES.
 ├── index.html                    # landing page katalog
 ├── manifest.json / sw.js         # PWA manifest + service worker

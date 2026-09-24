@@ -35,6 +35,24 @@ const MAX_BODY_BYTES = 5 * 1024 * 1024;
 const RATE_LIMIT_MAX = 100;
 const RATE_LIMIT_WINDOW_MS = 60_000;
 
+/**
+ * True for localhost addresses. Production hardening (upgrade-insecure-requests
+ * in the CSP + the unconditional http→https 301) must NOT fire on loopback
+ * hosts — wrangler dev binds to 127.0.0.1 and serves a self-signed cert, so
+ * forcing HTTPS there would break local development and the E2E suite.
+ */
+export function isLoopbackHost(hostname) {
+  if (!hostname) return false;
+  const lower = hostname.toLowerCase();
+  return (
+    lower === 'localhost' ||
+    lower === '127.0.0.1' ||
+    lower === '::1' ||
+    lower === '[::1]' ||
+    lower === '0.0.0.0'
+  );
+}
+
 // Minimal env-var validation helper — fails fast with a clear error if a
 // required var is missing. Intended for the first real vars added later;
 // currently serves as a scaffold that can be expanded without changing
@@ -199,7 +217,7 @@ export default {
       }
     } else if (url.pathname.toLowerCase() === '/game.html') {
       response = redirectSingleHop(url, '/game');
-    } else if (url.protocol === 'http:') {
+    } else if (url.protocol === 'http:' && !isLoopbackHost(url.hostname)) {
       const httpsUrl = new URL(url);
       httpsUrl.protocol = 'https:';
       response = Response.redirect(httpsUrl.toString(), 301);
