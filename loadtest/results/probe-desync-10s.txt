@@ -1,0 +1,213 @@
+
+         /\      Grafana   /‾‾/  
+    /\  /  \     |\  __   /  /   
+   /  \/    \    | |/ /  /   ‾‾\ 
+  /          \   |   (  |  (‾)  |
+ / __________ \  |_|\_\  \_____/ 
+
+
+     execution: local
+        script: C:\Users\banu.farisi\repo\game-portal\loadtest\gimboot.js
+        output: -
+
+     scenarios: (100.00%) 1 scenario, 1000 max VUs, 40s max duration (incl. graceful stop):
+              * default: 1000 looping VUs for 10s (gracefulStop: 30s)
+
+
+running (00.7s), 1000/1000 VUs, 0 complete and 0 interrupted iterations
+default   [   7% ] 1000 VUs  00.7s/10s
+
+running (01.7s), 1000/1000 VUs, 0 complete and 0 interrupted iterations
+default   [  17% ] 1000 VUs  01.7s/10s
+
+running (02.7s), 1000/1000 VUs, 0 complete and 0 interrupted iterations
+default   [  27% ] 1000 VUs  02.7s/10s
+
+running (03.7s), 1000/1000 VUs, 0 complete and 0 interrupted iterations
+default   [  37% ] 1000 VUs  03.7s/10s
+
+running (04.7s), 1000/1000 VUs, 0 complete and 0 interrupted iterations
+default   [  47% ] 1000 VUs  04.7s/10s
+
+running (05.7s), 1000/1000 VUs, 0 complete and 0 interrupted iterations
+default   [  57% ] 1000 VUs  05.7s/10s
+
+running (06.7s), 1000/1000 VUs, 0 complete and 0 interrupted iterations
+default   [  67% ] 1000 VUs  06.7s/10s
+
+running (07.7s), 1000/1000 VUs, 0 complete and 0 interrupted iterations
+default   [  77% ] 1000 VUs  07.7s/10s
+
+running (08.7s), 1000/1000 VUs, 0 complete and 0 interrupted iterations
+default   [  87% ] 1000 VUs  08.7s/10s
+
+running (09.7s), 1000/1000 VUs, 0 complete and 0 interrupted iterations
+default   [  97% ] 1000 VUs  09.7s/10s
+
+running (10.7s), 1000/1000 VUs, 0 complete and 0 interrupted iterations
+default ↓ [ 100% ] 1000 VUs  10s
+
+running (11.7s), 1000/1000 VUs, 0 complete and 0 interrupted iterations
+default ↓ [ 100% ] 1000 VUs  10s
+
+running (12.7s), 1000/1000 VUs, 0 complete and 0 interrupted iterations
+default ↓ [ 100% ] 1000 VUs  10s
+
+running (13.7s), 1000/1000 VUs, 0 complete and 0 interrupted iterations
+default ↓ [ 100% ] 1000 VUs  10s
+
+running (14.7s), 1000/1000 VUs, 0 complete and 0 interrupted iterations
+default ↓ [ 100% ] 1000 VUs  10s
+
+running (15.7s), 1000/1000 VUs, 0 complete and 0 interrupted iterations
+default ↓ [ 100% ] 1000 VUs  10s
+
+running (16.7s), 1000/1000 VUs, 0 complete and 0 interrupted iterations
+default ↓ [ 100% ] 1000 VUs  10s
+
+running (17.7s), 1000/1000 VUs, 0 complete and 0 interrupted iterations
+default ↓ [ 100% ] 1000 VUs  10s
+
+running (18.7s), 1000/1000 VUs, 0 complete and 0 interrupted iterations
+default ↓ [ 100% ] 1000 VUs  10s
+
+running (19.7s), 1000/1000 VUs, 0 complete and 0 interrupted iterations
+default ↓ [ 100% ] 1000 VUs  10s
+
+running (20.7s), 1000/1000 VUs, 0 complete and 0 interrupted iterations
+default ↓ [ 100% ] 1000 VUs  10s
+
+running (21.7s), 1000/1000 VUs, 0 complete and 0 interrupted iterations
+default ↓ [ 100% ] 1000 VUs  10s
+
+running (22.7s), 1000/1000 VUs, 0 complete and 0 interrupted iterations
+default ↓ [ 100% ] 1000 VUs  10s
+
+running (23.7s), 1000/1000 VUs, 0 complete and 0 interrupted iterations
+default ↓ [ 100% ] 1000 VUs  10s
+
+running (24.7s), 1000/1000 VUs, 0 complete and 0 interrupted iterations
+default ↓ [ 100% ] 1000 VUs  10s
+
+running (25.7s), 1000/1000 VUs, 0 complete and 0 interrupted iterations
+default ↓ [ 100% ] 1000 VUs  10s
+
+running (26.7s), 1000/1000 VUs, 0 complete and 0 interrupted iterations
+default ↓ [ 100% ] 1000 VUs  10s
+
+running (27.7s), 1000/1000 VUs, 0 complete and 0 interrupted iterations
+default ↓ [ 100% ] 1000 VUs  10s
+
+running (28.7s), 1000/1000 VUs, 0 complete and 0 interrupted iterations
+default ↓ [ 100% ] 1000 VUs  10s
+
+running (29.7s), 1000/1000 VUs, 0 complete and 0 interrupted iterations
+default ↓ [ 100% ] 1000 VUs  10s
+
+running (30.7s), 1000/1000 VUs, 0 complete and 0 interrupted iterations
+default ↓ [ 100% ] 1000 VUs  10s
+
+running (31.7s), 1000/1000 VUs, 0 complete and 0 interrupted iterations
+default ↓ [ 100% ] 1000 VUs  10s
+
+running (32.7s), 1000/1000 VUs, 0 complete and 0 interrupted iterations
+default ↓ [ 100% ] 1000 VUs  10s
+
+running (33.7s), 1000/1000 VUs, 0 complete and 0 interrupted iterations
+default ↓ [ 100% ] 1000 VUs  10s
+
+running (34.7s), 1000/1000 VUs, 0 complete and 0 interrupted iterations
+default ↓ [ 100% ] 1000 VUs  10s
+
+running (35.7s), 1000/1000 VUs, 0 complete and 0 interrupted iterations
+default ↓ [ 100% ] 1000 VUs  10s
+
+running (36.7s), 1000/1000 VUs, 0 complete and 0 interrupted iterations
+default ↓ [ 100% ] 1000 VUs  10s
+
+running (37.7s), 1000/1000 VUs, 0 complete and 0 interrupted iterations
+default ↓ [ 100% ] 1000 VUs  10s
+
+running (38.7s), 1000/1000 VUs, 0 complete and 0 interrupted iterations
+default ↓ [ 100% ] 1000 VUs  10s
+
+running (39.7s), 1000/1000 VUs, 0 complete and 0 interrupted iterations
+default ↓ [ 100% ] 1000 VUs  10s
+
+
+  █ THRESHOLDS 
+
+    checks
+    ✓ 'rate>0.99' rate=100.00%
+
+    http_req_failed
+    ✓ 'rate<0.01' rate=0.00%
+
+
+  █ TOTAL RESULTS 
+
+    checks_total.......: 1710    42.71739/s
+    checks_succeeded...: 100.00% 1710 out of 1710
+    checks_failed......: 0.00%   0 out of 1710
+
+    ✓ sitemap returns 200
+    ✓ sitemap content-type matches route
+    ✓ sitemap body non-empty
+    ✓ api_games returns 200
+    ✓ api_games content-type matches route
+    ✓ api_games body non-empty
+    ✓ api_search returns 200
+    ✓ api_search content-type matches route
+    ✓ api_search body non-empty
+    ✓ share returns 200
+    ✓ share content-type matches route
+    ✓ share body non-empty
+    ✓ play returns 200
+    ✓ play content-type matches route
+    ✓ play body non-empty
+    ✓ game returns 200
+    ✓ game content-type matches route
+    ✓ game body non-empty
+
+    CUSTOM
+    issue_offset_s.................: avg=19.56ms  min=195µs   med=18.85ms max=40.1ms   p(90)=35.21ms  p(95)=38.19ms  p(99)=39.77ms  count=571
+    route_duration_api_games.......: avg=89.06ms  min=22.1ms  med=54.47ms max=583.66ms p(90)=197.73ms p(95)=265.53ms p(99)=445.88ms count=206
+    route_duration_api_search......: avg=96ms     min=26.02ms med=62.81ms max=520.46ms p(90)=218.54ms p(95)=238.54ms p(99)=353.08ms count=79 
+    route_duration_game............: avg=94.2ms   min=25.15ms med=50.03ms max=550.12ms p(90)=207.2ms  p(95)=253ms    p(99)=485.63ms count=23 
+    route_duration_play............: avg=102.35ms min=28.07ms med=67.9ms  max=691.38ms p(90)=220.78ms p(95)=269.29ms p(99)=490.14ms count=166
+    route_duration_share...........: avg=93.5ms   min=25.91ms med=50.74ms max=448.41ms p(90)=185.27ms p(95)=296.28ms p(99)=434.12ms count=69 
+    route_duration_sitemap.........: avg=100.38ms min=25.17ms med=67.43ms max=376.21ms p(90)=220.06ms p(95)=264.39ms p(99)=347.71ms count=27 
+    route_errors_api_games.........: 0.00%  0 out of 206
+    route_errors_api_search........: 0.00%  0 out of 79
+    route_errors_game..............: 0.00%  0 out of 23
+    route_errors_play..............: 0.00%  0 out of 166
+    route_errors_share.............: 0.00%  0 out of 69
+    route_errors_sitemap...........: 0.00%  0 out of 27
+    status_2xx.....................: 570    14.23913/s
+
+    HTTP
+    http_req_duration..............: avg=95.17ms  min=22.1ms  med=59.82ms max=691.38ms p(90)=211.11ms p(95)=267.1ms  p(99)=470ms    count=570
+      { expected_response:true }...: avg=95.17ms  min=22.1ms  med=59.82ms max=691.38ms p(90)=211.11ms p(95)=267.1ms  p(99)=470ms    count=570
+    http_req_failed................: 0.00%  0 out of 570
+    http_reqs......................: 570    14.23913/s
+
+    EXECUTION
+    vus............................: 1000   min=1000     max=1000
+    vus_max........................: 1000   min=1000     max=1000
+
+    NETWORK
+    data_received..................: 5.3 MB 133 kB/s
+    data_sent......................: 86 kB  2.1 kB/s
+
+
+
+
+running (40.0s), 0000/1000 VUs, 0 complete and 1000 interrupted iterations
+default ✓ [ 100% ] 1000 VUs  10s
+time="2026-10-08T22:22:56+07:00" level=warning msg="No script iterations fully finished, consider making the test duration longer"
+
+--- resource samples (every 10s) ---
+t=12s workerd=244 k6=288 sysFree=281 sysTotal=16016
+t=22s workerd=270 k6=289 sysFree=853 sysTotal=16016
+t=32s workerd=289 k6=297 sysFree=343 sysTotal=16016
+t=42s workerd=305 k6=321 sysFree=741 sysTotal=16016

@@ -1,0 +1,132 @@
+
+         /\      Grafana   /‾‾/  
+    /\  /  \     |\  __   /  /   
+   /  \/    \    | |/ /  /   ‾‾\ 
+  /          \   |   (  |  (‾)  |
+ / __________ \  |_|\_\  \_____/ 
+
+
+     execution: local
+        script: C:\Users\banu.farisi\repo\game-portal\loadtest\gimboot.js
+        output: -
+
+     scenarios: (100.00%) 1 scenario, 40 max VUs, 45s max duration (incl. graceful stop):
+              * default: 40 looping VUs for 15s (gracefulStop: 30s)
+
+
+running (01.0s), 40/40 VUs, 0 complete and 0 interrupted iterations
+default   [   7% ] 40 VUs  01.0s/15s
+
+running (02.0s), 40/40 VUs, 21 complete and 0 interrupted iterations
+default   [  13% ] 40 VUs  02.0s/15s
+
+running (03.0s), 40/40 VUs, 45 complete and 0 interrupted iterations
+default   [  20% ] 40 VUs  03.0s/15s
+
+running (04.0s), 40/40 VUs, 76 complete and 0 interrupted iterations
+default   [  27% ] 40 VUs  04.0s/15s
+
+running (05.0s), 40/40 VUs, 102 complete and 0 interrupted iterations
+default   [  33% ] 40 VUs  05.0s/15s
+
+running (06.0s), 40/40 VUs, 130 complete and 0 interrupted iterations
+default   [  40% ] 40 VUs  06.0s/15s
+
+running (07.0s), 40/40 VUs, 160 complete and 0 interrupted iterations
+default   [  47% ] 40 VUs  07.0s/15s
+
+running (08.0s), 40/40 VUs, 195 complete and 0 interrupted iterations
+default   [  53% ] 40 VUs  08.0s/15s
+
+running (09.0s), 40/40 VUs, 228 complete and 0 interrupted iterations
+default   [  60% ] 40 VUs  09.0s/15s
+
+running (10.0s), 40/40 VUs, 262 complete and 0 interrupted iterations
+default   [  67% ] 40 VUs  10.0s/15s
+
+running (11.0s), 40/40 VUs, 300 complete and 0 interrupted iterations
+default   [  73% ] 40 VUs  11.0s/15s
+
+running (12.0s), 40/40 VUs, 338 complete and 0 interrupted iterations
+default   [  80% ] 40 VUs  12.0s/15s
+
+running (13.0s), 40/40 VUs, 362 complete and 0 interrupted iterations
+default   [  87% ] 40 VUs  13.0s/15s
+
+running (14.0s), 40/40 VUs, 406 complete and 0 interrupted iterations
+default   [  93% ] 40 VUs  14.0s/15s
+
+running (15.0s), 40/40 VUs, 446 complete and 0 interrupted iterations
+default   [ 100% ] 40 VUs  15.0s/15s
+
+
+  █ THRESHOLDS 
+
+    checks
+    ✓ 'rate>0.99' rate=100.00%
+
+    http_req_failed
+    ✓ 'rate<0.01' rate=0.00%
+
+
+  █ TOTAL RESULTS 
+
+    checks_total.......: 1458    92.972936/s
+    checks_succeeded...: 100.00% 1458 out of 1458
+    checks_failed......: 0.00%   0 out of 1458
+
+    ✓ api_games returns 200
+    ✓ api_games content-type matches route
+    ✓ api_games body non-empty
+    ✓ api_search returns 200
+    ✓ api_search content-type matches route
+    ✓ api_search body non-empty
+    ✓ play returns 200
+    ✓ play content-type matches route
+    ✓ play body non-empty
+    ✓ share returns 200
+    ✓ share content-type matches route
+    ✓ share body non-empty
+    ✓ sitemap returns 200
+    ✓ sitemap content-type matches route
+    ✓ sitemap body non-empty
+
+    CUSTOM
+    cold_cache_window_duration.....: avg=1.19s    min=24.77ms  med=841.87ms max=5.67s  p(90)=2.4s   p(95)=4.28s  p(99)=5s     count=130
+    issue_offset_s.................: avg=7.9s     min=3ms      med=8.34s    max=14.66s p(90)=13.57s p(95)=14.52s p(99)=14.65s count=486
+    route_duration_api_games.......: avg=1.04s    min=24.77ms  med=941.56ms max=7.74s  p(90)=1.62s  p(95)=1.81s  p(99)=4.95s  count=184
+    route_duration_api_search......: avg=896.33ms min=27.61ms  med=794.6ms  max=2.65s  p(90)=1.76s  p(95)=1.81s  p(99)=2.36s  count=71 
+    route_duration_play............: avg=1.59s    min=152.92ms med=1.16s    max=11.44s p(90)=2.4s   p(95)=4.46s  p(99)=9.97s  count=129
+    route_duration_share...........: avg=1.54s    min=206.8ms  med=957.21ms max=11.84s p(90)=2.17s  p(95)=5.07s  p(99)=11.15s count=72 
+    route_duration_sitemap.........: avg=1.41s    min=215.77ms med=958.07ms max=9.71s  p(90)=2.35s  p(95)=2.56s  p(99)=7.67s  count=30 
+    route_errors_api_games.........: 0.00%  0 out of 184
+    route_errors_api_search........: 0.00%  0 out of 71
+    route_errors_play..............: 0.00%  0 out of 129
+    route_errors_share.............: 0.00%  0 out of 72
+    route_errors_sitemap...........: 0.00%  0 out of 30
+    status_2xx.....................: 486    30.990979/s
+
+    HTTP
+    http_req_duration..............: avg=1.26s    min=24.77ms  med=971.52ms max=11.84s p(90)=1.87s  p(95)=2.58s  p(99)=9.25s  count=486
+      { expected_response:true }...: avg=1.26s    min=24.77ms  med=971.52ms max=11.84s p(90)=1.87s  p(95)=2.58s  p(99)=9.25s  count=486
+    http_req_failed................: 0.00%  0 out of 486
+    http_reqs......................: 486    30.990979/s
+
+    EXECUTION
+    iteration_duration.............: avg=1.26s    min=24.77ms  med=972.54ms max=11.86s p(90)=1.87s  p(95)=2.59s  p(99)=9.26s  count=486
+    iterations.....................: 486    30.990979/s
+    vus............................: 40     min=40       max=40
+    vus_max........................: 40     min=40       max=40
+
+    NETWORK
+    data_received..................: 4.4 MB 283 kB/s
+    data_sent......................: 73 kB  4.7 kB/s
+
+
+
+
+running (15.7s), 00/40 VUs, 486 complete and 0 interrupted iterations
+default ✓ [ 100% ] 40 VUs  15s
+
+--- resource samples (every 10s) ---
+t=11s workerd=362 k6=49 sysFree=1732 sysTotal=16016
