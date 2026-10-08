@@ -1,0 +1,1400 @@
+
+         /\      Grafana   /‾‾/  
+    /\  /  \     |\  __   /  /   
+   /  \/    \    | |/ /  /   ‾‾\ 
+  /          \   |   (  |  (‾)  |
+ / __________ \  |_|\_\  \_____/ 
+
+
+     execution: local
+        script: C:\Users\banu.farisi\repo\game-portal\loadtest\gimboot.js
+        output: -
+
+     scenarios: (100.00%) 1 scenario, 1000 max VUs, 2m30s max duration (incl. graceful stop):
+              * default: 1000 looping VUs for 2m0s (gracefulStop: 30s)
+
+
+running (0m00.6s), 1000/1000 VUs, 0 complete and 0 interrupted iterations
+default   [   1% ] 1000 VUs  0m00.6s/2m0s
+
+running (0m01.6s), 1000/1000 VUs, 0 complete and 0 interrupted iterations
+default   [   1% ] 1000 VUs  0m01.6s/2m0s
+
+running (0m02.7s), 1000/1000 VUs, 0 complete and 0 interrupted iterations
+default   [   2% ] 1000 VUs  0m02.7s/2m0s
+
+running (0m03.7s), 1000/1000 VUs, 0 complete and 0 interrupted iterations
+default   [   3% ] 1000 VUs  0m03.7s/2m0s
+
+running (0m04.7s), 1000/1000 VUs, 0 complete and 0 interrupted iterations
+default   [   4% ] 1000 VUs  0m04.7s/2m0s
+
+running (0m05.7s), 1000/1000 VUs, 0 complete and 0 interrupted iterations
+default   [   5% ] 1000 VUs  0m05.7s/2m0s
+
+running (0m06.7s), 1000/1000 VUs, 0 complete and 0 interrupted iterations
+default   [   6% ] 1000 VUs  0m06.7s/2m0s
+
+running (0m07.7s), 1000/1000 VUs, 0 complete and 0 interrupted iterations
+default   [   6% ] 1000 VUs  0m07.7s/2m0s
+
+running (0m08.7s), 1000/1000 VUs, 0 complete and 0 interrupted iterations
+default   [   7% ] 1000 VUs  0m08.7s/2m0s
+
+running (0m09.7s), 1000/1000 VUs, 0 complete and 0 interrupted iterations
+default   [   8% ] 1000 VUs  0m09.7s/2m0s
+
+running (0m10.7s), 1000/1000 VUs, 0 complete and 0 interrupted iterations
+default   [   9% ] 1000 VUs  0m10.7s/2m0s
+
+running (0m11.7s), 1000/1000 VUs, 0 complete and 0 interrupted iterations
+default   [  10% ] 1000 VUs  0m11.7s/2m0s
+
+running (0m12.7s), 1000/1000 VUs, 0 complete and 0 interrupted iterations
+default   [  11% ] 1000 VUs  0m12.7s/2m0s
+
+running (0m13.6s), 1000/1000 VUs, 0 complete and 0 interrupted iterations
+default   [  11% ] 1000 VUs  0m13.6s/2m0s
+
+running (0m14.7s), 1000/1000 VUs, 0 complete and 0 interrupted iterations
+default   [  12% ] 1000 VUs  0m14.7s/2m0s
+
+running (0m15.7s), 1000/1000 VUs, 0 complete and 0 interrupted iterations
+default   [  13% ] 1000 VUs  0m15.7s/2m0s
+
+running (0m16.7s), 1000/1000 VUs, 0 complete and 0 interrupted iterations
+default   [  14% ] 1000 VUs  0m16.7s/2m0s
+
+running (0m17.6s), 1000/1000 VUs, 0 complete and 0 interrupted iterations
+default   [  15% ] 1000 VUs  0m17.6s/2m0s
+
+running (0m18.7s), 1000/1000 VUs, 0 complete and 0 interrupted iterations
+default   [  16% ] 1000 VUs  0m18.7s/2m0s
+
+running (0m19.7s), 1000/1000 VUs, 0 complete and 0 interrupted iterations
+default   [  16% ] 1000 VUs  0m19.7s/2m0s
+
+running (0m20.6s), 1000/1000 VUs, 0 complete and 0 interrupted iterations
+default   [  17% ] 1000 VUs  0m20.6s/2m0s
+
+running (0m21.7s), 1000/1000 VUs, 0 complete and 0 interrupted iterations
+default   [  18% ] 1000 VUs  0m21.7s/2m0s
+
+running (0m22.7s), 1000/1000 VUs, 0 complete and 0 interrupted iterations
+default   [  19% ] 1000 VUs  0m22.7s/2m0s
+
+running (0m23.6s), 1000/1000 VUs, 0 complete and 0 interrupted iterations
+default   [  20% ] 1000 VUs  0m23.6s/2m0s
+
+running (0m24.7s), 1000/1000 VUs, 0 complete and 0 interrupted iterations
+default   [  21% ] 1000 VUs  0m24.7s/2m0s
+
+running (0m25.6s), 1000/1000 VUs, 0 complete and 0 interrupted iterations
+default   [  21% ] 1000 VUs  0m25.6s/2m0s
+
+running (0m26.7s), 1000/1000 VUs, 0 complete and 0 interrupted iterations
+default   [  22% ] 1000 VUs  0m26.7s/2m0s
+
+running (0m27.7s), 1000/1000 VUs, 0 complete and 0 interrupted iterations
+default   [  23% ] 1000 VUs  0m27.7s/2m0s
+
+running (0m28.7s), 1000/1000 VUs, 0 complete and 0 interrupted iterations
+default   [  24% ] 1000 VUs  0m28.7s/2m0s
+
+running (0m29.7s), 1000/1000 VUs, 0 complete and 0 interrupted iterations
+default   [  25% ] 1000 VUs  0m29.7s/2m0s
+
+running (0m30.7s), 1000/1000 VUs, 0 complete and 0 interrupted iterations
+default   [  26% ] 1000 VUs  0m30.7s/2m0s
+
+running (0m31.7s), 1000/1000 VUs, 0 complete and 0 interrupted iterations
+default   [  26% ] 1000 VUs  0m31.7s/2m0s
+
+running (0m32.8s), 1000/1000 VUs, 0 complete and 0 interrupted iterations
+default   [  27% ] 1000 VUs  0m32.8s/2m0s
+
+running (0m33.7s), 1000/1000 VUs, 0 complete and 0 interrupted iterations
+default   [  28% ] 1000 VUs  0m33.7s/2m0s
+
+running (0m34.7s), 1000/1000 VUs, 0 complete and 0 interrupted iterations
+default   [  29% ] 1000 VUs  0m34.7s/2m0s
+
+running (0m35.7s), 1000/1000 VUs, 0 complete and 0 interrupted iterations
+default   [  30% ] 1000 VUs  0m35.7s/2m0s
+
+running (0m36.7s), 1000/1000 VUs, 0 complete and 0 interrupted iterations
+default   [  31% ] 1000 VUs  0m36.7s/2m0s
+
+running (0m37.7s), 1000/1000 VUs, 0 complete and 0 interrupted iterations
+default   [  31% ] 1000 VUs  0m37.7s/2m0s
+
+running (0m38.7s), 1000/1000 VUs, 0 complete and 0 interrupted iterations
+default   [  32% ] 1000 VUs  0m38.7s/2m0s
+
+running (0m39.7s), 1000/1000 VUs, 0 complete and 0 interrupted iterations
+default   [  33% ] 1000 VUs  0m39.7s/2m0s
+
+running (0m40.7s), 1000/1000 VUs, 0 complete and 0 interrupted iterations
+default   [  34% ] 1000 VUs  0m40.7s/2m0s
+
+running (0m41.7s), 1000/1000 VUs, 0 complete and 0 interrupted iterations
+default   [  35% ] 1000 VUs  0m41.7s/2m0s
+
+running (0m42.7s), 1000/1000 VUs, 0 complete and 0 interrupted iterations
+default   [  36% ] 1000 VUs  0m42.7s/2m0s
+
+running (0m43.7s), 1000/1000 VUs, 0 complete and 0 interrupted iterations
+default   [  36% ] 1000 VUs  0m43.7s/2m0s
+
+running (0m44.7s), 1000/1000 VUs, 0 complete and 0 interrupted iterations
+default   [  37% ] 1000 VUs  0m44.7s/2m0s
+
+running (0m45.8s), 1000/1000 VUs, 0 complete and 0 interrupted iterations
+default   [  38% ] 1000 VUs  0m45.8s/2m0s
+
+running (0m46.7s), 1000/1000 VUs, 0 complete and 0 interrupted iterations
+default   [  39% ] 1000 VUs  0m46.7s/2m0s
+
+running (0m47.7s), 1000/1000 VUs, 0 complete and 0 interrupted iterations
+default   [  40% ] 1000 VUs  0m47.7s/2m0s
+
+running (0m48.7s), 1000/1000 VUs, 0 complete and 0 interrupted iterations
+default   [  41% ] 1000 VUs  0m48.7s/2m0s
+
+running (0m49.7s), 1000/1000 VUs, 0 complete and 0 interrupted iterations
+default   [  41% ] 1000 VUs  0m49.7s/2m0s
+
+running (0m50.8s), 1000/1000 VUs, 0 complete and 0 interrupted iterations
+default   [  42% ] 1000 VUs  0m50.8s/2m0s
+
+running (0m51.6s), 1000/1000 VUs, 0 complete and 0 interrupted iterations
+default   [  43% ] 1000 VUs  0m51.6s/2m0s
+
+running (0m52.6s), 1000/1000 VUs, 0 complete and 0 interrupted iterations
+default   [  44% ] 1000 VUs  0m52.6s/2m0s
+
+running (0m53.6s), 1000/1000 VUs, 0 complete and 0 interrupted iterations
+default   [  45% ] 1000 VUs  0m53.6s/2m0s
+
+running (0m54.7s), 1000/1000 VUs, 0 complete and 0 interrupted iterations
+default   [  46% ] 1000 VUs  0m54.7s/2m0s
+
+running (0m55.7s), 1000/1000 VUs, 0 complete and 0 interrupted iterations
+default   [  46% ] 1000 VUs  0m55.7s/2m0s
+
+running (0m56.7s), 1000/1000 VUs, 0 complete and 0 interrupted iterations
+default   [  47% ] 1000 VUs  0m56.7s/2m0s
+
+running (0m57.6s), 1000/1000 VUs, 0 complete and 0 interrupted iterations
+default   [  48% ] 1000 VUs  0m57.6s/2m0s
+
+running (0m58.7s), 1000/1000 VUs, 0 complete and 0 interrupted iterations
+default   [  49% ] 1000 VUs  0m58.7s/2m0s
+
+running (0m59.7s), 1000/1000 VUs, 0 complete and 0 interrupted iterations
+default   [  50% ] 1000 VUs  0m59.7s/2m0s
+
+running (1m00.7s), 1000/1000 VUs, 0 complete and 0 interrupted iterations
+default   [  51% ] 1000 VUs  1m00.7s/2m0s
+
+running (1m01.7s), 1000/1000 VUs, 0 complete and 0 interrupted iterations
+default   [  51% ] 1000 VUs  1m01.7s/2m0s
+
+running (1m02.7s), 1000/1000 VUs, 0 complete and 0 interrupted iterations
+default   [  52% ] 1000 VUs  1m02.7s/2m0s
+
+running (1m03.7s), 1000/1000 VUs, 0 complete and 0 interrupted iterations
+default   [  53% ] 1000 VUs  1m03.7s/2m0s
+
+running (1m04.6s), 1000/1000 VUs, 0 complete and 0 interrupted iterations
+default   [  54% ] 1000 VUs  1m04.6s/2m0s
+
+running (1m05.6s), 1000/1000 VUs, 0 complete and 0 interrupted iterations
+default   [  55% ] 1000 VUs  1m05.6s/2m0s
+
+running (1m06.7s), 1000/1000 VUs, 0 complete and 0 interrupted iterations
+default   [  56% ] 1000 VUs  1m06.7s/2m0s
+
+running (1m07.6s), 1000/1000 VUs, 0 complete and 0 interrupted iterations
+default   [  56% ] 1000 VUs  1m07.6s/2m0s
+
+running (1m08.7s), 1000/1000 VUs, 0 complete and 0 interrupted iterations
+default   [  57% ] 1000 VUs  1m08.7s/2m0s
+
+running (1m09.7s), 1000/1000 VUs, 0 complete and 0 interrupted iterations
+default   [  58% ] 1000 VUs  1m09.7s/2m0s
+time="2026-10-08T17:52:01+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:01+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:01+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+
+running (1m10.7s), 1000/1000 VUs, 3 complete and 0 interrupted iterations
+default   [  59% ] 1000 VUs  1m10.7s/2m0s
+time="2026-10-08T17:52:02+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:02+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/share/local-kicau-mania\": request timeout"
+time="2026-10-08T17:52:02+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:02+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:02+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/share/local-kicau-mania\": request timeout"
+time="2026-10-08T17:52:02+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/search?q=racing\": request timeout"
+
+running (1m11.7s), 1000/1000 VUs, 9 complete and 0 interrupted iterations
+default   [  60% ] 1000 VUs  1m11.7s/2m0s
+
+running (1m12.7s), 1000/1000 VUs, 17 complete and 0 interrupted iterations
+default   [  61% ] 1000 VUs  1m12.7s/2m0s
+
+running (1m13.7s), 1000/1000 VUs, 21 complete and 0 interrupted iterations
+default   [  61% ] 1000 VUs  1m13.7s/2m0s
+
+running (1m14.7s), 1000/1000 VUs, 30 complete and 0 interrupted iterations
+default   [  62% ] 1000 VUs  1m14.7s/2m0s
+
+running (1m15.7s), 1000/1000 VUs, 30 complete and 0 interrupted iterations
+default   [  63% ] 1000 VUs  1m15.7s/2m0s
+
+running (1m16.7s), 1000/1000 VUs, 30 complete and 0 interrupted iterations
+default   [  64% ] 1000 VUs  1m16.7s/2m0s
+time="2026-10-08T17:52:08+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:08+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:08+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:08+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:08+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:08+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/sitemap.xml\": request timeout"
+time="2026-10-08T17:52:08+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/search?q=racing\": request timeout"
+time="2026-10-08T17:52:08+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:08+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:08+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:08+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+
+running (1m17.7s), 1000/1000 VUs, 30 complete and 0 interrupted iterations
+default   [  65% ] 1000 VUs  1m17.7s/2m0s
+time="2026-10-08T17:52:08+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:08+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:08+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:09+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/search?q=racing\": request timeout"
+time="2026-10-08T17:52:09+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/game\": request timeout"
+time="2026-10-08T17:52:09+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:09+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:09+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/sitemap.xml\": request timeout"
+
+running (1m18.7s), 1000/1000 VUs, 47 complete and 0 interrupted iterations
+default   [  66% ] 1000 VUs  1m18.7s/2m0s
+time="2026-10-08T17:52:09+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/search?q=racing\": request timeout"
+time="2026-10-08T17:52:09+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:10+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/search?q=racing\": request timeout"
+time="2026-10-08T17:52:10+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/share/local-kicau-mania\": request timeout"
+time="2026-10-08T17:52:10+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:10+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:10+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/search?q=racing\": request timeout"
+time="2026-10-08T17:52:10+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/share/local-kicau-mania\": request timeout"
+time="2026-10-08T17:52:10+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/search?q=racing\": request timeout"
+time="2026-10-08T17:52:10+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:10+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:10+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:10+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+
+running (1m19.7s), 1000/1000 VUs, 47 complete and 0 interrupted iterations
+default   [  66% ] 1000 VUs  1m19.7s/2m0s
+time="2026-10-08T17:52:10+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:10+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:10+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:10+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/search?q=racing\": request timeout"
+time="2026-10-08T17:52:10+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/search?q=racing\": request timeout"
+time="2026-10-08T17:52:10+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:11+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:11+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:11+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/share/local-kicau-mania\": request timeout"
+time="2026-10-08T17:52:11+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/share/local-kicau-mania\": request timeout"
+time="2026-10-08T17:52:11+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/share/local-kicau-mania\": request timeout"
+time="2026-10-08T17:52:11+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/search?q=racing\": request timeout"
+time="2026-10-08T17:52:11+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+
+running (1m20.6s), 1000/1000 VUs, 57 complete and 0 interrupted iterations
+default   [  67% ] 1000 VUs  1m20.6s/2m0s
+time="2026-10-08T17:52:11+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/sitemap.xml\": request timeout"
+time="2026-10-08T17:52:11+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:12+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/game\": request timeout"
+time="2026-10-08T17:52:12+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/sitemap.xml\": request timeout"
+time="2026-10-08T17:52:12+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/share/local-kicau-mania\": request timeout"
+time="2026-10-08T17:52:12+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/share/local-kicau-mania\": request timeout"
+time="2026-10-08T17:52:12+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/sitemap.xml\": request timeout"
+time="2026-10-08T17:52:12+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:12+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:12+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/search?q=racing\": request timeout"
+time="2026-10-08T17:52:12+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/search?q=racing\": request timeout"
+time="2026-10-08T17:52:12+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+
+running (1m21.7s), 1000/1000 VUs, 65 complete and 0 interrupted iterations
+default   [  68% ] 1000 VUs  1m21.7s/2m0s
+time="2026-10-08T17:52:12+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:12+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:12+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:12+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:12+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+
+running (1m22.7s), 1000/1000 VUs, 65 complete and 0 interrupted iterations
+default   [  69% ] 1000 VUs  1m22.7s/2m0s
+
+running (1m23.7s), 1000/1000 VUs, 65 complete and 0 interrupted iterations
+default   [  70% ] 1000 VUs  1m23.7s/2m0s
+
+running (1m24.6s), 1000/1000 VUs, 92 complete and 0 interrupted iterations
+default   [  71% ] 1000 VUs  1m24.6s/2m0s
+
+running (1m25.8s), 1000/1000 VUs, 99 complete and 0 interrupted iterations
+default   [  71% ] 1000 VUs  1m25.8s/2m0s
+time="2026-10-08T17:52:17+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:17+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:17+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/search?q=racing\": request timeout"
+
+running (1m26.7s), 1000/1000 VUs, 120 complete and 0 interrupted iterations
+default   [  72% ] 1000 VUs  1m26.7s/2m0s
+time="2026-10-08T17:52:18+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/search?q=racing\": request timeout"
+time="2026-10-08T17:52:18+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:18+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:18+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:18+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/search?q=racing\": request timeout"
+
+running (1m27.7s), 1000/1000 VUs, 124 complete and 0 interrupted iterations
+default   [  73% ] 1000 VUs  1m27.7s/2m0s
+time="2026-10-08T17:52:19+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/search?q=racing\": request timeout"
+time="2026-10-08T17:52:19+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:19+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:19+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:19+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/search?q=racing\": request timeout"
+time="2026-10-08T17:52:19+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:19+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:19+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:19+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+
+running (1m28.7s), 1000/1000 VUs, 124 complete and 0 interrupted iterations
+default   [  74% ] 1000 VUs  1m28.7s/2m0s
+time="2026-10-08T17:52:19+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:19+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:20+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/sitemap.xml\": request timeout"
+time="2026-10-08T17:52:20+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/search?q=racing\": request timeout"
+time="2026-10-08T17:52:20+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:20+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:20+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:20+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:20+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/search?q=racing\": request timeout"
+time="2026-10-08T17:52:20+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/share/local-kicau-mania\": request timeout"
+time="2026-10-08T17:52:20+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/game\": request timeout"
+time="2026-10-08T17:52:20+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+
+running (1m29.7s), 1000/1000 VUs, 124 complete and 0 interrupted iterations
+default   [  75% ] 1000 VUs  1m29.7s/2m0s
+time="2026-10-08T17:52:20+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:21+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/search?q=racing\": request timeout"
+time="2026-10-08T17:52:21+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:21+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:21+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/share/local-kicau-mania\": request timeout"
+time="2026-10-08T17:52:21+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:21+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:21+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/search?q=racing\": request timeout"
+time="2026-10-08T17:52:21+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/game\": request timeout"
+time="2026-10-08T17:52:21+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:21+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:21+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:21+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:21+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:21+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+
+running (1m30.8s), 1000/1000 VUs, 124 complete and 0 interrupted iterations
+default   [  76% ] 1000 VUs  1m30.8s/2m0s
+time="2026-10-08T17:52:21+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:21+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:22+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:22+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:22+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:22+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/search?q=racing\": request timeout"
+time="2026-10-08T17:52:22+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:22+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:22+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:22+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:22+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/game\": request timeout"
+time="2026-10-08T17:52:22+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/share/local-kicau-mania\": request timeout"
+time="2026-10-08T17:52:22+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:22+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:22+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/search?q=racing\": request timeout"
+
+running (1m31.7s), 1000/1000 VUs, 144 complete and 0 interrupted iterations
+default   [  76% ] 1000 VUs  1m31.7s/2m0s
+time="2026-10-08T17:52:23+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/search?q=racing\": request timeout"
+time="2026-10-08T17:52:23+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:23+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:23+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/search?q=racing\": request timeout"
+time="2026-10-08T17:52:23+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:23+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/game\": request timeout"
+time="2026-10-08T17:52:23+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/share/local-kicau-mania\": request timeout"
+time="2026-10-08T17:52:23+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:23+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:23+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/share/local-kicau-mania\": request timeout"
+time="2026-10-08T17:52:23+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:23+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/search?q=racing\": request timeout"
+time="2026-10-08T17:52:23+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+
+running (1m32.7s), 1000/1000 VUs, 147 complete and 0 interrupted iterations
+default   [  77% ] 1000 VUs  1m32.7s/2m0s
+time="2026-10-08T17:52:23+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/search?q=racing\": request timeout"
+time="2026-10-08T17:52:23+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/game\": request timeout"
+time="2026-10-08T17:52:24+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/search?q=racing\": request timeout"
+time="2026-10-08T17:52:24+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/search?q=racing\": request timeout"
+time="2026-10-08T17:52:24+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/search?q=racing\": request timeout"
+time="2026-10-08T17:52:24+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:24+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/search?q=racing\": request timeout"
+time="2026-10-08T17:52:24+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/game\": request timeout"
+time="2026-10-08T17:52:24+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/sitemap.xml\": request timeout"
+time="2026-10-08T17:52:24+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:24+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:24+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/sitemap.xml\": request timeout"
+time="2026-10-08T17:52:24+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/search?q=racing\": request timeout"
+
+running (1m33.7s), 1000/1000 VUs, 147 complete and 0 interrupted iterations
+default   [  78% ] 1000 VUs  1m33.7s/2m0s
+time="2026-10-08T17:52:24+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/search?q=racing\": request timeout"
+time="2026-10-08T17:52:25+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/sitemap.xml\": request timeout"
+time="2026-10-08T17:52:25+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:25+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/search?q=racing\": request timeout"
+time="2026-10-08T17:52:25+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/search?q=racing\": request timeout"
+time="2026-10-08T17:52:25+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:25+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/sitemap.xml\": request timeout"
+time="2026-10-08T17:52:25+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/share/local-kicau-mania\": request timeout"
+time="2026-10-08T17:52:25+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:25+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:25+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:25+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/share/local-kicau-mania\": request timeout"
+time="2026-10-08T17:52:25+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/share/local-kicau-mania\": request timeout"
+time="2026-10-08T17:52:25+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/search?q=racing\": request timeout"
+time="2026-10-08T17:52:25+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:25+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/search?q=racing\": request timeout"
+
+running (1m34.7s), 1000/1000 VUs, 147 complete and 0 interrupted iterations
+default   [  79% ] 1000 VUs  1m34.7s/2m0s
+time="2026-10-08T17:52:25+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:25+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:25+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/game\": request timeout"
+time="2026-10-08T17:52:26+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/game\": request timeout"
+time="2026-10-08T17:52:26+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:26+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:26+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:26+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:26+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:26+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/game\": request timeout"
+time="2026-10-08T17:52:26+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:26+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:26+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:26+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:26+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:26+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:26+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:26+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/share/local-kicau-mania\": request timeout"
+time="2026-10-08T17:52:26+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/search?q=racing\": request timeout"
+
+running (1m35.8s), 1000/1000 VUs, 147 complete and 0 interrupted iterations
+default   [  80% ] 1000 VUs  1m35.8s/2m0s
+time="2026-10-08T17:52:26+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/search?q=racing\": request timeout"
+time="2026-10-08T17:52:27+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:27+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:27+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:27+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:27+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+
+running (1m36.7s), 1000/1000 VUs, 147 complete and 0 interrupted iterations
+default   [  81% ] 1000 VUs  1m36.7s/2m0s
+time="2026-10-08T17:52:27+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/share/local-kicau-mania\": request timeout"
+time="2026-10-08T17:52:27+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/search?q=racing\": request timeout"
+time="2026-10-08T17:52:28+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/search?q=racing\": request timeout"
+time="2026-10-08T17:52:28+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:28+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:28+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/share/local-kicau-mania\": request timeout"
+time="2026-10-08T17:52:28+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/search?q=racing\": request timeout"
+time="2026-10-08T17:52:28+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:28+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:28+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:28+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/sitemap.xml\": request timeout"
+time="2026-10-08T17:52:28+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:28+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+
+running (1m37.7s), 1000/1000 VUs, 151 complete and 0 interrupted iterations
+default   [  81% ] 1000 VUs  1m37.7s/2m0s
+time="2026-10-08T17:52:28+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:28+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:29+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:29+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:29+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:29+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:29+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:29+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:29+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:29+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/sitemap.xml\": request timeout"
+time="2026-10-08T17:52:29+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+
+running (1m38.7s), 1000/1000 VUs, 155 complete and 0 interrupted iterations
+default   [  82% ] 1000 VUs  1m38.7s/2m0s
+time="2026-10-08T17:52:29+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:29+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/search?q=racing\": request timeout"
+time="2026-10-08T17:52:29+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:29+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:30+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:30+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:30+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/search?q=racing\": request timeout"
+time="2026-10-08T17:52:30+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:30+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:30+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/game\": request timeout"
+time="2026-10-08T17:52:30+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:30+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:30+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/game\": request timeout"
+time="2026-10-08T17:52:30+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:30+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:30+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:30+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/share/local-kicau-mania\": request timeout"
+
+running (1m39.7s), 1000/1000 VUs, 155 complete and 0 interrupted iterations
+default   [  83% ] 1000 VUs  1m39.7s/2m0s
+time="2026-10-08T17:52:30+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:31+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/search?q=racing\": request timeout"
+time="2026-10-08T17:52:31+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:31+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:31+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:31+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/share/local-kicau-mania\": request timeout"
+time="2026-10-08T17:52:31+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:31+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:31+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/sitemap.xml\": request timeout"
+time="2026-10-08T17:52:31+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/search?q=racing\": request timeout"
+time="2026-10-08T17:52:31+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/game\": request timeout"
+time="2026-10-08T17:52:31+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:31+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:31+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:31+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:31+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+
+running (1m40.7s), 1000/1000 VUs, 155 complete and 0 interrupted iterations
+default   [  84% ] 1000 VUs  1m40.7s/2m0s
+time="2026-10-08T17:52:31+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:31+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/search?q=racing\": request timeout"
+time="2026-10-08T17:52:32+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/game\": request timeout"
+time="2026-10-08T17:52:32+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:32+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/search?q=racing\": request timeout"
+time="2026-10-08T17:52:32+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:32+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:32+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:32+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:32+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:32+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:32+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/search?q=racing\": request timeout"
+time="2026-10-08T17:52:32+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:32+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/search?q=racing\": request timeout"
+
+running (1m41.6s), 1000/1000 VUs, 165 complete and 0 interrupted iterations
+default   [  85% ] 1000 VUs  1m41.6s/2m0s
+time="2026-10-08T17:52:32+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:32+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:32+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:32+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:33+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:33+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/search?q=racing\": request timeout"
+time="2026-10-08T17:52:33+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:33+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:33+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/search?q=racing\": request timeout"
+time="2026-10-08T17:52:33+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:33+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:33+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:33+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:33+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:33+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:33+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+
+running (1m42.7s), 1000/1000 VUs, 183 complete and 0 interrupted iterations
+default   [  86% ] 1000 VUs  1m42.7s/2m0s
+time="2026-10-08T17:52:33+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:33+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:33+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:33+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:34+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:34+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:34+07:00" level=warning msg="Request Failed" error="request timeout"
+time="2026-10-08T17:52:34+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:34+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:34+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+
+running (1m43.7s), 1000/1000 VUs, 183 complete and 0 interrupted iterations
+default   [  86% ] 1000 VUs  1m43.7s/2m0s
+time="2026-10-08T17:52:34+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:34+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:34+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/share/local-kicau-mania\": request timeout"
+time="2026-10-08T17:52:35+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:35+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/sitemap.xml\": request timeout"
+time="2026-10-08T17:52:35+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/sitemap.xml\": request timeout"
+time="2026-10-08T17:52:35+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:35+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:35+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/game\": request timeout"
+time="2026-10-08T17:52:35+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:35+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:35+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:35+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:35+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+
+running (1m44.6s), 1000/1000 VUs, 183 complete and 0 interrupted iterations
+default   [  87% ] 1000 VUs  1m44.6s/2m0s
+time="2026-10-08T17:52:35+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/share/local-kicau-mania\": request timeout"
+time="2026-10-08T17:52:36+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:36+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:36+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/search?q=racing\": request timeout"
+time="2026-10-08T17:52:36+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:36+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/sitemap.xml\": request timeout"
+time="2026-10-08T17:52:36+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/sitemap.xml\": request timeout"
+time="2026-10-08T17:52:36+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:36+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:36+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:36+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:36+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+
+running (1m45.7s), 1000/1000 VUs, 183 complete and 0 interrupted iterations
+default   [  88% ] 1000 VUs  1m45.7s/2m0s
+time="2026-10-08T17:52:37+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:37+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/game\": request timeout"
+time="2026-10-08T17:52:37+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:37+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:37+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:37+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:37+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/sitemap.xml\": request timeout"
+time="2026-10-08T17:52:37+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:37+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:37+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:37+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/share/local-kicau-mania\": request timeout"
+time="2026-10-08T17:52:37+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:37+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:37+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:37+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/search?q=racing\": request timeout"
+time="2026-10-08T17:52:37+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/search?q=racing\": request timeout"
+time="2026-10-08T17:52:37+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:37+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+
+running (1m46.7s), 1000/1000 VUs, 183 complete and 0 interrupted iterations
+default   [  89% ] 1000 VUs  1m46.7s/2m0s
+time="2026-10-08T17:52:38+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/sitemap.xml\": request timeout"
+time="2026-10-08T17:52:38+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/search?q=racing\": request timeout"
+time="2026-10-08T17:52:38+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/search?q=racing\": request timeout"
+time="2026-10-08T17:52:38+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/share/local-kicau-mania\": request timeout"
+time="2026-10-08T17:52:38+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:38+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/share/local-kicau-mania\": request timeout"
+time="2026-10-08T17:52:38+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:38+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:38+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/search?q=racing\": request timeout"
+time="2026-10-08T17:52:38+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/search?q=racing\": request timeout"
+time="2026-10-08T17:52:38+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:38+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:38+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+
+running (1m47.6s), 1000/1000 VUs, 183 complete and 0 interrupted iterations
+default   [  90% ] 1000 VUs  1m47.6s/2m0s
+time="2026-10-08T17:52:38+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/search?q=racing\": request timeout"
+time="2026-10-08T17:52:39+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:39+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:39+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:39+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:39+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/share/local-kicau-mania\": request timeout"
+time="2026-10-08T17:52:39+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/share/local-kicau-mania\": request timeout"
+time="2026-10-08T17:52:39+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:39+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:39+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:39+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:39+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:39+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+
+running (1m48.7s), 1000/1000 VUs, 197 complete and 0 interrupted iterations
+default   [  91% ] 1000 VUs  1m48.7s/2m0s
+time="2026-10-08T17:52:39+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:39+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:39+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:39+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:39+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/sitemap.xml\": request timeout"
+time="2026-10-08T17:52:40+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/search?q=racing\": request timeout"
+time="2026-10-08T17:52:40+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/share/local-kicau-mania\": request timeout"
+time="2026-10-08T17:52:40+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/search?q=racing\": request timeout"
+time="2026-10-08T17:52:40+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:40+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:40+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:40+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:40+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:40+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/share/local-kicau-mania\": request timeout"
+time="2026-10-08T17:52:40+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:40+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/game\": request timeout"
+time="2026-10-08T17:52:40+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:40+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:40+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/share/local-kicau-mania\": request timeout"
+
+running (1m49.7s), 1000/1000 VUs, 197 complete and 0 interrupted iterations
+default   [  91% ] 1000 VUs  1m49.7s/2m0s
+time="2026-10-08T17:52:40+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:41+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:41+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/sitemap.xml\": request timeout"
+time="2026-10-08T17:52:41+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/search?q=racing\": request timeout"
+time="2026-10-08T17:52:41+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:41+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:41+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/share/local-kicau-mania\": request timeout"
+time="2026-10-08T17:52:41+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/search?q=racing\": request timeout"
+time="2026-10-08T17:52:41+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:41+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:41+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:41+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:41+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:41+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+
+running (1m50.8s), 1000/1000 VUs, 197 complete and 0 interrupted iterations
+default   [  92% ] 1000 VUs  1m50.8s/2m0s
+time="2026-10-08T17:52:41+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:41+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:41+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/search?q=racing\": request timeout"
+time="2026-10-08T17:52:42+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/share/local-kicau-mania\": request timeout"
+time="2026-10-08T17:52:42+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:42+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:42+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:42+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/share/local-kicau-mania\": request timeout"
+time="2026-10-08T17:52:42+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/search?q=racing\": request timeout"
+time="2026-10-08T17:52:42+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:42+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:42+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:42+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/share/local-kicau-mania\": request timeout"
+time="2026-10-08T17:52:42+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/sitemap.xml\": request timeout"
+
+running (1m51.7s), 1000/1000 VUs, 197 complete and 0 interrupted iterations
+default   [  93% ] 1000 VUs  1m51.7s/2m0s
+time="2026-10-08T17:52:42+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/share/local-kicau-mania\": request timeout"
+time="2026-10-08T17:52:42+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:42+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/share/local-kicau-mania\": request timeout"
+time="2026-10-08T17:52:42+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:43+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/game\": request timeout"
+time="2026-10-08T17:52:43+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/share/local-kicau-mania\": request timeout"
+time="2026-10-08T17:52:43+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/search?q=racing\": request timeout"
+time="2026-10-08T17:52:43+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/game\": request timeout"
+time="2026-10-08T17:52:43+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/game\": request timeout"
+time="2026-10-08T17:52:43+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/share/local-kicau-mania\": request timeout"
+time="2026-10-08T17:52:43+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:43+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:43+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+
+running (1m52.7s), 1000/1000 VUs, 197 complete and 0 interrupted iterations
+default   [  94% ] 1000 VUs  1m52.7s/2m0s
+time="2026-10-08T17:52:43+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:43+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/share/local-kicau-mania\": request timeout"
+time="2026-10-08T17:52:43+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:44+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/share/local-kicau-mania\": request timeout"
+time="2026-10-08T17:52:44+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/share/local-kicau-mania\": request timeout"
+time="2026-10-08T17:52:44+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:44+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:44+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:44+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/search?q=racing\": request timeout"
+time="2026-10-08T17:52:44+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/search?q=racing\": request timeout"
+time="2026-10-08T17:52:44+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+
+running (1m53.7s), 1000/1000 VUs, 197 complete and 0 interrupted iterations
+default   [  95% ] 1000 VUs  1m53.7s/2m0s
+time="2026-10-08T17:52:44+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:45+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:45+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:45+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:45+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/share/local-kicau-mania\": request timeout"
+time="2026-10-08T17:52:45+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/search?q=racing\": request timeout"
+time="2026-10-08T17:52:45+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:45+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:45+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:45+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/game\": request timeout"
+time="2026-10-08T17:52:45+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:45+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:45+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/game\": request timeout"
+time="2026-10-08T17:52:45+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/game\": request timeout"
+time="2026-10-08T17:52:45+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/game\": request timeout"
+time="2026-10-08T17:52:45+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:45+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/search?q=racing\": request timeout"
+time="2026-10-08T17:52:45+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/sitemap.xml\": request timeout"
+
+running (1m54.7s), 1000/1000 VUs, 197 complete and 0 interrupted iterations
+default   [  96% ] 1000 VUs  1m54.7s/2m0s
+time="2026-10-08T17:52:45+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:45+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:45+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:45+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:45+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:46+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/sitemap.xml\": request timeout"
+time="2026-10-08T17:52:46+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/search?q=racing\": request timeout"
+time="2026-10-08T17:52:46+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/search?q=racing\": request timeout"
+time="2026-10-08T17:52:46+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/sitemap.xml\": request timeout"
+time="2026-10-08T17:52:46+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/sitemap.xml\": request timeout"
+time="2026-10-08T17:52:46+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/search?q=racing\": request timeout"
+time="2026-10-08T17:52:46+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/share/local-kicau-mania\": request timeout"
+time="2026-10-08T17:52:46+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:46+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+
+running (1m55.7s), 1000/1000 VUs, 197 complete and 0 interrupted iterations
+default   [  96% ] 1000 VUs  1m55.7s/2m0s
+time="2026-10-08T17:52:46+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/share/local-kicau-mania\": request timeout"
+time="2026-10-08T17:52:46+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:46+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:46+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:47+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:47+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:47+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:47+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:47+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:47+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/sitemap.xml\": request timeout"
+time="2026-10-08T17:52:47+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:47+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/share/local-kicau-mania\": request timeout"
+time="2026-10-08T17:52:47+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:47+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+
+running (1m56.7s), 1000/1000 VUs, 197 complete and 0 interrupted iterations
+default   [  97% ] 1000 VUs  1m56.7s/2m0s
+time="2026-10-08T17:52:47+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/search?q=racing\": request timeout"
+time="2026-10-08T17:52:48+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:48+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:48+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:48+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:48+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:48+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:48+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:48+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:48+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:48+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:48+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/sitemap.xml\": request timeout"
+time="2026-10-08T17:52:48+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/search?q=racing\": request timeout"
+time="2026-10-08T17:52:48+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:48+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/sitemap.xml\": request timeout"
+time="2026-10-08T17:52:48+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:48+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+
+running (1m57.7s), 1000/1000 VUs, 197 complete and 0 interrupted iterations
+default   [  98% ] 1000 VUs  1m57.7s/2m0s
+time="2026-10-08T17:52:48+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/share/local-kicau-mania\": request timeout"
+time="2026-10-08T17:52:48+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:48+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:49+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/sitemap.xml\": request timeout"
+time="2026-10-08T17:52:49+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:49+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/share/local-kicau-mania\": request timeout"
+time="2026-10-08T17:52:49+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:49+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/share/local-kicau-mania\": request timeout"
+time="2026-10-08T17:52:49+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:49+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:49+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:49+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/search?q=racing\": request timeout"
+time="2026-10-08T17:52:49+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/share/local-kicau-mania\": request timeout"
+
+running (1m58.7s), 1000/1000 VUs, 197 complete and 0 interrupted iterations
+default   [  99% ] 1000 VUs  1m58.7s/2m0s
+time="2026-10-08T17:52:49+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:49+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:50+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:50+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:50+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:50+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/search?q=racing\": request timeout"
+time="2026-10-08T17:52:50+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/search?q=racing\": request timeout"
+time="2026-10-08T17:52:50+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/search?q=racing\": request timeout"
+time="2026-10-08T17:52:50+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:50+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:50+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/search?q=racing\": request timeout"
+time="2026-10-08T17:52:50+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:50+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/search?q=racing\": request timeout"
+time="2026-10-08T17:52:50+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:50+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/share/local-kicau-mania\": request timeout"
+time="2026-10-08T17:52:50+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:50+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:50+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:50+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:50+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:50+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/sitemap.xml\": request timeout"
+
+running (1m59.6s), 1000/1000 VUs, 197 complete and 0 interrupted iterations
+default   [ 100% ] 1000 VUs  1m59.6s/2m0s
+time="2026-10-08T17:52:50+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:50+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:50+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:51+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/sitemap.xml\": request timeout"
+time="2026-10-08T17:52:51+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:51+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/search?q=racing\": request timeout"
+time="2026-10-08T17:52:51+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:51+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:51+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:51+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+
+running (2m00.8s), 1000/1000 VUs, 197 complete and 0 interrupted iterations
+default ↓ [ 100% ] 1000 VUs  2m0s
+time="2026-10-08T17:52:52+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:52+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:52+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:52+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:52+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/game\": request timeout"
+time="2026-10-08T17:52:52+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/share/local-kicau-mania\": request timeout"
+time="2026-10-08T17:52:52+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:52+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/share/local-kicau-mania\": request timeout"
+time="2026-10-08T17:52:52+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+
+running (2m01.7s), 1000/1000 VUs, 197 complete and 0 interrupted iterations
+default ↓ [ 100% ] 1000 VUs  2m0s
+time="2026-10-08T17:52:52+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:52+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:52+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/share/local-kicau-mania\": request timeout"
+time="2026-10-08T17:52:52+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:52+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/search?q=racing\": request timeout"
+time="2026-10-08T17:52:53+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:53+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:53+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:53+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/share/local-kicau-mania\": request timeout"
+time="2026-10-08T17:52:53+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/share/local-kicau-mania\": request timeout"
+time="2026-10-08T17:52:53+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:53+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:53+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:53+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:53+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/search?q=racing\": request timeout"
+time="2026-10-08T17:52:53+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:53+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/game\": request timeout"
+time="2026-10-08T17:52:53+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/sitemap.xml\": request timeout"
+time="2026-10-08T17:52:53+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:53+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/search?q=racing\": request timeout"
+
+running (2m02.7s), 1000/1000 VUs, 197 complete and 0 interrupted iterations
+default ↓ [ 100% ] 1000 VUs  2m0s
+time="2026-10-08T17:52:53+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:53+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/search?q=racing\": request timeout"
+time="2026-10-08T17:52:54+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/share/local-kicau-mania\": request timeout"
+time="2026-10-08T17:52:54+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/sitemap.xml\": request timeout"
+time="2026-10-08T17:52:54+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:54+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:54+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/share/local-kicau-mania\": request timeout"
+time="2026-10-08T17:52:54+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/search?q=racing\": request timeout"
+time="2026-10-08T17:52:54+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:54+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:54+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:54+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/share/local-kicau-mania\": request timeout"
+time="2026-10-08T17:52:54+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/share/local-kicau-mania\": request timeout"
+time="2026-10-08T17:52:54+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/search?q=racing\": request timeout"
+time="2026-10-08T17:52:54+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/game\": request timeout"
+
+running (2m03.7s), 1000/1000 VUs, 197 complete and 0 interrupted iterations
+default ↓ [ 100% ] 1000 VUs  2m0s
+time="2026-10-08T17:52:54+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/sitemap.xml\": request timeout"
+time="2026-10-08T17:52:54+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:54+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:55+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/search?q=racing\": request timeout"
+time="2026-10-08T17:52:55+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:55+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:55+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:55+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/game\": request timeout"
+time="2026-10-08T17:52:55+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:55+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:55+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:55+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/share/local-kicau-mania\": request timeout"
+time="2026-10-08T17:52:55+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:55+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:55+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/search?q=racing\": request timeout"
+time="2026-10-08T17:52:55+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/game\": request timeout"
+time="2026-10-08T17:52:55+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/search?q=racing\": request timeout"
+time="2026-10-08T17:52:55+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:55+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/sitemap.xml\": request timeout"
+
+running (2m04.7s), 1000/1000 VUs, 197 complete and 0 interrupted iterations
+default ↓ [ 100% ] 1000 VUs  2m0s
+time="2026-10-08T17:52:55+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:56+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/search?q=racing\": request timeout"
+time="2026-10-08T17:52:56+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:56+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/search?q=racing\": request timeout"
+time="2026-10-08T17:52:56+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/share/local-kicau-mania\": request timeout"
+time="2026-10-08T17:52:56+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:56+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:56+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:56+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:56+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:56+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:56+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:56+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+
+running (2m05.7s), 1000/1000 VUs, 197 complete and 0 interrupted iterations
+default ↓ [ 100% ] 1000 VUs  2m0s
+time="2026-10-08T17:52:56+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:56+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:57+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:57+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:57+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:57+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:57+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/search?q=racing\": request timeout"
+time="2026-10-08T17:52:57+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:57+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:57+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:57+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/share/local-kicau-mania\": request timeout"
+time="2026-10-08T17:52:57+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:57+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:57+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:57+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/search?q=racing\": request timeout"
+time="2026-10-08T17:52:57+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:57+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:57+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:57+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/share/local-kicau-mania\": request timeout"
+time="2026-10-08T17:52:57+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:57+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/search?q=racing\": request timeout"
+time="2026-10-08T17:52:57+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/sitemap.xml\": request timeout"
+
+running (2m06.7s), 1000/1000 VUs, 197 complete and 0 interrupted iterations
+default ↓ [ 100% ] 1000 VUs  2m0s
+time="2026-10-08T17:52:57+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/share/local-kicau-mania\": request timeout"
+time="2026-10-08T17:52:57+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:58+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:58+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/search?q=racing\": request timeout"
+time="2026-10-08T17:52:58+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:58+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:58+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:58+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/share/local-kicau-mania\": request timeout"
+time="2026-10-08T17:52:58+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/share/local-kicau-mania\": request timeout"
+time="2026-10-08T17:52:58+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:58+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:58+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:58+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:58+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/share/local-kicau-mania\": request timeout"
+time="2026-10-08T17:52:58+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+
+running (2m07.7s), 1000/1000 VUs, 197 complete and 0 interrupted iterations
+default ↓ [ 100% ] 1000 VUs  2m0s
+time="2026-10-08T17:52:58+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/search?q=racing\": request timeout"
+time="2026-10-08T17:52:59+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:59+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:59+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/share/local-kicau-mania\": request timeout"
+time="2026-10-08T17:52:59+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:59+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:59+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:52:59+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/search?q=racing\": request timeout"
+time="2026-10-08T17:52:59+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/share/local-kicau-mania\": request timeout"
+time="2026-10-08T17:52:59+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/search?q=racing\": request timeout"
+time="2026-10-08T17:52:59+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/share/local-kicau-mania\": request timeout"
+time="2026-10-08T17:52:59+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:59+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+
+running (2m08.7s), 1000/1000 VUs, 197 complete and 0 interrupted iterations
+default ↓ [ 100% ] 1000 VUs  2m0s
+time="2026-10-08T17:52:59+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:52:59+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/share/local-kicau-mania\": request timeout"
+time="2026-10-08T17:52:59+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/share/local-kicau-mania\": request timeout"
+time="2026-10-08T17:52:59+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:53:00+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:53:00+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:53:00+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/search?q=racing\": request timeout"
+time="2026-10-08T17:53:00+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/game\": request timeout"
+time="2026-10-08T17:53:00+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:53:00+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/search?q=racing\": request timeout"
+time="2026-10-08T17:53:00+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:53:00+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:53:00+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/search?q=racing\": request timeout"
+time="2026-10-08T17:53:00+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/search?q=racing\": request timeout"
+time="2026-10-08T17:53:00+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:53:00+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:53:00+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:53:00+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/search?q=racing\": request timeout"
+time="2026-10-08T17:53:00+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:53:00+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/search?q=racing\": request timeout"
+
+running (2m09.6s), 1000/1000 VUs, 197 complete and 0 interrupted iterations
+default ↓ [ 100% ] 1000 VUs  2m0s
+time="2026-10-08T17:53:00+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:53:01+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:53:01+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:53:01+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:53:01+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:53:01+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/share/local-kicau-mania\": request timeout"
+
+running (2m10.6s), 1000/1000 VUs, 197 complete and 0 interrupted iterations
+default ↓ [ 100% ] 1000 VUs  2m0s
+time="2026-10-08T17:53:02+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/game\": request timeout"
+time="2026-10-08T17:53:02+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:53:02+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:53:02+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:53:02+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:53:02+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/search?q=racing\": request timeout"
+
+running (2m11.7s), 1000/1000 VUs, 197 complete and 0 interrupted iterations
+default ↓ [ 100% ] 1000 VUs  2m0s
+time="2026-10-08T17:53:02+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:53:03+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:53:03+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/game\": request timeout"
+time="2026-10-08T17:53:03+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/search?q=racing\": request timeout"
+time="2026-10-08T17:53:03+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/search?q=racing\": request timeout"
+time="2026-10-08T17:53:03+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:53:03+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:53:03+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/game\": request timeout"
+
+running (2m12.6s), 1000/1000 VUs, 197 complete and 0 interrupted iterations
+default ↓ [ 100% ] 1000 VUs  2m0s
+time="2026-10-08T17:53:03+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:53:03+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/search?q=racing\": request timeout"
+time="2026-10-08T17:53:04+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:53:04+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+
+running (2m13.6s), 1000/1000 VUs, 197 complete and 0 interrupted iterations
+default ↓ [ 100% ] 1000 VUs  2m0s
+time="2026-10-08T17:53:05+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:53:05+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:53:05+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:53:05+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:53:05+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/sitemap.xml\": request timeout"
+time="2026-10-08T17:53:05+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:53:05+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:53:05+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:53:05+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+
+running (2m14.6s), 1000/1000 VUs, 197 complete and 0 interrupted iterations
+default ↓ [ 100% ] 1000 VUs  2m0s
+
+running (2m15.7s), 1000/1000 VUs, 197 complete and 0 interrupted iterations
+default ↓ [ 100% ] 1000 VUs  2m0s
+
+running (2m16.6s), 1000/1000 VUs, 197 complete and 0 interrupted iterations
+default ↓ [ 100% ] 1000 VUs  2m0s
+
+running (2m17.7s), 0943/1000 VUs, 254 complete and 0 interrupted iterations
+default ↓ [ 100% ] 1000 VUs  2m0s
+time="2026-10-08T17:53:09+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:53:09+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/sitemap.xml\": request timeout"
+time="2026-10-08T17:53:09+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/search?q=racing\": request timeout"
+time="2026-10-08T17:53:09+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:53:09+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:53:09+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/search?q=racing\": request timeout"
+time="2026-10-08T17:53:09+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:53:09+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:53:09+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:53:09+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/sitemap.xml\": request timeout"
+time="2026-10-08T17:53:09+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/share/local-kicau-mania\": request timeout"
+time="2026-10-08T17:53:09+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:53:09+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:53:09+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:53:09+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:53:09+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:53:09+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+
+running (2m18.7s), 0931/1000 VUs, 266 complete and 0 interrupted iterations
+default ↓ [ 100% ] 1000 VUs  2m0s
+
+running (2m19.7s), 0931/1000 VUs, 266 complete and 0 interrupted iterations
+default ↓ [ 100% ] 1000 VUs  2m0s
+time="2026-10-08T17:53:11+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/search?q=racing\": request timeout"
+time="2026-10-08T17:53:11+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:53:11+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/share/local-kicau-mania\": request timeout"
+time="2026-10-08T17:53:11+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:53:11+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:53:11+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:53:11+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:53:11+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:53:11+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:53:11+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+
+running (2m20.6s), 0928/1000 VUs, 269 complete and 0 interrupted iterations
+default ↓ [ 100% ] 1000 VUs  2m0s
+time="2026-10-08T17:53:12+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": EOF"
+time="2026-10-08T17:53:12+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/search?q=racing\": EOF"
+time="2026-10-08T17:53:12+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/search?q=racing\": EOF"
+time="2026-10-08T17:53:12+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/search?q=racing\": EOF"
+time="2026-10-08T17:53:12+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": EOF"
+time="2026-10-08T17:53:12+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": EOF"
+time="2026-10-08T17:53:12+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": EOF"
+time="2026-10-08T17:53:12+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": EOF"
+time="2026-10-08T17:53:12+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": EOF"
+time="2026-10-08T17:53:12+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": EOF"
+time="2026-10-08T17:53:12+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": EOF"
+time="2026-10-08T17:53:12+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/search?q=racing\": EOF"
+time="2026-10-08T17:53:12+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": EOF"
+time="2026-10-08T17:53:12+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/share/local-kicau-mania\": EOF"
+time="2026-10-08T17:53:12+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/search?q=racing\": EOF"
+time="2026-10-08T17:53:12+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": EOF"
+time="2026-10-08T17:53:12+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": EOF"
+time="2026-10-08T17:53:12+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/sitemap.xml\": EOF"
+time="2026-10-08T17:53:12+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": EOF"
+time="2026-10-08T17:53:12+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": EOF"
+time="2026-10-08T17:53:12+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:53:12+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/share/local-kicau-mania\": request timeout"
+time="2026-10-08T17:53:12+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:53:12+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:53:12+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": EOF"
+time="2026-10-08T17:53:12+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/search?q=racing\": request timeout"
+time="2026-10-08T17:53:12+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": EOF"
+time="2026-10-08T17:53:12+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/share/local-kicau-mania\": EOF"
+time="2026-10-08T17:53:12+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:53:12+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": EOF"
+time="2026-10-08T17:53:12+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": EOF"
+time="2026-10-08T17:53:12+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": EOF"
+time="2026-10-08T17:53:12+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": EOF"
+time="2026-10-08T17:53:12+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/game\": EOF"
+time="2026-10-08T17:53:12+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:53:12+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+
+running (2m21.7s), 0883/1000 VUs, 314 complete and 0 interrupted iterations
+default ↓ [ 100% ] 1000 VUs  2m0s
+
+running (2m22.7s), 0883/1000 VUs, 314 complete and 0 interrupted iterations
+default ↓ [ 100% ] 1000 VUs  2m0s
+
+running (2m23.7s), 0883/1000 VUs, 314 complete and 0 interrupted iterations
+default ↓ [ 100% ] 1000 VUs  2m0s
+time="2026-10-08T17:53:15+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/search?q=racing\": request timeout"
+time="2026-10-08T17:53:15+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/share/local-kicau-mania\": request timeout"
+time="2026-10-08T17:53:15+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:53:15+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:53:15+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:53:15+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:53:15+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/game\": request timeout"
+time="2026-10-08T17:53:15+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/search?q=racing\": request timeout"
+time="2026-10-08T17:53:15+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/game\": request timeout"
+time="2026-10-08T17:53:15+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:53:15+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:53:15+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:53:15+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:53:15+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/search?q=racing\": request timeout"
+time="2026-10-08T17:53:15+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/sitemap.xml\": request timeout"
+time="2026-10-08T17:53:15+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/game\": request timeout"
+time="2026-10-08T17:53:15+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/search?q=racing\": request timeout"
+time="2026-10-08T17:53:15+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:53:15+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:53:15+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:53:15+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:53:15+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/game\": request timeout"
+time="2026-10-08T17:53:15+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/share/local-kicau-mania\": request timeout"
+time="2026-10-08T17:53:15+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:53:15+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/search?q=racing\": request timeout"
+time="2026-10-08T17:53:15+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:53:15+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+
+running (2m24.7s), 0883/1000 VUs, 314 complete and 0 interrupted iterations
+default ↓ [ 100% ] 1000 VUs  2m0s
+time="2026-10-08T17:53:15+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/share/local-kicau-mania\": request timeout"
+time="2026-10-08T17:53:15+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:53:15+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:53:15+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/search?q=racing\": request timeout"
+time="2026-10-08T17:53:16+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/sitemap.xml\": request timeout"
+time="2026-10-08T17:53:16+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:53:16+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+
+running (2m25.6s), 0883/1000 VUs, 314 complete and 0 interrupted iterations
+default ↓ [ 100% ] 1000 VUs  2m0s
+time="2026-10-08T17:53:17+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/search?q=racing\": request timeout"
+time="2026-10-08T17:53:17+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/share/local-kicau-mania\": request timeout"
+time="2026-10-08T17:53:17+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:53:17+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:53:17+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:53:17+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:53:17+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:53:17+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/search?q=racing\": request timeout"
+time="2026-10-08T17:53:17+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:53:17+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:53:17+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:53:17+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:53:17+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:53:17+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/share/local-kicau-mania\": request timeout"
+time="2026-10-08T17:53:17+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:53:17+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/search?q=racing\": request timeout"
+time="2026-10-08T17:53:17+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:53:17+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/api/games\": request timeout"
+time="2026-10-08T17:53:17+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:53:17+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+time="2026-10-08T17:53:17+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/sitemap.xml\": request timeout"
+
+running (2m26.7s), 0883/1000 VUs, 314 complete and 0 interrupted iterations
+default ↓ [ 100% ] 1000 VUs  2m0s
+time="2026-10-08T17:53:18+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/share/local-kicau-mania\": request timeout"
+time="2026-10-08T17:53:18+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/share/local-kicau-mania\": request timeout"
+time="2026-10-08T17:53:18+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/share/local-kicau-mania\": request timeout"
+time="2026-10-08T17:53:18+07:00" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:51123/play/local-kicau-mania/kicau-mania\": request timeout"
+
+running (2m27.7s), 0872/1000 VUs, 325 complete and 0 interrupted iterations
+default ↓ [ 100% ] 1000 VUs  2m0s
+
+running (2m28.7s), 0864/1000 VUs, 333 complete and 0 interrupted iterations
+default ↓ [ 100% ] 1000 VUs  2m0s
+
+running (2m29.7s), 0851/1000 VUs, 346 complete and 0 interrupted iterations
+default ↓ [ 100% ] 1000 VUs  2m0s
+
+
+  █ THRESHOLDS 
+
+    checks
+    ✗ 'rate>0.99' rate=26.85%
+
+    http_req_failed
+    ✗ 'rate<0.01' rate=73.17%
+
+
+  █ TOTAL RESULTS 
+
+    checks_total.......: 3456   23.03597/s
+    checks_succeeded...: 26.85% 928 out of 3456
+    checks_failed......: 73.14% 2528 out of 3456
+
+    ✗ play returns 200
+      ↳  26% — ✓ 95 / ✗ 260
+    ✗ play content-type matches route
+      ↳  26% — ✓ 95 / ✗ 260
+    ✗ play body non-empty
+      ↳  26% — ✓ 95 / ✗ 260
+    ✗ share returns 200
+      ↳  29% — ✓ 37 / ✗ 88
+    ✗ share content-type matches route
+      ↳  29% — ✓ 37 / ✗ 88
+    ✗ share body non-empty
+      ↳  29% — ✓ 37 / ✗ 88
+    ✗ api_games returns 200
+      ↳  25% — ✓ 98 / ✗ 282
+    ✗ api_games content-type matches route
+      ↳  25% — ✓ 98 / ✗ 282
+    ✗ api_games body non-empty
+      ↳  25% — ✓ 98 / ✗ 282
+    ✗ api_search returns 200
+      ↳  27% — ✓ 49 / ✗ 129
+    ✗ api_search content-type matches route
+      ↳  27% — ✓ 49 / ✗ 129
+    ✗ api_search body non-empty
+      ↳  27% — ✓ 49 / ✗ 129
+    ✗ sitemap returns 200
+      ↳  25% — ✓ 15 / ✗ 44
+    ✗ sitemap content-type matches route
+      ↳  25% — ✓ 15 / ✗ 44
+    ✗ sitemap body non-empty
+      ↳  25% — ✓ 15 / ✗ 44
+    ✗ game returns 200
+      ↳  27% — ✓ 15 / ✗ 40
+    ✗ game content-type matches route
+      ↳  27% — ✓ 15 / ✗ 40
+    ✗ game body non-empty
+      ↳  29% — ✓ 16 / ✗ 39
+
+    CUSTOM
+    route_duration_api_games.......: avg=49.44s min=47.75ms  med=59.96s max=1m0s   p(90)=1m0s  p(95)=1m0s   p(99)=1m0s   count=380 
+    route_duration_api_search......: avg=49.71s min=255.89ms med=59.96s max=1m0s   p(90)=1m0s  p(95)=1m0s   p(99)=1m0s   count=178 
+    route_duration_game............: avg=51.78s min=2.63s    med=59.98s max=1m0s   p(90)=1m0s  p(95)=1m0s   p(99)=1m0s   count=55  
+    route_duration_play............: avg=49.6s  min=68.57ms  med=59.96s max=1m0s   p(90)=1m0s  p(95)=1m0s   p(99)=1m0s   count=355 
+    route_duration_share...........: avg=48.28s min=86.68ms  med=59.98s max=1m0s   p(90)=1m0s  p(95)=1m0s   p(99)=1m0s   count=125 
+    route_duration_sitemap.........: avg=51.25s min=700.3ms  med=59.96s max=1m0s   p(90)=1m0s  p(95)=1m0s   p(99)=1m0s   count=59  
+    route_errors_api_games.........: 74.21% 282 out of 380
+    route_errors_api_search........: 72.47% 129 out of 178
+    route_errors_game..............: 72.72% 40 out of 55
+    route_errors_play..............: 73.23% 260 out of 355
+    route_errors_share.............: 70.39% 88 out of 125
+    route_errors_sitemap...........: 74.57% 44 out of 59
+    status_2xx.....................: 309    2.05964/s
+    status_timeout.................: 843    5.619017/s
+
+    HTTP
+    http_req_duration..............: avg=49.61s min=47.75ms  med=59.97s max=1m0s   p(90)=1m0s  p(95)=1m0s   p(99)=1m0s   count=1152
+      { expected_response:true }...: avg=23.17s min=47.75ms  med=15.46s max=59.76s p(90)=49.1s p(95)=54.06s p(99)=58.63s count=309 
+    http_req_failed................: 73.17% 843 out of 1152
+    http_reqs......................: 1152   7.678657/s
+
+    EXECUTION
+    iteration_duration.............: avg=1m51s  min=1m10s    med=1m41s  max=2m29s  p(90)=2m27s p(95)=2m28s  p(99)=2m29s  count=353 
+    iterations.....................: 353    2.352922/s
+    vus............................: 850    min=850         max=1000
+    vus_max........................: 1000   min=1000        max=1000
+
+    NETWORK
+    data_received..................: 2.8 MB 19 kB/s
+    data_sent......................: 181 kB 1.2 kB/s
+
+
+
+
+running (2m30.0s), 0000/1000 VUs, 353 complete and 844 interrupted iterations
+default ✓ [ 100% ] 1000 VUs  2m0s
+time="2026-10-08T17:53:21+07:00" level=error msg="thresholds on metrics 'checks, http_req_failed' have been crossed"
