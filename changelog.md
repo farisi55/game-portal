@@ -1,7 +1,7 @@
 ---
 project: Gimboot
-knowledge_version: 1.6.3
-changelog_version: 1.0.24
+knowledge_version: 1.6.4
+changelog_version: 1.0.25
 created: 2026-08-28
 status: in_progress
 milestone: 1 of 1
@@ -45,19 +45,6 @@ simple_mode: false
 > `prd.md` diperbarui ke v1.6.0 (§3.1, §3.2, §4.1, §4.2, §5 baru, §8, §9, §10), lalu v1.6.1 setelah poin 9 dikonfirmasi final; `knowledge.md` ke v1.6.0 lalu v1.6.1 (§2, §3, §7, §9).
 
 ## [IN PROGRESS]
-### Task #017 — Validate Preview-Deployment Staging Flow & Document Canary Procedure
-- **Phase:** Phase 7 — Deployment
-- **Scope:** Confirm the preview-deployment mechanism works as a staging gate, and document the staged-rollout procedure that becomes mandatory once traffic nears the 10.000-concurrent threshold. [DIJAWAB 2026-08-30] Mekanisme dikonfirmasi developer: **Cloudflare Workers Builds** (bukan "Cloudflare Pages Preview Deployments" seperti draf sebelumnya) — preview deployment mengikuti mekanisme bawaan Workers Builds.
-- **Files to create / modify:** `docs/deployment-runbook.md`
-- **Acceptance criteria:**
-  - [ ] A test branch produces a working preview URL distinct from production, smoke-tested manually
-  - [ ] The runbook documents the trigger point (~70–80% dari 10.000 pengguna serentak) and the steps for a staged/canary rollout once reached
-- **Dependencies:** none
-- **Decisions made:** Belum dieksekusi — isi setelah task selesai.
-
-## [NEXT TASKS]
-
-### Phase 7 — Deployment (Server variant)
 ### Task #018 — Verify Version Tagging & Rollback Procedure
 - **Phase:** Phase 7 — Deployment
 - **Scope:** Confirm the semver tagging convention is applied and that rolling back to a previous version completes within 10 minutes. [AUDIT KODE — KOREKSI, diverifikasi ke dokumentasi Cloudflare terkini] Draf sebelumnya menyebut "redeploying a previous tag via Cloudflare Pages dashboard" — untuk Worker, mekanismenya adalah `wrangler rollback` (CLI) atau Cloudflare dashboard: Workers & Pages → pilih Worker → tab Deployments → menu titik-tiga pada versi tujuan → Rollback.
@@ -68,6 +55,9 @@ simple_mode: false
 - **Dependencies:** none
 - **Decisions made:** Belum dieksekusi — isi setelah task selesai.
 
+## [NEXT TASKS]
+
+### Phase 7 — Deployment (Server variant)
 ### Task #019 — Generate & Verify API Documentation
 - **Phase:** Phase 7 — Deployment
 - **Scope:** Produce an OpenAPI-style `docs/api.yaml` for the existing routes and confirm it matches the running server's actual behavior. [AUDIT KODE] Cakupan bertambah dari 3 menjadi hingga 6 rute (lihat @knowledge §5 terbaru): `GET /api/games`, `GET /api/search`, `GET /share/:id`, `GET /play/:id/:slug`, `GET /game`, `GET /sitemap.xml` — tiga terakhir sebelumnya tidak tercatat sama sekali.
@@ -991,9 +981,33 @@ Satu Cloudflare Worker dengan static assets (`src/index.js`) menangani seluruh r
 - **Notes:** One intermediate capacity run with the identical final configuration collapsed (73% timeouts, ~4 rps served) and is preserved as `capacity-attempt2-failed.txt`; it did not reproduce — a 10s probe, the subsequent full run, and the final post-upgrade confirmation run all passed with bounded memory, with no load-profile code change in between. Absolute latencies describe the local single-isolate stack, not the Cloudflare edge; the production dashboard memory/CPU check remains a manual follow-up (same pattern as Tasks #015/#020). **Backward conflict:** `.assetsignore` was previously modified by Task #004/#015 — this task appends `loadtest/`; no semantic conflict (the file is a cumulative exclusion list).
 - **Knowledge drift:** RESOLVED — @knowledge bumped to v1.6.3: §2 (k6 tooling entry, sharp override/wrangler bump), §3 folder tree (+`loadtest/`), §3 key-architectural-decision 6 ("belum diuji beban" → load-tested, points to `loadtest/RESULTS.md`).
 
+### Task #017 — Validate Preview-Deployment Staging Flow & Document Canary Procedure ✅
+- **Completed:** 2026-10-09
+- **Phase:** Phase 7 — Deployment
+- **Status:** OK
+- **Branch:** feat/task-017-preview-staging-flow
+- **Files created / modified:**
+  - `docs/deployment-runbook.md` — new: environments table (prod / preview / local), Workers Builds preview mechanism (incl. observed *Enable Preview Builds* state and every way to obtain a Preview URL), staging-gate procedure, trigger point (~70–80% of 10.000 = 7.000–8.000 concurrent) with detection signals, staged/canary rollout (`wrangler versions upload` → 10% → 50% → 100% with observe/abort/rollback criteria), rollback + monitoring sections, validation log with smoke evidence
+  - `wrangler.toml` — added empty `[previews]` block (hard prerequisite of `npx wrangler preview`; no production deploy behavior change)
+  - `knowledge.md` — v1.6.4: §8 multi-environment (preview flow validated + observed state) & canary line (now points at the runbook)
+- **Acceptance criteria met:**
+  - [x] A test branch produces a working preview URL distinct from production, smoke-tested manually — branch `feat/task-017-preview-staging-flow` → Preview URL `https://feat-task-017-preview-staging-flow-games.farisi55.workers.dev` (stable, branch-named) + Unique Deployment URL `https://2174b419-games.farisi55.workers.dev`. Manual smoke: `GET /` 200, `GET /api/health` 200 `{"status":"ok","version":"1.0.4",...}`, `GET /api/games?limit=1` 200, `GET /game.html` 301 → `/game` (host-relative, identical behavior to production). Distinct from production: separate hostname + different served body (preview sha256 `feb8fb68…` serves the `dev`-based branch build vs production `8a1d2d74…` on `main` @ `770e907`); production remained healthy throughout (`/api/health` ok, `/` 200)
+  - [x] The runbook documents the trigger point (~70–80% dari 10.000 pengguna serentak) and the steps for a staged/canary rollout once reached — `docs/deployment-runbook.md` §4 (trigger point 7.000–8.000 concurrent + detection signals incl. Task #016 baselines) and §5 (version upload, 10% → 50% → 100% traffic split via `wrangler versions deploy <id>@pct -y`, per-stage observation criteria, abort → `wrangler rollback`, post-rollout verification)
+- **Security gate:** FULL — all checks passed — no code/runtime change (one docs file + empty config block; `docs/` already excluded from static assets); simple_mode: 4 items skipped
+- **Scalability gate:** FULL — all checks passed — no code/runtime change; the scaling concern is addressed procedurally (mandatory canary trigger point 7.000–8.000 concurrent, load-test-based detection signals); simple_mode: 4 items skipped
+- **Regression:** Passed 165 unit tests; lint clean; `npm run build` passes with 0 vulnerabilities (pre-commit hook re-ran the full chain)
+- **Decisions made:**
+  - [ARCH] The staging gate is the Workers Builds preview mechanism, but *Enable Preview Builds* (dashboard → Settings → Build → Branch control) is **OFF** for this project — observed: two pushes to the test branch (one empty branch creation, one content commit) produced no `Workers Builds: games` check run over ~7 minutes, matching the historical zero-check-run pattern on every non-`main` push, while the `main` production build check run exists (success, 2026-09-24). The runbook therefore documents BOTH paths: automatic check-run/PR-comment URL once the checkbox is enabled, and the manual `npx wrangler preview` run from the branch checkout — which is what produced and validated the Preview URL for this task.
+  - [CONFIG] Empty `[previews]` block added to `wrangler.toml`: `wrangler preview` refuses to run without it ("Your Wrangler configuration is missing a `previews` block"); the block may be empty, assets/compatibility/migrations stay top-level, and it does not alter production deploy behavior.
+  - [INFRA] `wrangler login` (OAuth) re-authenticated this session, enabling read-only API verification of the deployment state: account subdomain `farisi55`, `workers_dev` enabled, `previews_enabled: true`, latest production deployment 2026-09-24 from the `main` Workers Builds run. The Builds triggers API itself requires a token with Workers Builds Configuration permission (403 with the wrangler OAuth token), so enabling the preview-builds toggle remains a dashboard action.
+  - [DOCS] Canary mechanics documented as `npx wrangler versions upload` (create, no traffic) + `npx wrangler versions deploy <new>@10% <current>@90% -y` → 50/50 → `@100%`, abort via `npx wrangler rollback <version-id>` — verified against current wrangler 4.148 command reference; rollback verification itself is Task #018's acceptance.
+- **Notes:** Optional manual follow-up (same pattern as Tasks #015/#020): flip *Enable Preview Builds* in Branch control for push-to-preview automation; the documented manual path works regardless. **Finding (out of scope, NOT fixed here):** production currently serves `coverage/index.html` and `/.gitignore` with HTTP 200 — `.assetsignore` lists neither (`coverage/`, `.gitignore`, `.vscode/`, `.freebuff/`, `*.test.js` are absent); candidate for a future asset-hygiene/security task. **Backward conflict:** none — first task to create `docs/deployment-runbook.md` (`docs/` was already excluded from assets by Task #015, no `.assetsignore` change needed).
+- **Knowledge drift:** RESOLVED — @knowledge bumped to v1.6.4: §8 multi-environment (preview flow validated 2026-10-09: Preview URL smoke-tested, `[previews]` block added, *Enable Preview Builds* observed OFF → manual path documented) & §8 canary line (now references `docs/deployment-runbook.md` §4–§5 for the trigger point and rollout steps).
+
 > v1.0.17 (2026-09-09): Task #021 completed — canonicalize game deep-link URL variants for GSC "Di-crawl - saat ini tidak diindeks" fix. `/game.html?id=X` and `/game?id=X` now redirect to `/play/:id/:slug` in single 301. `canonicalGameUrl()` updated to point to `/play/:id/:slug` for LOCAL_GAMES. 2 new unit tests. 157 tests pass, lint clean, build passes. Task #012 promoted to [IN PROGRESS].
 > v1.0.18 (2026-09-09): Task #012 completed — harden client-side search rendering against reflected XSS. Code review confirmed all rendering uses `textContent` and DOM property assignments. Created `js/catalog.test.js` with 5 XSS-focused unit tests. 162 tests pass, lint clean, build passes. Task #013 promoted to [IN PROGRESS].
 > v1.0.21 (2026-09-23): Task #013 completed — verify test suite coverage & CI pass/fail visibility. Added `npm test` to build script for visible CI output. Fixed 4 high-severity CVEs via `npm audit fix`. 162 tests pass, lint clean, `npm run build` passes with 0 vulnerabilities. Task #014 promoted to [IN PROGRESS].
 > v1.0.22 (2026-09-24): Task #015 completed — End-to-End Smoke Test: Catalog → Play → Record → Share. Playwright E2E suite added (`e2e/full-flow.test.js` + `vitest.e2e.config.js`); `@playwright/test@1.62.0` added to devDependencies. `src/index.js` http→https 301 now gated on `isLoopbackHost()` (loopback excluded — wrangler dev serves a self-signed cert). `games/shared/ui-share.js` share text targets `/play/<canonical-id>/<slug>`; inline `<style>` fallback removed (blocked by strict CSP). 165 unit tests + 3 E2E tests pass, lint clean, build passes. Task #016 promoted to [IN PROGRESS].
 > v1.0.24 (2026-10-08): Task #016 completed — Two-Stage Load Test on `src/index.js` routes. k6 suite added under `loadtest/` (gimboot.js scenario script, run.mjs orchestrator via unstable_dev, README, RESULTS, raw results incl. preserved failure records). All three stages PASS on wrangler 4.148.0/workerd 1.20261006.1: smoke 580 req/0 errors; capacity 1.000 VU/120s p95 222 ms, p99 338 ms, 0.00% errors, workerd RSS 185→497 MB (bounded); cache-cold herd 40 VU window p95 4.28 s, 0 errors. Security + Scalability gates FULL. 7 pre-existing high CVEs fixed for the build gate (`npm audit fix` + `overrides: sharp 0.35.5` — miniflare pins sharp exactly). 165 tests pass, lint clean, build passes with 0 vulnerabilities. @knowledge v1.6.3 (§2, §3 + loadtest/). Task #017 promoted to [IN PROGRESS].
+> v1.0.25 (2026-10-09): Task #017 completed — Validate Preview-Deployment Staging Flow & Document Canary Procedure. `docs/deployment-runbook.md` created (environments, Workers Builds preview mechanism + staging-gate procedure, trigger point 7.000–8.000 concurrent = ~70–80% of 10.000, canary rollout 10%→50%→100% with abort/rollback, validation log). Preview URL from test branch `feat/task-017-preview-staging-flow` produced and smoke-tested (`/` 200, `/api/health` ok, `/game.html` 301→`/game`, body distinct from production); *Enable Preview Builds* observed OFF (no check run after two pushes) → manual `npx wrangler preview` path documented; `wrangler.toml` += empty `[previews]` block. Security + Scalability gates FULL. 165 tests pass, lint clean, build passes with 0 vulnerabilities. @knowledge v1.6.4 (§8). Task #018 promoted to [IN PROGRESS].
 
