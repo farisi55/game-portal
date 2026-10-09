@@ -17,3 +17,7 @@ directory = "."
 binding = "ASSETS"
 not_found_handling = "single-page-application"
 run_worker_first = [ "/*" ]
+
+# Required by `npx wrangler preview` (staging-preview mechanism, Task #017).
+# The block may be empty; it does not change production deploy behavior.
+[previews]

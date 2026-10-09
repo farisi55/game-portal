@@ -11,7 +11,7 @@
 | Environment | Trigger | URL | Notes |
 | --- | --- | --- | --- |
 | Production | push/merge to `main` (Workers Builds production branch) | `https://games.farisi55.workers.dev` | Serves all real traffic |
-| Staging (preview) | push to any **non-`main`** branch (preview builds) | `https://<version-prefix>-games.farisi55.workers.dev` (Preview URL) | Isolated deployment per branch/version, never receives production traffic |
+| Staging (preview) | any **non-`main`** branch: `npx wrangler preview` from the branch (or automatic preview builds when *Enable Preview Builds* is on) | `https://<version-prefix>-games.farisi55.workers.dev` (Preview URL) | Isolated deployment per branch/version, never receives production traffic |
 | Local | `npx wrangler dev` | `http://localhost:8787` | Full Worker runtime locally |
 
 Worker account facts (verified via Cloudflare API, 2026-10-09):
@@ -48,8 +48,11 @@ Ways to obtain the Preview URL after a branch push:
 
 1. Create a branch from `dev` (naming: `feat/task-NNN-…` or `staging/…`). Never push feature work directly to `main`.
 2. Push the branch: `git push -u origin <branch>`.
-3. Wait for the `Workers Builds: games` check run on the pushed commit to turn green (<https://github.com/farisi55/game-portal/actions> or the commit's checks tab).
-4. Fetch the Preview URL (Section 2) and smoke-test it manually:
+3. Ensure a Preview exists for the branch:
+   - If the *Enable Preview Builds* checkbox is on: wait for the `Workers Builds: games` check run on the pushed commit to turn green and take the Preview URL from the check run / PR comment.
+   - If no check run appears (preview builds off — state observed 2026-10-09): create it from the branch checkout:
+     `npx wrangler preview` → prints `Preview URL: https://<branch>-games.farisi55.workers.dev`
+4. Smoke-test the Preview URL manually:
 
    ```bash
    curl -s https://<preview-host>/api/health     # expect {"status":"ok",...}
@@ -134,4 +137,29 @@ Full rollback runbook: `changelog.md` Task #018 (upcoming — README "Rolling ba
 
 ## 6. Validation log (Task #017)
 
-Filled in by the task execution; see `changelog.md` Task #017 entry for the recorded evidence (branch, commit, check run, Preview URL, smoke responses).
+- **Date:** 2026-10-09
+- **Test branch:** `feat/task-017-preview-staging-flow` (from `dev` @ `c104497`; content commit `6e09d6d` pushed twice)
+- **Automated preview-build state:** after both pushes no `Workers Builds: games` check run appeared (observed over ~7 minutes) → **Enable Preview Builds is OFF** for this project (dashboard → Worker → Settings → Build → Branch control). Production builds on `main` are unaffected (last production check run: success, 2026-09-24). Until the checkbox is enabled, Section 3 step 3 uses the manual CLI path.
+- **Preview created from the test branch:**
+
+  ```text
+  $ npx wrangler preview
+  Preview: feat/task-017-preview-staging-flow (updated)
+  Preview URL: https://feat-task-017-preview-staging-flow-games.farisi55.workers.dev
+  Unique Deployment URL: https://2174b419-games.farisi55.workers.dev
+  ```
+
+  `wrangler preview` requires the `[previews]` block in `wrangler.toml` (added by this task; empty block, no production deploy behavior change).
+
+- **Manual smoke results:**
+
+| Check | Preview | Production |
+| --- | --- | --- |
+| `GET /` | 200 | 200 |
+| `GET /api/health` | 200 `{"status":"ok","version":"1.0.4","timestamp":"2026-10-09T07:17:37.872Z"}` | 200 `{"status":"ok","version":"1.0.4",...}` |
+| `GET /api/games?limit=1` | 200 | 200 |
+| `GET /game.html` | 301 → `…/game` (host-relative) | 301 → `…/game` (host-relative) |
+| `GET /` body sha256 | `feb8fb68…` (branch build) | `8a1d2d74…` (main build) — **distinct** |
+
+- **Result: PASS** — the test branch produced a working preview URL distinct from production and was smoke-tested manually. Distinctness is proven by the separate hostname and the different served body: the preview serves the `dev`-based branch build (worker code newer than production, whose active deployment builds `main` @ `770e907`).
+- **Follow-up (optional, dashboard):** enable *Enable Preview Builds* in Branch control so every non-`main` push builds automatically and posts the Preview URL (check run + PR comment); the manual `npx wrangler preview` path above remains valid either way.
