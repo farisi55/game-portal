@@ -1,7 +1,7 @@
 ---
 project: Gimboot
-knowledge_version: 1.6.5
-changelog_version: 1.0.27
+knowledge_version: 1.6.6
+changelog_version: 1.0.28
 created: 2026-08-28
 status: in_progress
 milestone: 1 of 1
@@ -1256,6 +1256,134 @@ Satu Cloudflare Worker dengan static assets (`src/index.js`) menangani seluruh r
   - Tanpa konflik backward/forward: `docs/api.yaml` baru milik task ini; tak ada task lain yang menyentuhnya (scan NEXT: tidak ada)
 - **Knowledge drift:** UPDATE REQUIRED: @knowledge §5 — 3 koreksi (1) endpoint pattern: `/api/games`/`/api/search` = feed eksternal saja + penambahan `/api/health`, (2) error format `{ code, message }` → `{ error: string }`, (3) pagination "tidak eksplisit" → eksplisit `page`/`limit` + objek `{ games, pagination }` — dan @knowledge §8 — health endpoint "disarankan, belum diimplementasikan" → sudah diimplementasikan (Task #003); **semua sudah diedit pada task ini**: knowledge v1.6.4 → **v1.6.5**, `knowledge_version` changelog disinkronkan ke 1.6.5. Drift ditemukan saat mencocokkan spec ke §5 — pemicu: API contract ≠ dokumentasi (bukan perubahan kode; kode tidak diubah task ini)
 
+### Task #023 — External Security Scan Findings Remediation (app.pentest-tools.com) ✅
+- **Completed:** 2026-10-09
+- **Phase:** Unlisted — ad-hoc (permintaan langsung developer di luar urutan 22 task P04 asli)
+- **Status:** OK
+- **Branch:** feat/task-023-pentest-scan-remediation
+- **Files created / modified:**
+  - `knowledge.md` — v1.6.5 → **v1.6.6**: §8 += baris "Security scan monitoring" (hasil scan, kebijakan disposition, catatan drift header zone)
+  - `changelog.md` — entry ini (bump 1.0.27 → 1.0.28, `knowledge_version` sinkron 1.6.6)
+  - `src/index.js`/aset — **tidak diubah sama sekali** (lihat disposition di bawah; tanpa deploy)
+- **Acceptance criteria met:**
+  - [x] Kedua temuan scan **45403422** ("Website Scanner" app.pentest-tools.com vs `https://gimboot.com/`, 2026-10-09 17:42 GMT+7, durasi 11 dtk, ringkasan 0 critical / 0 high / 0 medium / **2 low**) diselidiki satu per satu terhadap live target dan terdokumentasi — 2/2
+  - [x] Temuan #1 `WEBSCAN-00-0000001` "Server software and technology found" (CWE-200, OWASP A02:2021, vector `AV:N/AC:L/PR:N/UI:N/S:U/C:L/I:N/A:N`): tiap item bukti (HTTP/3, Open Graph, PWA, Cloudflare, HSTS) ditelusuri ke sumbernya dan didisposisi eksplisit; diverifikasi pula bahwa tak ada disclosure tambahan di bawah kendali kami (0 `X-Powered-By`, 0 `<meta name="generator">`, `Server: cloudflare` tanpa versi — grep HTML + dump header live)
+  - [x] Temuan #2 `WEBSCAN-00-0000006` "Robots.txt file found" (OWASP A06:2021): isi `https://gimboot.com/robots.txt` (64 byte, = file repo) ditinjau vs rekomendasi "remove entries leading to sensitive locations" — isi hanya `User-agent: *` + `Allow: /` + `Sitemap: https://gimboot.com/sitemap.xml`, **0 path sensitif** → review PASS tanpa perubahan
+  - [x] Perubahan tercatat di `changelog.md` (entry ini, v1.0.28) dan `knowledge.md` (§8, v1.6.6) — permintaan developer
+- **Security gate:** FULL — all checks passed (simple_mode: false → **0 items skipped**; item N/A per bentuk proyek ditandai eksplisit)
+  - BASIC (13/13):
+    - [x] 1. No secrets hardcoded — ✓ dua file dokumen saja, bebas rahasia
+    - [x] 2. Sensitive config via env/secure config saja — N/A (tanpa kode/secret baru)
+    - [x] 3. Tanpa eval()/exec() dengan input eksternal — N/A (tanpa perubahan kode)
+    - [x] 4. Error message tanpa stack trace/path internal — ✓ N/A (tidak ada kode error baru)
+    - [x] 5. Debug mode OFF non-local — N/A (tanpa kode; prod diverifikasi sedia kala)
+    - [x] 6. CORS whitelist origin tepercaya — ✓ tak disentuh; `*` sah utk endpoint publik read-only (§5/§9)
+    - [x] 7. `.gitignore` memuat `.env`, `*.pem`, `*.key`, `*.p12` — ✓ (Task #001, tak berubah)
+    - [x] 8. Tanpa default admin credentials/backdoor — N/A (tanpa auth surface)
+    - [x] 9. Pre-commit hook aktif — ✓ `.husky/pre-commit` (lint+test+build) berjalan pada commit task ini
+    - [x] 10. CI/CD: tanpa shell debug-tracing berisi secret; secrets masked — ✓ tak tersentuh
+    - [x] 11. Third-party CI actions pinned SHA — N/A (tanpa `.github/workflows`)
+    - [x] 12. Branch protection main/production — ✓ rule `main` aktif (dikonfirmasi dashboard 2026-10-09, Task #018/#019); task ini hanya menyentuh `dev`
+    - [x] 13. Container: tanpa `ARG` secret di Dockerfile — N/A (tanpa Dockerfile)
+  - STANDARD (24/24):
+    - [x] 1. Validasi/sanitasi input eksternal — N/A (tanpa kode/endpoint baru; dokumentasi murni)
+    - [x] 2. Regex input bebas catastrophic backtracking — N/A (tanpa regex baru)
+    - [x] 3. Body size limit; upload size + magic-bytes — N/A (tanpa endpoint body/upload)
+    - [x] 4. Auth pada tiap route terlindungi — N/A (tanpa auth; seluruh rute publik read-only)
+    - [x] 5. Authz di layer service (IDOR) — N/A (tanpa resource/data user)
+    - [x] 6. Admin route: role check + namespace + audit log — N/A (tanpa admin route)
+    - [x] 7. DB parameterized/ORM — N/A (tanpa DB)
+    - [x] 8. File path canonicalized — N/A (tanpa operasi path baru)
+    - [x] 9. PII tidak di-log — ✓ tanpa logging baru; temuan scan tidak memuat PII
+    - [x] 10. Konten user di-log di-escape (log injection) — N/A (tanpa log baru; 0 `console.log` di src/index.js)
+    - [x] 11. Output HTML di-escape — N/A (tanpa perubahan template; escaping jalur dinamis diverifikasi #010)
+    - [x] 12. Field sensitif di-mask di UI — N/A (tanpa perubahan UI)
+    - [x] 13. Redirect divalidasi vs allowlist — ✓ tak disentuh (jalur redirect diverifikasi #019 live)
+    - [x] 14. Brute-force protection — ✓ tak berubah; rate limiter 100 req/60s/IP (src/index.js:35-36) tetap utuh
+    - [x] 15. Password vs HIBP — N/A (tanpa password)
+    - [x] 16. Password reset token — N/A (tanpa reset)
+    - [x] 17. Access token short-lived/refresh rotation — N/A (tanpa token)
+    - [x] 18. Session regeneration setelah login — N/A (tanpa login)
+    - [x] 19. Logout invalidate server-side — N/A (tanpa logout)
+    - [x] 20. Set-Cookie HttpOnly/Secure/SameSite — N/A (tanpa cookie)
+    - [x] 21. Secure storage mobile/desktop — N/A (web app tanpa storage kredensial)
+    - [x] 22. HTTP method override disabled — ✓ tak disentuh (dispatch biasa, src/index.js)
+    - [x] 23. Content-Type divalidasi sebelum body — N/A (tanpa endpoint pembaca body)
+    - [x] 24. Perubahan skema API hanya additive — N/A (tanpa perubahan endpoint/skema)
+  - FULL (22/22):
+    - [x] 1. Rate limit per-IP utk endpoint tak-terautentikasi (skip simple_mode) — ✓ 100 req/60s/IP tak berubah; simple_mode=false → tidak diskip
+    - [x] 2. Rate limit per-user/API-key shared-store (skip jika simple+single) — N/A (tanpa auth/key)
+    - [x] 3. Infra-level rate limiting dikonfigurasi (skip simple_mode) — ✓ edge Cloudflare + in-worker limiter tak tersentuh; simple_mode=false
+    - [x] 4. CSRF utk operasi state-changing (skip jika auth via header) — N/A (semua route GET read-only)
+    - [x] 5. Security headers HSTS/XFO/XCTO/Referrer/Permissions — ✓ **justru objek riset task ini**: kelima header terverifikasi live di `gimboot.com` (17:50 GMT+7) — HSTS `max-age=15552000; includeSubDomains` (nilai zone) + XFO `DENY`, pada workers.dev nilai kode `31536000; includeSubDomains; preload` + `SAMEORIGIN` — keduanya aktif & aman; **diputuskan TIDAK dihapus** (lihat Decision D1)
+    - [x] 6. CSP tanpa `unsafe-inline`/`unsafe-eval` — ✓ nonce + `strict-dynamic` terverifikasi live di `gimboot.com` (sama dengan workers.dev) — tak diubah
+    - [x] 7. Perbandingan secret constant-time — N/A (tanpa pembanding secret)
+    - [x] 8. JWT alg pinned — N/A (tanpa JWT)
+    - [x] 9. CVE scan 0 high/critical — ✓ `npm audit --audit-level=high` 0 vulnerabilities (gerbang build saat commit)
+    - [x] 10. Lockfile pins dependency; CI clean-install — ✓ `package-lock.json` tak berubah
+    - [x] 11. API response hanya field perlu; mass-assignment — N/A (tanpa endpoint write/baru)
+    - [x] 12. Price/total server-side — N/A (tanpa pembayaran)
+    - [x] 13. Payment entitlement server-to-server — N/A (tanpa pembayaran)
+    - [x] 14. Data sensitif terenkripsi at rest — N/A (stateless, tanpa data sensitif)
+    - [x] 15. MFA utk admin/payment [DECISION NEEDED jika unnamed] — N/A (tanpa admin/payment)
+    - [x] 16. SSRF prevention — ✓ tak ada outbound fetch baru; URL pada dokumen = live target milik sendiri + contoh
+    - [x] 17. LLM calls isolation — N/A (tanpa LLM)
+    - [x] 18. XML XXE disabled — N/A (tanpa parser XML baru; `/sitemap.xml` output-only)
+    - [x] 19. CDN assets SRI — N/A (aset first-party self-hosted)
+    - [x] 20. Production build tanpa source map publik — ✓ `git ls-files "*.map"` = 0 file (tak berubah)
+    - [x] 21. Error tracking scrub PII/secret — ✓ tanpa error-tracker pihak ketiga (knowledge:159); tak tersentuh
+    - [x] 22. Webhook/OTA signature constant-time + timestamp — N/A (tanpa webhook/OTA)
+- **Scalability gate:** FULL — all checks passed (simple_mode: false → **0 items skipped**; item N/A per bentuk proyek ditandai eksplisit)
+  - BASIC (7/7):
+    - [x] 1. Tanpa blocking sync di async handler — N/A (tanpa perubahan kode server)
+    - [x] 2. Tanpa hardcoded pool size/timeout/batch limit tanpa justifikasi — ✓ tak ada konstanta baru
+    - [x] 3. DB connection pool — N/A (tanpa DB)
+    - [x] 4. Explicit timeout I/O eksternal — ✓ `fetchWithTimeout(…, 5000)` (src/index.js:76) tak berubah
+    - [x] 5. Tanpa mutable state global antar-request — ✓ stateless; tak tersentuh
+    - [x] 6. Correlation ID di entry point — ✓ `x-request-id` UUID terverifikasi live di `gimboot.com` (dari probe temuan #1)
+    - [x] 7. Structured logger async non-blocking — ✓ Workers Logs ERROR/WARN tak berubah
+  - STANDARD (12/12):
+    - [x] 1. Validasi murah sebelum operasi mahal — N/A (tanpa kode)
+    - [x] 2. Token-revocation lookup <1ms — N/A (tanpa token)
+    - [x] 3. Query plan check — N/A (tanpa query)
+    - [x] 4. Tanpa N+1 query — N/A (tanpa query)
+    - [x] 5. Authz reuses data fetched — N/A (tanpa authz)
+    - [x] 6. Pagination di layer server — ✓ tak disentuh (diverifikasi #019)
+    - [x] 7. Semua I/O async non-blocking — N/A (tanpa I/O baru; probe = curl eksternal)
+    - [x] 8. Tanpa akumulasi memori tak-terbatas — ✓ stateless; dokumen statis
+    - [x] 9. Soft-delete — N/A (tanpa data persisten)
+    - [x] 10. Transaksi multi-tabel — N/A (tanpa DB)
+    - [x] 11. Migrations non-blocking — N/A (tanpa DB)
+    - [x] 12. GraphQL limits — N/A (REST saja)
+  - FULL (16/16):
+    - [x] 1. Caching implemented+tested (skip simple_mode) — ✓ tak berubah; probe menunjukkan cache jalan (`CF-Cache-Status: HIT` utk `/`, MISS utk `robots.txt`); simple_mode=false
+    - [x] 2. DB pooling verified — N/A (tanpa DB)
+    - [x] 3. Stateless: tanpa state in-process — ✓ tak tersentuh
+    - [x] 4. Operasi panjang → background job — N/A (tanpa operasi panjang)
+    - [x] 5. Resource dilepas saat selesai/error — ✓ tak tersentuh (semua response di-return eksplisit)
+    - [x] 6. Outbound HTTP explicit timeout — ✓ 5000ms (src/index.js:76) tak berubah
+    - [x] 7. Circuit breaker/fallback per integrasi (skip simple_mode) — ✓ feed fallback tak tersentuh; simple_mode=false
+    - [x] 8. Queue depth bounded/backpressure — N/A (tanpa queue)
+    - [x] 9. Infra rate limiting edge/WAF (skip simple_mode) — ✓ Cloudflare edge + in-worker limiter tak berubah; simple_mode=false
+    - [x] 10. API Gateway utk high_scale non-microservices — N/A (satu service monolitik tanpa JWT/OAuth)
+    - [x] 11. Horizontal autoscaling — ✓ platform-managed; tanpa deploy pada task ini (docs-only)
+    - [x] 12. Idempotency key utk retryable API — ✓ seluruh route GET read-only idempoten by design
+    - [x] 13. Health endpoints per §8 — ✓ `/api/health` tak tersentuh (belum dipanggil ulang task ini — tidak ada perubahan kode yang perlu diverifikasi)
+    - [x] 14. Load baseline Stage1 smoke wajib (Server) — ✓ baseline #016 berlaku; task ini tidak mengubah runtime (0 perubahan performa)
+    - [x] 15. Static-Hosting: Core Web Vitals — N/A (project_shape: fullstack / Server variant)
+    - [x] 16. App-Store/Installer: staged rollout — N/A (bukan app store/installer)
+- **Regression:** Passed 165 unit tests; lint clean; `npm audit --audit-level=high` 0 vulnerabilities (pre-commit hook penuh pada commit task ini)
+- **Decisions made:**
+  - [SEC] **D1 — temuan #1 di-risk-accept, tanpa perubahan kode**: kelima item bukti bukan disclosure yang bisa/pantas dihapus — `Server: cloudflare` + `CF-RAY` + `alt-svc h3` (HTTP/3) = header platform yang di-inject edge Cloudflare setelah Worker (mustahil dihapus tanpa meninggalkan Cloudflare, dan tidak memuat versi software apa pun); **HSTS** = header keamanan yang disengaja (menghapus = regresi keamanan murni demi memuaskan scanner); **Open Graph** = fitur produk inti (kartu share `/share`+`/play`, PRD §5); **PWA** (`manifest.json`) = fitur inti (installable PWA). Sisa disclosure di bawah kendali kami = nol (tanpa `X-Powered-By`, tanpa meta generator, tanpa versi di `Server`) → mitigasi "remove identifying information" sudah terpenuhi secara intrinsik; saran scanner bersifat generik dan sengaja tidak diikuti secara buta
+  - [SEC] **D2 — temuan #2: `robots.txt` dipertahankan apa adanya** (`Allow: /` + `Sitemap`): review membuktikan 0 path sensitif diarahkan; menghapus file justru merusak discovery sitemap/SEO (Phase 8), dan menambah `Disallow` fiktif hanya menimbulkan kesan ada rute tersembunyi padahal tidak ada
+  - [OPS] **D3 — drift header `gimboot.com` (custom domain) vs `games.farisi55.workers.dev` dicatat tanpa aksi**: `HSTS max-age=15552000` (tanpa `preload`) + `XFO: DENY` + `Speculation-Rules: "/cdn-cgi/speculation"` vs nilai kode `31536000; includeSubDomains; preload` + `SAMEORIGIN` (tanpa Speculation-Rules). Bukti drift BUKAN dari kode: `git log -S "15552000"` = 0 hasil di seluruh history (`31536000`/`SAMEORIGIN` ada di c54d1b7/caf9859/9730629), dan `functions/*` (jalur Pages Functions) tidak memuat kode header apa pun → drift dari level zone Cloudflare (setting zone HSTS/managed transform). Kedua sisi aman (`DENY` ≥ `SAMEORIGIN`) → tanpa aksi; API zone `GET /zones?name=gimboot.com` = **403 code 9109 "Invalid access token"** (token OAuth wrangler tanpa scope zone-read — pola 403 yang sama dengan alerting/GitHub API sebelumnya) → verifikasi nilai zone hanya via dashboard bila suatu saat ada nilai yang melemah
+- **Notes:**
+  - Scan hanya menjalankan 2 test (technology + robots.txt) — temuan terkait yang SUDAH diketahui sebelumnya namun di luar cakupan scan ini tetap dilacak terpisah: `coverage/index.html` & `/.gitignore` tersaji publik (catatan Task #017, kandidat task hygiene/`.assetsignore`)
+  - Forward conflict: Task #022 (in progress) juga mencantumkan `knowledge.md` sebagai file "sudah diperbarui… kecuali ada temuan baru" — baris §8 task ini TERMASUK "temuan baru" tersebut; overlap dokumen saja, tidak ada perubahan fakta §5/§3 yang disentuh #022
+  - Docs-only → production tidak berubah oleh task ini (tanpa deploy); disposition "no code change" pada temuan #1/#2 memang hasil investigasi, bukan pekerjaan yang tertunda
+  - [NEXT TASKS] tidak dipromosikan apa pun (task ini ad-hoc, tidak ada di antrian); Task #022 tetap satu-satunya [IN PROGRESS]
+- **Knowledge drift:** UPDATE REQUIRED: @knowledge §8 — baris monitoring keamanan belum ada (scan eksternal belum pernah tercatat); **diedit pada task ini**: §8 += "Security scan monitoring" (tool app.pentest-tools.com, scan terakhir 45403422 + hasil 0/0/0/2, kebijakan disposition 4 poin a–d, catatan drift header zone + 403 API zone) — knowledge v1.6.5 → **v1.6.6**, `knowledge_version` changelog disinkronkan ke 1.6.6. Pemicu: developer meminta temuan scan dicatat di changelog DAN knowledge
+
 > v1.0.17 (2026-09-09): Task #021 completed — canonicalize game deep-link URL variants for GSC "Di-crawl - saat ini tidak diindeks" fix. `/game.html?id=X` and `/game?id=X` now redirect to `/play/:id/:slug` in single 301. `canonicalGameUrl()` updated to point to `/play/:id/:slug` for LOCAL_GAMES. 2 new unit tests. 157 tests pass, lint clean, build passes. Task #012 promoted to [IN PROGRESS].
 > v1.0.18 (2026-09-09): Task #012 completed — harden client-side search rendering against reflected XSS. Code review confirmed all rendering uses `textContent` and DOM property assignments. Created `js/catalog.test.js` with 5 XSS-focused unit tests. 162 tests pass, lint clean, build passes. Task #013 promoted to [IN PROGRESS].
 > v1.0.21 (2026-09-23): Task #013 completed — verify test suite coverage & CI pass/fail visibility. Added `npm test` to build script for visible CI output. Fixed 4 high-severity CVEs via `npm audit fix`. 162 tests pass, lint clean, `npm run build` passes with 0 vulnerabilities. Task #014 promoted to [IN PROGRESS].
@@ -1264,4 +1392,5 @@ Satu Cloudflare Worker dengan static assets (`src/index.js`) menangani seluruh r
 > v1.0.25 (2026-10-09): Task #017 completed — Validate Preview-Deployment Staging Flow & Document Canary Procedure. `docs/deployment-runbook.md` created (environments, Workers Builds preview mechanism + staging-gate procedure, trigger point 7.000–8.000 concurrent = ~70–80% of 10.000, canary rollout 10%→50%→100% with abort/rollback, validation log). Preview URL from test branch `feat/task-017-preview-staging-flow` produced and smoke-tested (`/` 200, `/api/health` ok, `/game.html` 301→`/game`, body distinct from production); *Enable Preview Builds* observed OFF (no check run after two pushes) → manual `npx wrangler preview` path documented; `wrangler.toml` += empty `[previews]` block. Security + Scalability gates FULL. 165 tests pass, lint clean, build passes with 0 vulnerabilities. @knowledge v1.6.4 (§8). Task #018 promoted to [IN PROGRESS].
 > v1.0.26 (2026-10-09): Task #018 completed — Verify Version Tagging & Rollback Procedure. First tag applied to the repo: annotated **`v1.0.5`** (= package.json version) created on dev HEAD after this task's merge and pushed to origin (0 tags existed before; format `vX.Y.Z` per @knowledge:153). Rollback timed end-to-end: T0 07:41:05Z → deployment `d20fd563` active in 7 s, serving verified in **13 s total (≪ 10 min)** against previous version `fca8eeba` (2026-09-09), then original `94fa99a0` restored in 7 s (deployment `77b86f56`) — production state identical pre/post. Security FULL (0 simple_mode skips; branch-protection rule for `main` added same day per developer confirmation) + Scalability FULL + Observability passed (alert rule configured same day per developer confirmation; Workers Logs ERROR/WARN structured logging, `x-request-id` correlation, health endpoint OK pre/during/post). 165 tests pass, lint clean, build passes with 0 vulnerabilities. No knowledge drift (tag convention already documented). Task #019 promoted to [IN PROGRESS].
 > v1.0.27 (2026-10-09): Task #019 completed — Generate & Verify API Documentation. `docs/api.yaml` created (OpenAPI 3.1.0, exactly the 6 scoped routes: `/api/games`, `/api/search`, `/share/{id}`, `/play/{id}/{slug}`, `/game`, `/sitemap.xml` — 6 schemas, 5 shared params, shared 405/429 components). Verified endpoint-by-endpoint against production: **29/29 checks pass** (bare-array vs `{games,pagination}` shapes, clamps, exact 400 body, share/play 200+302 semantics, `/game` 301 with query preserved, 205-URL sitemap, 405/204/OPTIONS/HEAD behaviors, http→https 301) plus **live 429 trip** (250-request parallel burst: 102×200 → 148×429, exact body). Only code-derived claim: 502 (upstream double-feed failure — not force-triggerable). Security FULL (0 skips) + Scalability FULL + Observability passed. Lint clean, 165/165 tests, audit 0 vulns. **Knowledge drift RESOLVED same task: @knowledge v1.6.4 → v1.6.5** — §5×3 corrections (error format `{error:string}` not `{code,message}`; explicit `page`/`limit` pagination since Task #014; `/api/games`+`/api/search` = external feeds only, LOCAL_GAMES merged only in `/share`+`/play`+`/sitemap`) + §5 endpoint list += `/api/health` + §8 health = implemented (Task #003, stale "belum diimplementasikan" line). Task #022 (last) promoted to [IN PROGRESS]; [NEXT TASKS] now empty.
+> v1.0.28 (2026-10-09): Task #023 completed — External Security Scan Findings Remediation (ad-hoc, permintaan langsung developer; di luar urutan 22 task P04). Dua temuan low dari scan app.pentest-tools.com **45403422** vs `https://gimboot.com/` (0 critical/high/medium) terdisposisi **tanpa perubahan kode**: (1) "Server software and technology found" (CWE-200 — HTTP/3, Open Graph, PWA, Cloudflare, HSTS) → risk-accepted per-item: header platform edge tak terhapus dari Worker dan tanpa versi software, HSTS/OG/PWA = keamanan/produk yang tidak boleh dibuang demi scanner, disclosure ber-versi di bawah kendali kami = 0; (2) "Robots.txt file found" → review bersih (`User-agent: *` + `Allow: /` + `Sitemap`, 0 path sensitif), file dipertahankan. Bonus: drift header zone terdokumentasi (gimboot.com: HSTS `15552000`+XFO `DENY`+Speculation-Rules vs kode/workers.dev: `31536000; preload`+`SAMEORIGIN` — `15552000` tak pernah ada di git history → zone-level, kedua nilai aman; API zone 403 code 9109 → dashboard-only). Security FULL + Scalability FULL (0 skips). 165 tests, lint clean, build+audit 0 vulns. **@knowledge v1.6.5 → v1.6.6** (§8 security scan monitoring + disposition policy). Tidak ada promosi — [NEXT TASKS] tetap kosong, Task #022 tetap satu-satunya [IN PROGRESS].
 
