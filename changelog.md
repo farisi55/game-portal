@@ -1,7 +1,7 @@
 ---
 project: Gimboot
-knowledge_version: 1.6.4
-changelog_version: 1.0.26
+knowledge_version: 1.6.5
+changelog_version: 1.0.27
 created: 2026-08-28
 status: in_progress
 milestone: 1 of 1
@@ -45,20 +45,6 @@ simple_mode: false
 > `prd.md` diperbarui ke v1.6.0 (§3.1, §3.2, §4.1, §4.2, §5 baru, §8, §9, §10), lalu v1.6.1 setelah poin 9 dikonfirmasi final; `knowledge.md` ke v1.6.0 lalu v1.6.1 (§2, §3, §7, §9).
 
 ## [IN PROGRESS]
-### Task #019 — Generate & Verify API Documentation
-- **Phase:** Phase 7 — Deployment
-- **Scope:** Produce an OpenAPI-style `docs/api.yaml` for the existing routes and confirm it matches the running server's actual behavior. [AUDIT KODE] Cakupan bertambah dari 3 menjadi hingga 6 rute (lihat @knowledge §5 terbaru): `GET /api/games`, `GET /api/search`, `GET /share/:id`, `GET /play/:id/:slug`, `GET /game`, `GET /sitemap.xml` — tiga terakhir sebelumnya tidak tercatat sama sekali.
-- **Files to create / modify:** `docs/api.yaml`
-- **Acceptance criteria:**
-  - [ ] `docs/api.yaml` documents seluruh rute di atas dengan request/response shapes matching @knowledge §5
-  - [ ] Manually calling each endpoint against the live/preview deployment matches what the doc describes
-- **Dependencies:** Task #009, Task #010
-- **Decisions made:** Belum dieksekusi — isi setelah task selesai.
-
-## [NEXT TASKS]
-
-### Phase 9 — New Feature: Emulator
-
 ### Task #022 — Build Emulator Feature: EmulatorJS Integration, Client-Side ROM/BIOS, Self-Hosted Core
 - **Phase:** Phase 9 — New Feature: Emulator
 - **Scope:** Bangun menu baru `/emulator` (lihat @knowledge §3 "Emulator subsystem", PRD §5): shell `emulator/index.html` (pilih sistem, upload ROM/BIOS, how-to guide, disclaimer + rujukan ROM legal) yang meng-iframe-kan `emulator/runtime.html` (boot EmulatorJS, terima `File` via `postMessage`, `createObjectURL()` lokal). Core EmulatorJS di-self-host di `/vendor/emulatorjs/` (GPL-3.0). Launch scope: NES, SNES, GB/GBC/GBA, Genesis/Mega Drive (tanpa BIOS); sistem berbasis BIOS menyusul dengan BIOS upload user. [DIJAWAB 2026-09-12] ROM & BIOS tidak boleh menyentuh `src/index.js`/server dalam bentuk apa pun — murni client-side. Nav: tab baru "Emulator" di `tab-bar` (`js/catalog.js`). [DIKONFIRMASI 2026-09-12] **Sequencing:** task ini dikerjakan TERAKHIR — tidak dimulai sebelum Task #013–#019 (seluruh hardening) selesai, tanpa pengecualian/paralel.
@@ -79,6 +65,10 @@ simple_mode: false
   - [ ] Tidak ada satu pun link ke situs distribusi ROM/BIOS berhak cipta (romsgames.net, romsfun.com, retrostic.com, atau sejenis) di halaman ini maupun di seluruh Gimboot
 - **Dependencies:** Task #013, Task #014, Task #015, Task #016, Task #017, Task #018, Task #019 — [DIKONFIRMASI 2026-09-12, FINAL] developer: *"agar tidak ada ambigu, maka fitur emulator dikerjakan terakhir, setelah hardening"*. Menggantikan draf tafsir sementara (hanya Task #017/#018) — lihat blok DEVELOPER DECISIONS 2026-09-12 di atas untuk riwayat.
 - **Decisions made:** Belum dieksekusi — isi setelah task selesai.
+
+## [NEXT TASKS]
+
+(none — tidak ada task tersisa; Task #022 (terakhir) dipromosikan ke [IN PROGRESS] pada iterasi ini)
 
 ## [COMPLETED]
 > **Catatan format:** empat entri retroaktif di bawah ini BUKAN task yang dieksekusi lewat proses changelog/gate P04 ini — proses itu baru mulai berlaku sejak Task #001. Entri-entri ini disusun 2026-08-30 dari kondisi kode saat diaudit (2026-08-28) untuk mencatat bahwa produk sudah live sebelum changelog ini ada, sebagaimana disebut `knowledge.md` §1 ("Phase 1 & Phase 3 ... selesai"). Karena itu, tidak ada field "Files to create/modify", "Acceptance criteria" bercentang, atau "Dependencies" seperti task lain — tidak ada catatan asli semacam itu untuk pekerjaan ini, dan menuliskannya di sini akan memberi kesan presisi yang tidak benar-benar ada.
@@ -1128,6 +1118,144 @@ Satu Cloudflare Worker dengan static assets (`src/index.js`) menangani seluruh r
   - Tanpa konflik merge/tumpang tindih file; git tag belum pernah dipakai sebelum task ini; branch feat tidak pernah di-push (pembersihan = hapus lokal)
 - **Knowledge drift:** none — tanpa perubahan perilaku/konfigurasi kode; konvensi tag sudah terdokumentasi (@knowledge:153 format `vX.Y.Z`) dan mekanisme rollback sudah ada di §8 — semua pemicu drift (lib baru, module/API baru, perilaku berubah, file terhapus/dipindah, konvensi baru) tidak terpicu; bukti verifikasi cukup hidup di entry changelog ini
 
+### Task #019 — Generate & Verify API Documentation ✅
+- **Completed:** 2026-10-09
+- **Phase:** Phase 7 — Deployment
+- **Status:** OK
+- **Branch:** feat/task-019-api-documentation
+- **Files created / modified:**
+  - `docs/api.yaml` — baru: spesifikasi OpenAPI 3.1.0 untuk 6 rute (schemas, shared params/headers/responses, contoh dari pengukuran live)
+  - `knowledge.md` — v1.6.4 → **v1.6.5**: 4 koreksi drift (lihat field Knowledge drift)
+  - `changelog.md` — entry ini (bump 1.0.26 → 1.0.27, knowledge_version sinkron 1.6.5)
+- **Acceptance criteria met:**
+  - [x] `docs/api.yaml` documents seluruh 6 rute dengan request/response shapes matching @knowledge §5 — OpenAPI **3.1.0**, parsed OK (PyYAML), 16/16 `$ref` resolve; paths: `/api/games` (200 array-telanjang|objek-paged, 405, 429, 502), `/api/search` (200, 400, 405, 429, 502), `/share/{id}` (200, 302, 405, 429), `/play/{id}/{slug}` (200, 405, 429), `/game` (200, 301, 405, 429), `/sitemap.xml` (200, 405, 429); schemas `Game`, `GameList`, `PagedGames`, `Pagination`, `ErrorResponse`, `FeedError`; params `num`/`page`/`limit`/`q`/`id`; shared 405/429 + security/correlation headers. Bentuk error & pagination diselaraskan dengan §5 lewat koreksi drift di task ini (lihat bawah)
+  - [x] Manually calling each endpoint vs live matches the doc — **29/29 pengecekan otomatis lolos** terhadap production `games.farisi55.workers.dev`: array telanjang vs objek `{games,pagination}`, `num=999`→200 (clamp), `page=0`→1, katalog tanpa `local-*` (0 dari 200), body 400 persis `{"error":"Missing required query param \"q\""}`, share 200+og/refresh+cache 86400 & 302 `/` (unknown & tanpa id), play known (canonical+JSON-LD+gimboot metas) vs unknown (`gimboot-play-id` saja, tanpa ld+json), `/game` 200/301-query-preserved/`?id=` feed→200/alias `/game.html`→301, sitemap 205 `<url>`+cache 1800, POST→405+`Allow: GET, HEAD, OPTIONS`, OPTIONS→204+Allow, HEAD→200+`x-request-id`, http→https 301, dan **429 dibuktikan live**: burst paralel 250 request → 102×200 lalu **148×429** dengan body persis `{"error":"Rate limit exceeded"}`. Satu-satunya klaim bukan-live: respons **502** (kedua feed upstream harus gagal — tidak bisa dipaksa dari luar; diverifikasi di kode `src/index.js:376`), dicatat apa adanya
+- **Security gate:** FULL — all checks passed (simple_mode: false → **0 items skipped**; item N/A per bentuk proyek ditandai eksplisit)
+  - BASIC (13/13):
+    - [x] 1. No secrets hardcoded — ✓ `docs/api.yaml` bebas rahasia (grep api_key/secret/token/password = 0); contoh memakai host `example.invalid` (RFC 2606)
+    - [x] 2. Sensitive config via env/secure config saja — N/A (tanpa kode/secret baru)
+    - [x] 3. Tanpa eval()/exec() dengan input eksternal — N/A (tanpa perubahan kode)
+    - [x] 4. Error message tanpa stack trace/path internal — ✓ contoh error di spec hanya `{ error: string }` tanpa detail internal (diverifikasi live)
+    - [x] 5. Debug mode OFF non-local — N/A (tanpa kode; prod diverifikasi sedia kala)
+    - [x] 6. CORS whitelist origin tepercaya — ✓ didokumentasikan `Access-Control-Allow-Origin: *` sesuai keputusan sah @knowledge §5:130 (endpoint publik read-only)
+    - [x] 7. `.gitignore` memuat `.env`, `*.pem`, `*.key`, `*.p12` — ✓ 4 pola terverifikasi grep task ini
+    - [x] 8. Tanpa default admin credentials/backdoor — N/A (tanpa auth surface)
+    - [x] 9. Pre-commit hook aktif — ✓ `.husky/pre-commit` (lint+test+build) berjalan pada commit task ini
+    - [x] 10. CI/CD: tanpa shell debug-tracing berisi secret; secrets masked — ✓ tanpa GitHub Actions (Workers Builds); sesi tanpa token yang diekspor
+    - [x] 11. Third-party CI actions pinned SHA — N/A (tidak ada `.github/workflows`)
+    - [x] 12. Branch protection main/production — ✓ rule "Require a pull request before merging" untuk `main`, dikonfigurasi via dashboard **2026-10-09, konfirmasi developer** (pagi ini, sesi sama — token GitHub tidak tersedia untuk verifikasi API)
+    - [x] 13. Container: tanpa `ARG` secret di Dockerfile — N/A (tanpa Dockerfile)
+  - STANDARD (24/24):
+    - [x] 1. Validasi/sanitasi input eksternal — N/A (tanpa kode/endpoint baru; dokumentasi murni)
+    - [x] 2. Regex input bebas catastrophic backtracking — N/A (tanpa regex baru)
+    - [x] 3. Body size limit; upload size + magic-bytes — N/A (tanpa endpoint body/upload)
+    - [x] 4. Auth pada tiap route terlindungi — N/A (tanpa auth; seluruh endpoint terdokumentasi publik read-only)
+    - [x] 5. Authz di layer service (IDOR) — N/A (tanpa resource/data user)
+    - [x] 6. Admin route: role check + namespace + audit log — N/A (tanpa admin route)
+    - [x] 7. DB parameterized/ORM — N/A (tanpa DB)
+    - [x] 8. File path canonicalized — N/A (tanpa operasi path baru)
+    - [x] 9. PII tidak di-log — ✓ aturan anti-PII Workers Logs (knowledge:159); spec tidak memuat PII apa pun (contoh id = id game publik)
+    - [x] 10. Konten user di-log di-escape (log injection) — N/A (tanpa log baru; 0 `console.log` di src/index.js)
+    - [x] 11. Output HTML di-escape — N/A (tanpa perubahan template HTML; escaping jalur dinamis diverifikasi #010, tidak disentuh)
+    - [x] 12. Field sensitif di-mask di UI — N/A (tanpa perubahan UI)
+    - [x] 13. Redirect divalidasi vs allowlist — ✓ redirect yang didokumentasikan (301/302 internal) diverifikasi live: hanya tujuan absolut origin yang sama; tanpa open-redirect baru
+    - [x] 14. Brute-force protection — N/A (tanpa auth); rate limiter per-IP berlaku menyeluruh 100 req/60s/IP (src/index.js:35-36) — **dibuktikan live 429 task ini**
+    - [x] 15. Password vs HIBP — N/A (tanpa password)
+    - [x] 16. Password reset token — N/A (tanpa reset)
+    - [x] 17. Access token short-lived/refresh rotation — N/A (tanpa token)
+    - [x] 18. Session regeneration setelah login — N/A (tanpa login)
+    - [x] 19. Logout invalidate server-side — N/A (tanpa logout)
+    - [x] 20. Set-Cookie HttpOnly/Secure/SameSite — N/A (tanpa cookie)
+    - [x] 21. Secure storage mobile/desktop — N/A (web app tanpa storage kredensial)
+    - [x] 22. HTTP method override disabled — ✓ dispatch method biasa (src/index.js:196-205), didokumentasikan: hanya GET/HEAD/OPTIONS
+    - [x] 23. Content-Type divalidasi sebelum body — N/A (tanpa endpoint pembaca body)
+    - [x] 24. Perubahan skema API hanya additive — N/A (tanpa perubahan endpoint/skema — task dokumentasi; spec hanya MEMOTRET perilaku yang sudah ada)
+  - FULL (22/22):
+    - [x] 1. Rate limit per-IP utk endpoint tak-terautentikasi (skip simple_mode) — ✓ 100 req/60s/IP (src/index.js:35,94-116) — **live-tripped task ini**: 250-request burst → 102×200 lalu 148×429, body persis `{"error":"Rate limit exceeded"}`; simple_mode=false → tidak diskip
+    - [x] 2. Rate limit per-user/API-key shared-store (skip jika simple+single) — N/A (tanpa auth/key)
+    - [x] 3. Infra-level rate limiting dikonfigurasi (skip simple_mode) — ✓ edge Cloudflare (DDoS/L7 bawaan) + limiter in-worker; simple_mode=false
+    - [x] 4. CSRF utk operasi state-changing (skip jika auth via header) — N/A (semua route GET read-only, tanpa cookie auth)
+    - [x] 5. Security headers HSTS/XFO/XCTO/Referrer/Permissions — ✓ GET `/` production hari ini memunculkan kelima header (src/index.js:124-128); tercantum di `info.description` spec
+    - [x] 6. CSP tanpa `unsafe-inline`/`unsafe-eval` — ✓ nonce + `strict-dynamic` pada respons HTML (src/index.js:288); tercantum di spec
+    - [x] 7. Perbandingan secret constant-time — N/A (tanpa pembanding secret)
+    - [x] 8. JWT alg pinned — N/A (tanpa JWT)
+    - [x] 9. CVE scan 0 high/critical — ✓ `npm audit --audit-level=high` = 0 vulnerabilities (task ini + gerbang build saat commit)
+    - [x] 10. Lockfile pins dependency; CI clean-install — ✓ `package-lock.json` tak berubah; Workers Builds clean install
+    - [x] 11. API response hanya field perlu; mass-assignment — ✓ spec memotret response apa adanya (7 field Game); tanpa endpoint write
+    - [x] 12. Price/total server-side — N/A (tanpa pembayaran)
+    - [x] 13. Payment entitlement server-to-server — N/A (tanpa pembayaran)
+    - [x] 14. Data sensitif terenkripsi at rest — N/A (stateless, tanpa data sensitif)
+    - [x] 15. MFA utk admin/payment [DECISION NEEDED jika unnamed] — N/A (tanpa admin/payment)
+    - [x] 16. SSRF prevention — ✓ dokumentasi tidak menambah outbound fetch; URL feed internal tidak disertakan di spec (contoh = `example.invalid`)
+    - [x] 17. LLM calls isolation — N/A (tanpa LLM)
+    - [x] 18. XML XXE disabled — ✓ `/sitemap.xml` response hanya (tanpa parser input XML); feed diparse tanpa entitas eksternal
+    - [x] 19. CDN assets SRI — N/A (aset first-party self-hosted)
+    - [x] 20. Production build tanpa source map publik — ✓ `git ls-files "*.map"` = 0 file
+    - [x] 21. Error tracking scrub PII/secret — ✓ tanpa error-tracker pihak ketiga (knowledge:159); log baku tanpa PII
+    - [x] 22. Webhook/OTA signature constant-time + timestamp — N/A (tanpa webhook/OTA; §5:126)
+- **Scalability gate:** FULL — all checks passed (simple_mode: false → **0 items skipped**; item N/A per bentuk proyek ditandai eksplisit)
+  - BASIC (7/7):
+    - [x] 1. Tanpa blocking sync di async handler — N/A (tanpa perubahan kode server)
+    - [x] 2. Tanpa hardcoded pool size/timeout/batch limit tanpa justifikasi — ✓ konstanta berjustifikasi (100/60s, 5000ms, 1800s — semua terdokumentasi di spec/knowledge)
+    - [x] 3. DB connection pool — N/A (tanpa DB)
+    - [x] 4. Explicit timeout I/O eksternal — ✓ `fetchWithTimeout(…, 5000)` (src/index.js:76) — tak berubah, tak disentuh
+    - [x] 5. Tanpa mutable state global antar-request — ✓ stateless; rate-limit state di Cache API per-IP (dibuktikan live: counter naik/lampau window self-clear)
+    - [x] 6. Correlation ID di entry point — ✓ header `x-request-id` (UUID) pada semua respons — diverifikasi live via HEAD task ini & didokumentasikan di spec; error body tanpa request_id = keputusan PRD (knowledge:128)
+    - [x] 7. Structured logger async non-blocking — ✓ Workers Logs ERROR/WARN (src/index.js:67-74)
+  - STANDARD (12/12):
+    - [x] 1. Validasi murah sebelum operasi mahal — ✓ `q` dicek sebelum fetch katalog (src/index.js:398-401) — terdokumentasi sebagai 400
+    - [x] 2. Token-revocation lookup <1ms — N/A (tanpa token)
+    - [x] 3. Query plan check — N/A (tanpa query)
+    - [x] 4. Tanpa N+1 query — N/A (tanpa query)
+    - [x] 5. Authz reuses data fetched — N/A (tanpa authz)
+    - [x] 6. Pagination di layer server — ✓ `page`/`limit` di-clamp worker-side (src/index.js:378-384) — **diverifikasi live** (`page=0`→1, `num=999`→200) & didokumentasikan
+    - [x] 7. Semua I/O async non-blocking — N/A (tanpa I/O baru; runtime async by design)
+    - [x] 8. Tanpa akumulasi memori tak-terbatas — ✓ stateless per-request; katalog di-slice sebelum respons
+    - [x] 9. Soft-delete — N/A (tanpa data persisten)
+    - [x] 10. Transaksi multi-tabel — N/A (tanpa DB)
+    - [x] 11. Migrations non-blocking — N/A (tanpa DB)
+    - [x] 12. GraphQL limits — N/A (REST saja)
+  - FULL (16/16):
+    - [x] 1. Caching implemented+tested (skip simple_mode) — ✓ cache header di live-diverifikasi & terdokumentasi per-rute: katalog/search 1800s, search-hits 600s (kosong tak di-cache), share 86400s; bukti load #016 (`loadtest/RESULTS.md`); simple_mode=false
+    - [x] 2. DB pooling verified — N/A (tanpa DB)
+    - [x] 3. Stateless: tanpa state in-process — ✓ tidak ada session/user state; respons identik lintas percobaan
+    - [x] 4. Operasi panjang → background job — N/A (tanpa operasi panjang)
+    - [x] 5. Resource dilepas saat selesai/error — ✓ seluruh response di-return eksplisit; catch melepas jalur (src/index.js:496-499)
+    - [x] 6. Outbound HTTP explicit timeout — ✓ 5000ms (src/index.js:76)
+    - [x] 7. Circuit breaker/fallback per integrasi (skip simple_mode) — ✓ satu-hop eksternal: timeout 5s + graceful fallback (catch → 302 `/`, src/index.js:496-499) + `Promise.allSettled` feed-independen (src/index.js:342-348 — satu feed mati, katalog lain tetap); simple_mode=false
+    - [x] 8. Queue depth bounded/backpressure — N/A (tanpa queue)
+    - [x] 9. Infra rate limiting edge/WAF (skip simple_mode) — ✓ Cloudflare edge + in-worker limiter (live 429 task ini); simple_mode=false
+    - [x] 10. API Gateway utk high_scale non-microservices — N/A (satu service monolitik tanpa JWT/OAuth — knowledge:106)
+    - [x] 11. Horizontal autoscaling — ✓ platform-managed (Workers isolates; deploy/rollback tanpa downtime)
+    - [x] 12. Idempotency key utk operasi retryable — ✓ seluruh route GET read-only & idempoten by design (knowledge:152) — tanpa write/retryable API
+    - [x] 13. Health endpoints per §8 — ✓ `/api/health` hidup: **102×200 live** pada burst rate-limit task ini (shape `{ status, version, timestamp }`, src/index.js:261)
+    - [x] 14. Load baseline Stage1 smoke wajib (Server) — ✓ #016: smoke 580 req/0 errors + Stage2 capacity (simple_mode=false, Stage2 ikut dijalankan)
+    - [x] 15. Static-Hosting: Core Web Vitals — N/A (project_shape: fullstack / Server variant)
+    - [x] 16. App-Store/Installer: staged rollout — N/A (bukan app store/installer)
+- **Observability gate:** passed (Phase 7 FULL, simple_mode: false → 0 items skipped)
+  - [x] 1. Structured logging/crash reporting + request_id — ✓ log JSON ERROR/WARN (src/index.js:67-74) + header `x-request-id` UUID pada semua respons (diverifikasi live HEAD task ini); error body tanpa request_id = keputusan PRD eksplisit (knowledge:128)
+  - [x] 2. Log level via konfigurasi; verbose tak pernah di prod — ✓ level ERROR & WARN di production (knowledge:159); 0 `console.log` di src/index.js
+  - [x] 3. Error tracking scrub PII/secret — ✓ tanpa pihak ketiga (knowledge:159); Workers Logs anti-PII; log baku tanpa PII/secret
+  - [x] 4. Health endpoint merespons — ✓ `/api/health` 200 ok — **102 hit live** pada burst task ini, shape sesuai Task #003
+  - [x] 5. Event bisnis kunci ter-log — ✓ ERROR/WARN operasional via Workers Logs + metrik request/route via Cloudflare Analytics (knowledge:159)
+  - [x] 6. Minimal satu alert rule — ✓ alert error-rate **dikonfigurasi via dashboard 2026-10-09 (konfirmasi developer, sesi pagi ini)**; endpoint alerting API tidak terbaca token OAuth wrangler (403 tanpa scope)
+  - [x] 7. Backup restore diuji di staging — N/A (stateless, tanpa DB/backup)
+  - [x] 8. Prosedur rollback/update-channel diuji — ✓ #018 pagi ini (13 detik end-to-end, deployment `d20fd563`→`77b86f56`); jalur terdokumentasi di `docs/deployment-runbook.md` §5
+- **Regression:** Passed 165 unit tests; lint clean; `npm audit --audit-level=high` 0 vulnerabilities (pre-commit hook penuh pada commit task ini)
+- **Decisions made:**
+  - [API] Konflik format error (§5: `{ code, message }` vs kode: `{ error: string }`) diselesaikan dengan **mengukur live**: dokumentasi memakai `{ error: string }` — satu-satunya bentuk yang benar-benar dikembalikan server (400/429/502 diverifikasi) — dan baris §5 dikoreksi sebagai drift; kecocokan dengan perilaku nyata (acceptance #2) mengalahkan dokumentasi usang; tidak ada yang ditebak
+  - [API] `/api/games` & `/api/search` didokumentasikan **hanya feed eksternal** (0 `local-*` di 200 item live): merge LOCAL_GAMES server-side terjadi di `/share`, `/play`, `/sitemap.xml` saja, plus client-side `js/config.js` — §5:122 dikoreksi
+  - [API] Pagination **eksplisit** didokumentasikan (`page`/`limit`, objek `{ games, pagination }`, sejak Task #014) — §5:129 dikoreksi dari klaim "tidak eksplisit"
+  - [INFRA] Spec = persis 6 rute sesuai cap scope ("hingga 6 rute"); `/api/health` (live sejak Task #003) sengaja TIDAK dijadikan path ke-7 — dicatat di §5/§8 knowledge + runbook; alasan: acceptance menyebut "seluruh rute di atas" (enumerasi 6) dan health bukan bagian cakupan task
+  - [INFRA] 429 dibuktikan dengan burst paralel 250 request setelah loop sekuensial awal tidak memicu (ambang 100/60s window — 110 request sekuensial tersebar >60 detik tidak cukup); perilaku window & body terkonfirmasi live
+- **Notes:**
+  - Contoh dalam spec memakai host `example.invalid` (RFC 2606) — sengaja tidak menyerupai endpoint nyata
+  - `docs/api.yaml` tidak masuk cakupan eslint; validasi = PyYAML parse + resolusi 16 `$ref` (bukti di acceptance); regenerasi manual bila kontrak berubah
+  - Respons **HEAD** `/` vs **GET** `/` asimetri header security (catatan dari #018) tidak berulang di rute-rute ini — semua rute terdokumentasi diverifikasi via GET/HEAD sesuai metodenya
+  - Dua bukti gate dari konfirmasi dashboard developer hari ini (alert rule + branch protection `main`) masih berlaku untuk tanggal yang sama
+  - Tanpa konflik backward/forward: `docs/api.yaml` baru milik task ini; tak ada task lain yang menyentuhnya (scan NEXT: tidak ada)
+- **Knowledge drift:** UPDATE REQUIRED: @knowledge §5 — 3 koreksi (1) endpoint pattern: `/api/games`/`/api/search` = feed eksternal saja + penambahan `/api/health`, (2) error format `{ code, message }` → `{ error: string }`, (3) pagination "tidak eksplisit" → eksplisit `page`/`limit` + objek `{ games, pagination }` — dan @knowledge §8 — health endpoint "disarankan, belum diimplementasikan" → sudah diimplementasikan (Task #003); **semua sudah diedit pada task ini**: knowledge v1.6.4 → **v1.6.5**, `knowledge_version` changelog disinkronkan ke 1.6.5. Drift ditemukan saat mencocokkan spec ke §5 — pemicu: API contract ≠ dokumentasi (bukan perubahan kode; kode tidak diubah task ini)
+
 > v1.0.17 (2026-09-09): Task #021 completed — canonicalize game deep-link URL variants for GSC "Di-crawl - saat ini tidak diindeks" fix. `/game.html?id=X` and `/game?id=X` now redirect to `/play/:id/:slug` in single 301. `canonicalGameUrl()` updated to point to `/play/:id/:slug` for LOCAL_GAMES. 2 new unit tests. 157 tests pass, lint clean, build passes. Task #012 promoted to [IN PROGRESS].
 > v1.0.18 (2026-09-09): Task #012 completed — harden client-side search rendering against reflected XSS. Code review confirmed all rendering uses `textContent` and DOM property assignments. Created `js/catalog.test.js` with 5 XSS-focused unit tests. 162 tests pass, lint clean, build passes. Task #013 promoted to [IN PROGRESS].
 > v1.0.21 (2026-09-23): Task #013 completed — verify test suite coverage & CI pass/fail visibility. Added `npm test` to build script for visible CI output. Fixed 4 high-severity CVEs via `npm audit fix`. 162 tests pass, lint clean, `npm run build` passes with 0 vulnerabilities. Task #014 promoted to [IN PROGRESS].
@@ -1135,4 +1263,5 @@ Satu Cloudflare Worker dengan static assets (`src/index.js`) menangani seluruh r
 > v1.0.24 (2026-10-08): Task #016 completed — Two-Stage Load Test on `src/index.js` routes. k6 suite added under `loadtest/` (gimboot.js scenario script, run.mjs orchestrator via unstable_dev, README, RESULTS, raw results incl. preserved failure records). All three stages PASS on wrangler 4.148.0/workerd 1.20261006.1: smoke 580 req/0 errors; capacity 1.000 VU/120s p95 222 ms, p99 338 ms, 0.00% errors, workerd RSS 185→497 MB (bounded); cache-cold herd 40 VU window p95 4.28 s, 0 errors. Security + Scalability gates FULL. 7 pre-existing high CVEs fixed for the build gate (`npm audit fix` + `overrides: sharp 0.35.5` — miniflare pins sharp exactly). 165 tests pass, lint clean, build passes with 0 vulnerabilities. @knowledge v1.6.3 (§2, §3 + loadtest/). Task #017 promoted to [IN PROGRESS].
 > v1.0.25 (2026-10-09): Task #017 completed — Validate Preview-Deployment Staging Flow & Document Canary Procedure. `docs/deployment-runbook.md` created (environments, Workers Builds preview mechanism + staging-gate procedure, trigger point 7.000–8.000 concurrent = ~70–80% of 10.000, canary rollout 10%→50%→100% with abort/rollback, validation log). Preview URL from test branch `feat/task-017-preview-staging-flow` produced and smoke-tested (`/` 200, `/api/health` ok, `/game.html` 301→`/game`, body distinct from production); *Enable Preview Builds* observed OFF (no check run after two pushes) → manual `npx wrangler preview` path documented; `wrangler.toml` += empty `[previews]` block. Security + Scalability gates FULL. 165 tests pass, lint clean, build passes with 0 vulnerabilities. @knowledge v1.6.4 (§8). Task #018 promoted to [IN PROGRESS].
 > v1.0.26 (2026-10-09): Task #018 completed — Verify Version Tagging & Rollback Procedure. First tag applied to the repo: annotated **`v1.0.5`** (= package.json version) created on dev HEAD after this task's merge and pushed to origin (0 tags existed before; format `vX.Y.Z` per @knowledge:153). Rollback timed end-to-end: T0 07:41:05Z → deployment `d20fd563` active in 7 s, serving verified in **13 s total (≪ 10 min)** against previous version `fca8eeba` (2026-09-09), then original `94fa99a0` restored in 7 s (deployment `77b86f56`) — production state identical pre/post. Security FULL (0 simple_mode skips; branch-protection rule for `main` added same day per developer confirmation) + Scalability FULL + Observability passed (alert rule configured same day per developer confirmation; Workers Logs ERROR/WARN structured logging, `x-request-id` correlation, health endpoint OK pre/during/post). 165 tests pass, lint clean, build passes with 0 vulnerabilities. No knowledge drift (tag convention already documented). Task #019 promoted to [IN PROGRESS].
+> v1.0.27 (2026-10-09): Task #019 completed — Generate & Verify API Documentation. `docs/api.yaml` created (OpenAPI 3.1.0, exactly the 6 scoped routes: `/api/games`, `/api/search`, `/share/{id}`, `/play/{id}/{slug}`, `/game`, `/sitemap.xml` — 6 schemas, 5 shared params, shared 405/429 components). Verified endpoint-by-endpoint against production: **29/29 checks pass** (bare-array vs `{games,pagination}` shapes, clamps, exact 400 body, share/play 200+302 semantics, `/game` 301 with query preserved, 205-URL sitemap, 405/204/OPTIONS/HEAD behaviors, http→https 301) plus **live 429 trip** (250-request parallel burst: 102×200 → 148×429, exact body). Only code-derived claim: 502 (upstream double-feed failure — not force-triggerable). Security FULL (0 skips) + Scalability FULL + Observability passed. Lint clean, 165/165 tests, audit 0 vulns. **Knowledge drift RESOLVED same task: @knowledge v1.6.4 → v1.6.5** — §5×3 corrections (error format `{error:string}` not `{code,message}`; explicit `page`/`limit` pagination since Task #014; `/api/games`+`/api/search` = external feeds only, LOCAL_GAMES merged only in `/share`+`/play`+`/sitemap`) + §5 endpoint list += `/api/health` + §8 health = implemented (Task #003, stale "belum diimplementasikan" line). Task #022 (last) promoted to [IN PROGRESS]; [NEXT TASKS] now empty.
 
