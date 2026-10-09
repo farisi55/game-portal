@@ -1,7 +1,7 @@
 ---
 project: Gimboot
 knowledge_version: 1.6.4
-changelog_version: 1.0.25
+changelog_version: 1.0.26
 created: 2026-08-28
 status: in_progress
 milestone: 1 of 1
@@ -45,19 +45,6 @@ simple_mode: false
 > `prd.md` diperbarui ke v1.6.0 (§3.1, §3.2, §4.1, §4.2, §5 baru, §8, §9, §10), lalu v1.6.1 setelah poin 9 dikonfirmasi final; `knowledge.md` ke v1.6.0 lalu v1.6.1 (§2, §3, §7, §9).
 
 ## [IN PROGRESS]
-### Task #018 — Verify Version Tagging & Rollback Procedure
-- **Phase:** Phase 7 — Deployment
-- **Scope:** Confirm the semver tagging convention is applied and that rolling back to a previous version completes within 10 minutes. [AUDIT KODE — KOREKSI, diverifikasi ke dokumentasi Cloudflare terkini] Draf sebelumnya menyebut "redeploying a previous tag via Cloudflare Pages dashboard" — untuk Worker, mekanismenya adalah `wrangler rollback` (CLI) atau Cloudflare dashboard: Workers & Pages → pilih Worker → tab Deployments → menu titik-tiga pada versi tujuan → Rollback.
-- **Files to create / modify:** tidak ada file kode — verifikasi proses git tag + `wrangler rollback`/dashboard Cloudflare
-- **Acceptance criteria:**
-  - [ ] Current commit is tagged following `vX.Y.Z`
-  - [ ] Rolling back to the previous version via `wrangler rollback` atau dashboard Cloudflare completes in under 10 minutes, verified once
-- **Dependencies:** none
-- **Decisions made:** Belum dieksekusi — isi setelah task selesai.
-
-## [NEXT TASKS]
-
-### Phase 7 — Deployment (Server variant)
 ### Task #019 — Generate & Verify API Documentation
 - **Phase:** Phase 7 — Deployment
 - **Scope:** Produce an OpenAPI-style `docs/api.yaml` for the existing routes and confirm it matches the running server's actual behavior. [AUDIT KODE] Cakupan bertambah dari 3 menjadi hingga 6 rute (lihat @knowledge §5 terbaru): `GET /api/games`, `GET /api/search`, `GET /share/:id`, `GET /play/:id/:slug`, `GET /game`, `GET /sitemap.xml` — tiga terakhir sebelumnya tidak tercatat sama sekali.
@@ -67,6 +54,8 @@ simple_mode: false
   - [ ] Manually calling each endpoint against the live/preview deployment matches what the doc describes
 - **Dependencies:** Task #009, Task #010
 - **Decisions made:** Belum dieksekusi — isi setelah task selesai.
+
+## [NEXT TASKS]
 
 ### Phase 9 — New Feature: Emulator
 
@@ -1004,10 +993,146 @@ Satu Cloudflare Worker dengan static assets (`src/index.js`) menangani seluruh r
 - **Notes:** Optional manual follow-up (same pattern as Tasks #015/#020): flip *Enable Preview Builds* in Branch control for push-to-preview automation; the documented manual path works regardless. **Finding (out of scope, NOT fixed here):** production currently serves `coverage/index.html` and `/.gitignore` with HTTP 200 — `.assetsignore` lists neither (`coverage/`, `.gitignore`, `.vscode/`, `.freebuff/`, `*.test.js` are absent); candidate for a future asset-hygiene/security task. **Backward conflict:** none — first task to create `docs/deployment-runbook.md` (`docs/` was already excluded from assets by Task #015, no `.assetsignore` change needed).
 - **Knowledge drift:** RESOLVED — @knowledge bumped to v1.6.4: §8 multi-environment (preview flow validated 2026-10-09: Preview URL smoke-tested, `[previews]` block added, *Enable Preview Builds* observed OFF → manual path documented) & §8 canary line (now references `docs/deployment-runbook.md` §4–§5 for the trigger point and rollout steps).
 
+### Task #018 — Verify Version Tagging & Rollback Procedure ✅
+- **Completed:** 2026-10-09
+- **Phase:** Phase 7 — Deployment
+- **Status:** OK
+- **Branch:** feat/task-018-version-tagging-rollback (lokal saja — tidak pernah di-push ke origin)
+- **Files created / modified:**
+  - `git tag` `v1.0.5` — annotated tag, dibuat di dev HEAD setelah merge task ini, di-push ke origin (ref, bukan file) [INFRA]
+  - `changelog.md` — entry ini (bump 1.0.25 → 1.0.26); tanpa perubahan file kode lain — murni tugas verifikasi
+- **Acceptance criteria:**
+  - [x] Current commit tagged `vX.Y.Z` — annotated tag **`v1.0.5`** (= `package.json` `version: 1.0.5`, format semver per @knowledge:153) diterapkan ke dev HEAD (merge commit `Merge task #018 into dev`) lalu di-push ke origin; diverifikasi `git ls-remote --tags origin`. Repo sebelumnya **nol tag** (`git tag -l` & `ls-remote --tags` kosong) — konvensi tercatat (@knowledge:153, `prd.md` §) tetapi belum pernah diterapkan.
+  - [x] Rollback <10 menit, verified once — T0 2026-10-09T07:41:05Z `npx wrangler rollback fca8eeba… -y -m "task-018: rollback procedure verification (<10 min gate)"` → deployment **`d20fd563`** aktif @07:41:12Z (**7 detik**), annotation tercatat di deployment record, versi tujuan 100% — serving diverifikasi @07:41:18Z (`/api/health` ok `{"status":"ok","version":"1.0.4"}`, `/` 200) → **total 13 detik ≪ 600 detik**. Target = versi sebelumnya `fca8eeba` (deploy 2026-09-09). Posisi semula segera dipulihkan lewat mekanisme sama (`94fa99a0…`, deployment **`77b86f56`** @07:43:17Z, **7 detik**), health ok + `/` 200 + `/api/games?limit=1` 200 setelah restore — **state production identik dengan sebelum task**. Jalur dashboard (Workers & Pages → Worker → tab Deployments → titik-tiga → Rollback) terdokumentasi di scope/README, tidak dieksekusi (CLI sudah cukup; "wrangler rollback **atau** dashboard").
+- **Security gate:** FULL — all checks passed (simple_mode: false → **0 items skipped**; item N/A per bentuk proyek ditandai eksplisit)
+  - BASIC (13/13):
+    - [x] 1. No secrets hardcoded — ✓ tanpa file/token dibuat; token OAuth wrangler (`~/.wrangler/…`, di luar repo) tidak pernah diecho/ditulis ke working tree
+    - [x] 2. Sensitive config via env/secure config saja — N/A (tanpa kode baru; token di luar repo)
+    - [x] 3. Tanpa eval()/exec() dengan input eksternal — N/A (tanpa perubahan kode)
+    - [x] 4. Error message tanpa stack trace/path internal — ✓ output rollback/CLI & respons API tidak mengandung stack/path internal
+    - [x] 5. Debug mode OFF di non-local — N/A (tanpa kode; production diverifikasi sedia kala)
+    - [x] 6. CORS whitelist hanya origin tepercaya — N/A (tanpa perubahan kode CORS)
+    - [x] 7. `.gitignore` memuat `.env`, `*.pem`, `*.key`, `*.p12` — ✓ diverifikasi grep pada task ini
+    - [x] 8. Tanpa default admin credentials/akun test/backdoor — N/A (tanpa auth surface, tanpa kode)
+    - [x] 9. Pre-commit hook aktif — ✓ `.husky/pre-commit` (lint+test+build) berjalan pada commit task ini
+    - [x] 10. CI/CD: tanpa shell debug-tracing berisi secret env; secrets masked — ✓ tanpa GitHub Actions di repo (Workers Builds); token OAuth hanya dipakai wrangler lokal, tidak pernah diekspor ke log/CI
+    - [x] 11. Third-party CI actions pinned ke SHA — N/A (tidak ada `.github/workflows`)
+    - [x] 12. Branch protection main/production — ✓ rule **"Require a pull request before merging"** untuk `main` dikonfigurasi via GitHub dashboard **2026-10-09, konfirmasi developer** (sesi ini tanpa kredensial GitHub: `gh` tidak terpasang & tanpa token API → verifikasi via dashboard)
+    - [x] 13. Container orchestration: tanpa `ARG` secret di Dockerfile — N/A (tanpa Dockerfile)
+  - STANDARD (24/24):
+    - [x] 1. Validasi/sanitasi input eksternal — N/A (tanpa input/endpoint baru)
+    - [x] 2. Regex input bebas catastrophic backtracking — N/A (tanpa regex baru)
+    - [x] 3. Body size limit; upload size + magic-bytes — N/A (tanpa endpoint body/upload baru)
+    - [x] 4. Auth pada tiap route terlindungi — N/A (tanpa auth, tanpa route baru)
+    - [x] 5. Authz di layer service/repository (IDOR) — N/A (tanpa resource/data user)
+    - [x] 6. Admin route: server-side role check + namespace + audit log — N/A (tanpa admin route)
+    - [x] 7. Akses DB parameterized/ORM — N/A (tanpa DB)
+    - [x] 8. File path divalidasi/canonicalized — N/A (tanpa operasi path eksternal baru)
+    - [x] 9. PII tidak masuk log — ✓ aturan anti-PII Workers Logs terdokumentasi (knowledge:159); log worker hanya baku JSON ERROR/WARN tanpa data user (src/index.js:70-72,497)
+    - [x] 10. Konten buatan user di-log harus di-escape (log injection) — ✓ konten user tidak pernah masuk log (0 `console.log`, hanya 3 panggilan baku: src/index.js:70,72,497)
+    - [x] 11. Output HTML di-escape — N/A (tanpa perubahan template HTML; helper `escapeHtmlAttr` tidak disentuh)
+    - [x] 12. Field sensitif di-mask di UI — N/A (tanpa perubahan UI)
+    - [x] 13. Redirect divalidasi vs allowlist — N/A (tanpa redirect baru; redirect canonical #020/#021 tidak diubah)
+    - [x] 14. Brute-force protection — N/A (tanpa auth/login); rate limiter per-IP tetap berlaku menyeluruh: 100 req/60s/IP (src/index.js:35-36,94)
+    - [x] 15. Password dicek vs HIBP — N/A (tanpa password)
+    - [x] 16. Password reset token: random, single-use, expiring — N/A (tanpa reset password)
+    - [x] 17. Access token short-lived + refresh dirotasi — N/A (tanpa token)
+    - [x] 18. Session token di-regenerate setelah login — N/A (tanpa login/session)
+    - [x] 19. Logout invalidate server-side — N/A (tanpa logout)
+    - [x] 20. Set-Cookie: HttpOnly + Secure + SameSite — N/A (proyek tanpa cookie auth)
+    - [x] 21. Secure storage utk app mobile/desktop — N/A (web app, tanpa storage kredensial)
+    - [x] 22. HTTP method override disabled — ✓ dispatch method biasa di worker, tanpa mekanisme override (src/index.js:179)
+    - [x] 23. Content-Type divalidasi sebelum body diproses — N/A (tanpa endpoint yang membaca request body)
+    - [x] 24. Perubahan skema API hanya additive — N/A (tanpa perubahan skema API — task tanpa file kode)
+  - FULL (22/22):
+    - [x] 1. Rate limit per-IP utk endpoint tak-terautentikasi (skip simple_mode) — ✓ `isRateLimited()` 100 req/60s/IP pada Cache API berlaku untuk semua route (src/index.js:35-36,94-101); simple_mode=false → tidak diskip
+    - [x] 2. Rate limit per-user/API-key shared-store (skip jika simple+single) — N/A (tanpa auth/key)
+    - [x] 3. Infra-level rate limiting dikonfigurasi (skip simple_mode) — ✓ edge platform Cloudflare (DDoS/L7 bawaan) + limiter in-worker; simple_mode=false
+    - [x] 4. CSRF utk operasi state-changing (skip jika auth via header) — N/A (tanpa endpoint state-changing, tanpa cookie auth)
+    - [x] 5. Security headers: HSTS, X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy — ✓ GET `/` production 2026-10-09: `Strict-Transport-Security: max-age=31536000; includeSubDomains; preload`, `X-Frame-Options: SAMEORIGIN`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, `Permissions-Policy: camera=(), microphone=(), geolocation=()` (sumber: src/index.js:124-128)
+    - [x] 6. CSP tanpa `unsafe-inline`/`unsafe-eval` — ✓ nonce + `strict-dynamic` terverifikasi pada respons GET `/` (src/index.js:288)
+    - [x] 7. Perbandingan secret constant-time — N/A (tanpa pembanding secret)
+    - [x] 8. JWT alg pinned — N/A (tanpa JWT)
+    - [x] 9. CVE scan 0 high/critical — ✓ `npm audit --audit-level=high` = 0 vulnerabilities (gerbang build, berjalan pada task ini)
+    - [x] 10. Lockfile pins dependency; CI clean-install — ✓ `package-lock.json` tidak berubah; Workers Builds memakai clean install
+    - [x] 11. API response hanya field yang perlu; mass-assignment dicegah — N/A (tanpa perubahan API/endpoint baru)
+    - [x] 12. Price/total dihitung server-side — N/A (tanpa pembayaran)
+    - [x] 13. Payment entitlement server-to-server — N/A (tanpa pembayaran)
+    - [x] 14. Data sensitif terenkripsi at rest (AES-256/managed) — N/A (stateless, tanpa data sensitif tersimpan)
+    - [x] 15. MFA second factor utk akun admin/payment [DECISION NEEDED jika unnamed] — N/A (tanpa admin/payment)
+    - [x] 16. SSRF prevention — ✓ URL feed eksternal dibangun internal, bukan dari input user (src/index.js:779,855); tidak ada endpoint yang menerima URL target
+    - [x] 17. LLM calls isolation (agent shape) — N/A (tanpa LLM)
+    - [x] 18. XML parsing tanpa XXE — N/A (tanpa parser XML; feed diparse sebagai JSON/regex)
+    - [x] 19. CDN assets SRI — N/A (aset first-party self-hosted tanpa CDN eksternal)
+    - [x] 20. Production build tanpa source map publik — ✓ `git ls-files "*.map"` = 0 file; artefak worker tanpa source map
+    - [x] 21. Error tracking scrub PII/secrets — ✓ tanpa error-tracker pihak ketiga (knowledge:159); Workers Logs hanya JSON ERROR/WARN baku tanpa PII/secret
+    - [x] 22. Webhook/OTA signature constant-time + timestamp — N/A (tanpa webhook/OTA)
+- **Scalability gate:** FULL — all checks passed (simple_mode: false → **0 items skipped**; item N/A per bentuk proyek ditandai eksplisit)
+  - BASIC (7/7):
+    - [x] 1. Tanpa blocking sync I/O di async handler — N/A (tanpa perubahan kode server)
+    - [x] 2. Tanpa hardcoded pool size/timeout/batch limit tanpa justifikasi — ✓ konstanta terdokumentasi & berjustifikasi: 100 req/60s/IP (src/index.js:35-36), timeout eksternal 5000ms (src/index.js:76)
+    - [x] 3. DB connection pool dikonfigurasi — N/A (tanpa DB)
+    - [x] 4. Explicit timeout utk I/O eksternal — ✓ `fetchWithTimeout(…, timeoutMs = 5000)` pada seluruh panggilan feed eksternal (src/index.js:76,781,855)
+    - [x] 5. Tanpa mutable state global antar-request — ✓ worker stateless: konstanta hanya-read, rate-limit via Cache API per-IP (src/index.js:97-101), state tidak membawa antar versi (rollback/restore membuktikan)
+    - [x] 6. Correlation ID (CRITICAL) di entry point — ✓ header `x-request-id` (UUID) di-set worker pada respons (src/index.js:188,290) + `CF-Ray` platform; error body tanpa request_id = keputusan PRD eksplisit (knowledge:128), korrelasi via header tetap ada
+    - [x] 7. Structured logger/crash reporter async non-blocking — ✓ Workers Logs bawaan (knowledge:159), `console.error/warn` non-blocking (src/index.js:70-72)
+  - STANDARD (12/12):
+    - [x] 1. Validasi murah sebelum operasi mahal — N/A (tanpa alur baru)
+    - [x] 2. Token-revocation lookup <1ms — N/A (tanpa token)
+    - [x] 3. Query plan dicek sebelum ship — N/A (tanpa query)
+    - [x] 4. Tanpa N+1 query — N/A (tanpa query)
+    - [x] 5. Authz memakai data yang sudah di-fetch — N/A (tanpa authz)
+    - [x] 6. Pagination di layer server — ✓ `page` & `limit` di-clamp di worker sebelum slicing katalog (src/index.js:372,378-381)
+    - [x] 7. Semua I/O async non-blocking — N/A (tanpa I/O baru; runtime worker async by design)
+    - [x] 8. Tanpa akumulasi memori tak-terbatas — ✓ stateless per-request; objek kecil; rate-limit state dititipkan ke Cache API (eviction platform)
+    - [x] 9. Soft-delete — N/A (tanpa data persisten)
+    - [x] 10. Write multi-tabel dalam transaction — N/A (tanpa DB)
+    - [x] 11. Migrations non-blocking — N/A (tanpa DB/migrasi)
+    - [x] 12. GraphQL query/depth/complexity limits — N/A (REST saja)
+  - FULL (16/16):
+    - [x] 1. Caching implemented+tested (skip simple_mode) — ✓ platform cache + pengukuran cache-cold pada #016 (`loadtest/RESULTS.md`); simple_mode=false → tidak diskip
+    - [x] 2. DB pooling verified — N/A (tanpa DB)
+    - [x] 3. Stateless: tanpa state di memori proses (session/in-process state) — ✓ identik dengan BASIC#5; health + route identik pre/during/post rollback
+    - [x] 4. Operasi panjang → background job/queue — N/A (tanpa operasi panjang)
+    - [x] 5. Resource dilepas saat selesai/error — ✓ seluruh response di-return eksplisit; catch error melepas jalur (src/index.js:496-499)
+    - [x] 6. Outbound HTTP explicit timeout — ✓ 5000ms (src/index.js:76)
+    - [x] 7. Circuit breaker/fallback utk dependency (skip simple_mode) — ✓ satu-hop eksternal saja (feed API): timeout 5s + graceful fallback `catch → 302 /` (src/index.js:496-499); tanpa rantai A→B→C → circuit breaker klasik tidak berlaku; simple_mode=false
+    - [x] 8. Queue depth bounded/backpressure — N/A (tanpa queue)
+    - [x] 9. Infra rate limiting utk high_scale target (skip simple_mode) — ✓ edge Cloudflare (DDoS/L7 bawaan) + in-worker limiter; simple_mode=false
+    - [x] 10. high_scale & non-microservices → API Gateway utk auth/CORS/baseline — N/A (satu service monolitik tanpa JWT/OAuth di edge — knowledge:106: satu-satunya edge backend)
+    - [x] 11. horizontal autoscaling terkonfigurasi — ✓ platform-managed (Workers isolates; deploy/rollback tanpa downtime, terbukti task ini)
+    - [x] 12. Idempotency key utk operasi retryable implemented+tested — N/A (tanpa write/retryable API — semua GET)
+    - [x] 13. Health endpoints per §8 (server shapes) — ✓ `/api/health` 200 ok pre/during/post rollback (src/index.js:188)
+    - [x] 14. Load baseline Stage1 smoke wajib (Server shapes) — ✓ #016: smoke 580 req/0 errors; Stage2 (capacity 1.000 VU/120s p95 222ms, 0.00% errors + cache-cold herd) juga dijalankan karena simple_mode=false (`loadtest/RESULTS.md`)
+    - [x] 15. Static-Hosting shapes: Core Web Vitals ukur & penuhi — N/A (project_shape: fullstack / Server variant)
+    - [x] 16. App-Store shape: staged rollout + in-app monitor — N/A (bukan app store)
+- **Observability gate:** passed (Phase 7 FULL, simple_mode: false → 0 items skipped)
+  - [x] 1. Structured logging/crash reporting aktif dengan request_id/trace_id — ✓ log JSON terstruktur ERROR/WARN via Workers Logs (src/index.js:70-72,497; knowledge:159); korrelasi per-request via header worker `x-request-id` (src/index.js:188,290) + `CF-Ray` — error body tanpa request_id = keputusan PRD eksplisit (knowledge:128)
+  - [x] 2. Log level via konfigurasi; verbose tidak pernah di production — ✓ level ERROR & WARN di production (knowledge:159); `src/index.js` mengandung **0** `console.log` (hanya 3 panggilan `console.error/warn`) → verbose-in-prod mustahil
+  - [x] 3. Error tracking aktif dengan scrub PII/secret — ✓ tanpa error-tracker pihak ketiga (knowledge:159 — Browser Console + Cloudflare Dashboard); aturan anti-PII Workers Logs terdokumentasi & log baku tanpa PII/secret
+  - [x] 4. Health endpoint / uptime check merespons — ✓ `/api/health` 200 `{"status":"ok"}` diverifikasi **sebelum, saat, dan sesudah** rollback (2026-10-09)
+  - [x] 5. Event bisnis kunci ter-log — ✓ event error/operasional via Workers Logs (src/index.js:70-72,497) + metrik request/route via Cloudflare Analytics bawaan (knowledge:159)
+  - [x] 6. Minimal satu alert rule dikonfigurasi — ✓ **alert error-rate dikonfigurasi via dashboard Cloudflare 2026-10-09 (konfirmasi developer)**; endpoint alerting API tidak dapat dibaca token OAuth wrangler (403 — tanpa scope alerting), sehingga konfirmasi dashboard dipakai sebagai bukti; knowledge:159 mencatat alerting sebelumnya opsional → kini aktif
+  - [x] 7. Backup restore diuji di staging (jika ada data persisten) — N/A (stateless, tanpa DB/backup — knowledge:159)
+  - [x] 8. Prosedur rollback/update-channel diuji sesuai shape — ✓ **tugas ini sendiri**: `wrangler rollback` diuji sekali end-to-end (13 detik, bukti di acceptance) + jalur dashboard terdokumentasi (scope, `docs/deployment-runbook.md` §5)
+- **Regression:** Passed 165 unit tests; lint clean; `npm run build` passes with 0 vulnerabilities (seluruhnya via pre-commit hook pada commit task ini)
+- **Decisions made:**
+  - [INFRA] Versi tag = `package.json` `version: 1.0.5` → tag **`v1.0.5`** (sumber semver = package.json; format `vX.Y.Z` sesuai @knowledge:153 — konvensi diterapkan pertama kali karena repo sebelumnya nol tag; tanpa bump package.json)
+  - [INFRA] Tag dibuat di dev HEAD **setelah merge task ini** (titik rilis akhir task), annotated, message merujuk task #018 + changelog v1.0.26, lalu di-push ke origin — loop tidak pernah menyentuh `main`
+  - [INFRA] Verifikasi rollback memakai `wrangler rollback -y` (fallback konfirmasi otomatis di non-interaktif) + pembacaan API authoritative (`GET /accounts/{acc}/workers/scripts/games/deployments` → deployment id, annotation, versi@100%); catatan: `wrangler deployments list` tampak stale/tersimpan tepat setelah rollback → API dipakai sumber kebenaran
+  - [TEST] Target rollback = versi sebelumnya `fca8eeba` (2026-09-09), lalu **segera dipulihkan** ke `94fa99a0` — production berakhir identik dengan state sebelum task (rollback-nya sendiri = mekanisme yang sama, dihitung ulang 7 detik)
+- **Notes:**
+  - Respons **GET** `/` production memuat seluruh security header; respons **HEAD** `/` tidak (asimetri HEAD/GET pada jalur asset — kandidat tindak lanjut kecil; jalur browser = GET, terlindungi)
+  - README (baris ~77-80) dan `docs/deployment-runbook.md` §5 terverifikasi akurat terhadap mekanisme yang diuji
+  - Dua bukti gate diverifikasi via konfirmasi developer di dashboard (alert rule + branch protection `main`, keduanya 2026-10-09) karena sesi ini tanpa kredensial GitHub (`gh` tidak terpasang) dan token OAuth wrangler tanpa scope alerting (403) — dicatat apa adanya
+  - Tanpa konflik merge/tumpang tindih file; git tag belum pernah dipakai sebelum task ini; branch feat tidak pernah di-push (pembersihan = hapus lokal)
+- **Knowledge drift:** none — tanpa perubahan perilaku/konfigurasi kode; konvensi tag sudah terdokumentasi (@knowledge:153 format `vX.Y.Z`) dan mekanisme rollback sudah ada di §8 — semua pemicu drift (lib baru, module/API baru, perilaku berubah, file terhapus/dipindah, konvensi baru) tidak terpicu; bukti verifikasi cukup hidup di entry changelog ini
+
 > v1.0.17 (2026-09-09): Task #021 completed — canonicalize game deep-link URL variants for GSC "Di-crawl - saat ini tidak diindeks" fix. `/game.html?id=X` and `/game?id=X` now redirect to `/play/:id/:slug` in single 301. `canonicalGameUrl()` updated to point to `/play/:id/:slug` for LOCAL_GAMES. 2 new unit tests. 157 tests pass, lint clean, build passes. Task #012 promoted to [IN PROGRESS].
 > v1.0.18 (2026-09-09): Task #012 completed — harden client-side search rendering against reflected XSS. Code review confirmed all rendering uses `textContent` and DOM property assignments. Created `js/catalog.test.js` with 5 XSS-focused unit tests. 162 tests pass, lint clean, build passes. Task #013 promoted to [IN PROGRESS].
 > v1.0.21 (2026-09-23): Task #013 completed — verify test suite coverage & CI pass/fail visibility. Added `npm test` to build script for visible CI output. Fixed 4 high-severity CVEs via `npm audit fix`. 162 tests pass, lint clean, `npm run build` passes with 0 vulnerabilities. Task #014 promoted to [IN PROGRESS].
 > v1.0.22 (2026-09-24): Task #015 completed — End-to-End Smoke Test: Catalog → Play → Record → Share. Playwright E2E suite added (`e2e/full-flow.test.js` + `vitest.e2e.config.js`); `@playwright/test@1.62.0` added to devDependencies. `src/index.js` http→https 301 now gated on `isLoopbackHost()` (loopback excluded — wrangler dev serves a self-signed cert). `games/shared/ui-share.js` share text targets `/play/<canonical-id>/<slug>`; inline `<style>` fallback removed (blocked by strict CSP). 165 unit tests + 3 E2E tests pass, lint clean, build passes. Task #016 promoted to [IN PROGRESS].
 > v1.0.24 (2026-10-08): Task #016 completed — Two-Stage Load Test on `src/index.js` routes. k6 suite added under `loadtest/` (gimboot.js scenario script, run.mjs orchestrator via unstable_dev, README, RESULTS, raw results incl. preserved failure records). All three stages PASS on wrangler 4.148.0/workerd 1.20261006.1: smoke 580 req/0 errors; capacity 1.000 VU/120s p95 222 ms, p99 338 ms, 0.00% errors, workerd RSS 185→497 MB (bounded); cache-cold herd 40 VU window p95 4.28 s, 0 errors. Security + Scalability gates FULL. 7 pre-existing high CVEs fixed for the build gate (`npm audit fix` + `overrides: sharp 0.35.5` — miniflare pins sharp exactly). 165 tests pass, lint clean, build passes with 0 vulnerabilities. @knowledge v1.6.3 (§2, §3 + loadtest/). Task #017 promoted to [IN PROGRESS].
 > v1.0.25 (2026-10-09): Task #017 completed — Validate Preview-Deployment Staging Flow & Document Canary Procedure. `docs/deployment-runbook.md` created (environments, Workers Builds preview mechanism + staging-gate procedure, trigger point 7.000–8.000 concurrent = ~70–80% of 10.000, canary rollout 10%→50%→100% with abort/rollback, validation log). Preview URL from test branch `feat/task-017-preview-staging-flow` produced and smoke-tested (`/` 200, `/api/health` ok, `/game.html` 301→`/game`, body distinct from production); *Enable Preview Builds* observed OFF (no check run after two pushes) → manual `npx wrangler preview` path documented; `wrangler.toml` += empty `[previews]` block. Security + Scalability gates FULL. 165 tests pass, lint clean, build passes with 0 vulnerabilities. @knowledge v1.6.4 (§8). Task #018 promoted to [IN PROGRESS].
+> v1.0.26 (2026-10-09): Task #018 completed — Verify Version Tagging & Rollback Procedure. First tag applied to the repo: annotated **`v1.0.5`** (= package.json version) created on dev HEAD after this task's merge and pushed to origin (0 tags existed before; format `vX.Y.Z` per @knowledge:153). Rollback timed end-to-end: T0 07:41:05Z → deployment `d20fd563` active in 7 s, serving verified in **13 s total (≪ 10 min)** against previous version `fca8eeba` (2026-09-09), then original `94fa99a0` restored in 7 s (deployment `77b86f56`) — production state identical pre/post. Security FULL (0 simple_mode skips; branch-protection rule for `main` added same day per developer confirmation) + Scalability FULL + Observability passed (alert rule configured same day per developer confirmation; Workers Logs ERROR/WARN structured logging, `x-request-id` correlation, health endpoint OK pre/during/post). 165 tests pass, lint clean, build passes with 0 vulnerabilities. No knowledge drift (tag convention already documented). Task #019 promoted to [IN PROGRESS].
 
