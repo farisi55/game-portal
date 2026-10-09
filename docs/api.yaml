@@ -1,0 +1,638 @@
+# Gimboot API — OpenAPI 3.1 specification.
+# Task #019 (2026-10-09): generated from src/index.js and verified endpoint-by-
+# endpoint against the production deployment https://games.farisi55.workers.dev.
+# Contract source: @knowledge §5; every response shape below was observed live.
+openapi: 3.1.0
+info:
+  title: Gimboot API
+  version: 1.0.5
+  summary: Public read-only API and page routes of the Gimboot game portal.
+  description: |
+    All endpoints are public and read-only — no authentication, no cookies,
+    no state-changing methods (see `security` note below).
+
+    Shared behavior for EVERY route served by the Worker `src/index.js`:
+
+    - **Methods:** `GET`, `HEAD`, `OPTIONS` only. Any other method → `405`
+      with `Allow: GET, HEAD, OPTIONS`. `OPTIONS` → `204` (CORS preflight).
+    - **Rate limiting:** 100 requests / 60 s per client IP
+      (`CF-Connecting-IP`) → `429` `{"error":"Rate limit exceeded"}`.
+    - **HTTPS enforcement:** plain `http://` requests to non-loopback hosts
+      are redirected with `301` to the same URL over `https://`.
+    - **Error shape:** `{"error": "<message>"}` — no `request_id` in the body
+      (explicit PRD decision, @knowledge §5); correlation happens via the
+      `x-request-id` response header instead.
+    - **Security headers on every response:** `Strict-Transport-Security`,
+      `X-Frame-Options: SAMEORIGIN`, `X-Content-Type-Options: nosniff`,
+      `Referrer-Policy: strict-origin-when-cross-origin`, `Permissions-Policy`,
+      plus `Content-Security-Policy` (HTML responses get a per-request nonce +
+      `strict-dynamic`) and the correlation headers `x-request-id` (UUID) and
+      `CF-Ray` (Cloudflare edge).
+    - **CORS:** JSON endpoints send `Access-Control-Allow-Origin: *`
+      (accepted policy for public read-only endpoints, @knowledge §5).
+    - **Versioning:** none — additive-only changes only (@knowledge §5).
+  license:
+    name: UNLICENSED
+servers:
+  - url: https://games.farisi55.workers.dev
+    description: Production (Cloudflare Worker)
+  - url: http://localhost:8787
+    description: Local development (`npx wrangler dev` / `unstable_dev`)
+tags:
+  - name: catalog
+    description: Game catalog JSON (`/api/games`, `/api/search`).
+  - name: pages
+    description: Server-rendered HTML page routes (`/share`, `/play`, `/game`).
+  - name: seo
+    description: Machine-readable SEO artifacts (`/sitemap.xml`).
+paths:
+  /api/games:
+    get:
+      tags: [catalog]
+      summary: Merged game catalog (GameMonetize + GamePix)
+      operationId: getGames
+      description: |
+        Returns the merged external catalog (two publisher feeds, each asked
+        for half of the requested window so the result is balanced).
+
+        **Response shape depends on the `page` parameter:**
+
+        - **No `page` parameter** → a *bare JSON array* of `Game` objects.
+        - **With `page`** → an object `{ games, pagination }` with
+          `pagination: { page, limit, total }`.
+
+        Results are edge-cached for 30 minutes (`Cache-Control:
+        public, max-age=1800`).
+
+        Note: first-party games (`local-*`) are **not** part of this feed —
+        they are registered client-side in `js/config.js` and merged
+        server-side only by `/share/:id`, `/play/:id/:slug` and
+        `/sitemap.xml` (@knowledge §5).
+      parameters:
+        - $ref: '#/components/parameters/Num'
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: Catalog (bare array without `page`, paged object with `page`).
+          headers:
+            Content-Type:
+              description: JSON content type.
+              schema:
+                type: string
+                example: application/json; charset=utf-8
+            Access-Control-Allow-Origin:
+              $ref: '#/components/headers/AccessControlAllowOrigin'
+            Cache-Control:
+              $ref: '#/components/headers/CacheControlCatalog'
+            x-request-id:
+              $ref: '#/components/headers/XRequestId'
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/GameList'
+                  - $ref: '#/components/schemas/PagedGames'
+              examples:
+                bareArray:
+                  summary: Without `page` — bare array
+                  value:
+                    - id: gm-82714
+                      title: Sample Game
+                      category: Arcade
+                      url: https://example-embed.invalid/play/gm-82714
+                      thumb: https://cdn.example.invalid/thumb.jpg
+                      width: 800
+                      height: 600
+                    - id: gp-737HCH
+                      title: Another Game
+                      category: Puzzle
+                      url: https://example-embed.invalid/gp-737HCH
+                      thumb: https://cdn.example.invalid/thumb2.jpg
+                      width: null
+                      height: null
+                paged:
+                  summary: With `page` — paged object
+                  value:
+                    games:
+                      - id: gm-82714
+                        title: Sample Game
+                        category: Arcade
+                        url: https://example-embed.invalid/play/gm-82714
+                        thumb: https://cdn.example.invalid/thumb.jpg
+                        width: 800
+                        height: 600
+                    pagination:
+                      page: 2
+                      limit: 2
+                      total: 4
+        '405':
+          $ref: '#/components/responses/MethodNotAllowed'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '502':
+          description: Both upstream game feeds failed (empty combined catalog).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FeedError'
+              example:
+                error: Both game feeds failed
+                gameMonetize: rejected
+                gamePix: rejected
+  /api/search:
+    get:
+      tags: [catalog]
+      summary: Search the merged catalog by free-text query
+      operationId: searchGames
+      description: |
+        Case-insensitive substring match against `title` and `category` of the
+        merged external catalog (same source as `/api/games`).
+
+        Successful non-empty results are edge-cached for 10 minutes
+        (`Cache-Control: public, max-age=600`); an empty result set is
+        returned uncached.
+      parameters:
+        - $ref: '#/components/parameters/Q'
+        - $ref: '#/components/parameters/Num'
+      responses:
+        '200':
+          description: Matching games — bare array, empty (`[]`) when nothing matches.
+          headers:
+            Content-Type:
+              schema:
+                type: string
+                example: application/json; charset=utf-8
+            Access-Control-Allow-Origin:
+              $ref: '#/components/headers/AccessControlAllowOrigin'
+            Cache-Control:
+              description: Present only for non-empty results (`public, max-age=600`).
+              schema:
+                type: string
+                example: public, max-age=600
+            x-request-id:
+              $ref: '#/components/headers/XRequestId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GameList'
+              examples:
+                hits:
+                  summary: Non-empty result
+                  value:
+                    - id: gp-737HCH
+                      title: Sample Game
+                      category: Arcade
+                      url: https://example-embed.invalid/gp-737HCH
+                      thumb: https://cdn.example.invalid/thumb.jpg
+                      width: 800
+                      height: 600
+                noHits:
+                  summary: No match
+                  value: []
+        '400':
+          description: '`q` missing or empty after trimming.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: Missing required query param "q"
+        '405':
+          $ref: '#/components/responses/MethodNotAllowed'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '502':
+          description: Search pipeline failed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: Search failed
+  /share/{id}:
+    get:
+      tags: [pages]
+      summary: Open Graph / Twitter share page for a game
+      operationId: getSharePage
+      description: |
+        Stateless social-share page. Renders `og:*` and `twitter:*` meta tags
+        built from the game record (merged catalog **including** first-party
+        `local-*` games) plus a `<meta http-equiv="refresh">` that sends human
+        browsers to the canonical `/play/{id}/{slug}` URL — social scrapers
+        stop at the meta tags. All interpolated values are HTML-escaped.
+      parameters:
+        - $ref: '#/components/parameters/GameId'
+      responses:
+        '200':
+          description: Share HTML page (also auto-redirects humans to `/play/...`).
+          headers:
+            Content-Type:
+              schema:
+                type: string
+                example: text/html;charset=UTF-8
+            Cache-Control:
+              schema:
+                type: string
+                example: public, max-age=86400
+            x-request-id:
+              $ref: '#/components/headers/XRequestId'
+          content:
+            text/html:
+              schema:
+                type: string
+              example: |
+                <!DOCTYPE html>
+                <html lang="en">
+                <head>
+                  <meta charset="UTF-8">
+                  <title>Play Kicau Mania on Gimboot!</title>
+                  <meta property="og:type" content="website">
+                  <meta property="og:title" content="Play Kicau Mania Instantly!">
+                  <meta property="og:image" content="https://games.farisi55.workers.dev/games/kicau-mania/thumb.svg">
+                  <meta name="twitter:card" content="summary_large_image">
+                  <meta http-equiv="refresh" content="0; url=https://games.farisi55.workers.dev/play/local-kicau-mania/kicau-mania">
+                </head>
+                <body>
+                  <p>Loading game... <a href="...">Click here</a> if not automatically redirected.</p>
+                </body>
+                </html>
+        '302':
+          description: |
+            Game id not found in the merged catalog, id missing
+            (`/share/`), or catalog fetch failure — redirect to `/`.
+          headers:
+            Location:
+              schema:
+                type: string
+                format: uri
+                example: https://games.farisi55.workers.dev/
+        '405':
+          $ref: '#/components/responses/MethodNotAllowed'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /play/{id}/{slug}:
+    get:
+      tags: [pages]
+      summary: Canonical game player page (SEO-injected shell)
+      operationId: getPlayPage
+      description: |
+        The single canonical game URL (replaces the legacy `game.html` /
+        `?id=` variants). Serves the shared game shell with server-side SEO
+        injection via HTMLRewriter:
+
+        - **Known game** (merged catalog incl. `local-*`): `<title>`,
+          meta description, `og:*` / `twitter:*`, `<link rel="canonical">`,
+          `gimboot-play-*` transport metas and a JSON-LD `VideoGame` block.
+        - **Unknown id**: shell served with only
+          `<meta name="gimboot-play-id">` so the client can retry the
+          catalog lookup without losing the play identity.
+        - **Missing id** (`/play/`): plain shell, unmodified.
+
+        The `{slug}` segment is **ignored server-side** — it exists purely as
+        an SEO/descriptive URL signal and never affects resolution.
+      parameters:
+        - $ref: '#/components/parameters/GameId'
+        - name: slug
+          in: path
+          required: true
+          description: Human-readable game slug (informational only, not validated).
+          schema:
+            type: string
+          example: kicau-mania
+      responses:
+        '200':
+          description: Game shell HTML with (or without) SEO injection.
+          headers:
+            Content-Type:
+              schema:
+                type: string
+                example: text/html
+            x-request-id:
+              $ref: '#/components/headers/XRequestId'
+          content:
+            text/html:
+              schema:
+                type: string
+              example: |
+                <html lang="en">
+                <head>
+                  <title>Play Kicau Mania Free, No Download - Gimboot</title>
+                  <meta property="og:title" content="Play Kicau Mania Free, No Download - Gimboot">
+                  <link rel="canonical" href="https://games.farisi55.workers.dev/play/local-kicau-mania/kicau-mania">
+                  <meta name="gimboot-play-id" content="local-kicau-mania">
+                  <meta name="gimboot-play-width" content="360">
+                  <script type="application/ld+json">{"@context":"https://schema.org","@type":"VideoGame", ...}</script>
+                </head>
+                <body>...</body>
+                </html>
+        '405':
+          $ref: '#/components/responses/MethodNotAllowed'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /game:
+    get:
+      tags: [pages]
+      summary: Game shell (legacy route) with query-param SEO + canonical redirect
+      operationId: getGameRoute
+      description: |
+        Dispatch behavior:
+
+        - **`id` = known first-party (`local-*`) game** → `301` to the
+          canonical `/play/{id}/{slug}` — the original query string is
+          preserved on the redirect target (single-hop redirect clears only
+          the fragment).
+        - **`id` present but not a first-party game** (e.g. a feed id) →
+          `200` shell, SEO taken from the query params below.
+        - **No `id`** → `200` shell with SEO from the query params
+          (defaults: title `Game`, empty description suffix).
+
+        Alias: `/game.html` → `301` `/game` (query preserved); with a known
+        `id` it also lands on `/play/...` in a single hop.
+      parameters:
+        - name: id
+          in: query
+          required: false
+          description: Game id — known `local-*` ids trigger the `301` to `/play/...`.
+          schema:
+            type: string
+          example: local-kicau-mania
+        - name: title
+          in: query
+          required: false
+          description: SEO title input (default `Game`).
+          schema:
+            type: string
+          example: Demo Game
+        - name: category
+          in: query
+          required: false
+          description: Category for the meta description (empty → generic wording).
+          schema:
+            type: string
+          example: Arcade
+        - name: thumb
+          in: query
+          required: false
+          description: Thumbnail URL for `og:image` / `twitter:image` (relative or absolute).
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Game shell HTML with SEO injected from query params.
+          headers:
+            Content-Type:
+              schema:
+                type: string
+                example: text/html
+            x-request-id:
+              $ref: '#/components/headers/XRequestId'
+          content:
+            text/html:
+              schema:
+                type: string
+              example: |
+                <html>
+                <head>
+                  <title>Demo Game - Main Gratis di Gimboot</title>
+                  <meta name="description" content="Mainkan Demo Game, game Arcade seru secara gratis di Gimboot.">
+                  <link rel="canonical" href="https://games.farisi55.workers.dev/game">
+                </head>
+                ...
+                </html>
+        '301':
+          description: Known first-party `id` → canonical `/play/{id}/{slug}` (query preserved).
+          headers:
+            Location:
+              schema:
+                type: string
+                format: uri
+              example: https://games.farisi55.workers.dev/play/local-kicau-mania/kicau-mania?id=local-kicau-mania
+        '405':
+          $ref: '#/components/responses/MethodNotAllowed'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /sitemap.xml:
+    get:
+      tags: [seo]
+      summary: Dynamic sitemap (first-party + external catalog)
+      operationId: getSitemap
+      description: |
+        `urlset` containing the home page (`changefreq: daily`, `priority:
+        1.0`) plus one `/play/{id}/{slug}` entry per game
+        (`changefreq: weekly`, `priority: 0.8`) for **first-party
+        `local-*` games merged with up to `CATALOG_MAX_NUM` (200) feed
+        games** (205 `<url>` entries observed live). Locations are always
+        emitted as canonical `https://` URLs. Referenced by `robots.txt`.
+        Edge-cached 30 minutes (`public, max-age=1800`).
+      responses:
+        '200':
+          description: XML sitemap.
+          headers:
+            Content-Type:
+              schema:
+                type: string
+                example: application/xml; charset=utf-8
+            Cache-Control:
+              $ref: '#/components/headers/CacheControlCatalog'
+            x-request-id:
+              $ref: '#/components/headers/XRequestId'
+          content:
+            application/xml:
+              schema:
+                type: string
+              example: |
+                <?xml version="1.0" encoding="UTF-8"?>
+                <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+                <url><loc>https://games.farisi55.workers.dev/</loc><changefreq>daily</changefreq><priority>1.0</priority></url>
+                <url><loc>https://games.farisi55.workers.dev/play/local-kicau-mania/kicau-mania</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+                </urlset>
+        '405':
+          $ref: '#/components/responses/MethodNotAllowed'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+components:
+  parameters:
+    Num:
+      name: num
+      in: query
+      required: false
+      description: Total catalog window. Clamped to `1..200`; defaults to 50 (`CATALOG_DEFAULT_NUM`).
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 200
+        default: 50
+      example: 50
+    Page:
+      name: page
+      in: query
+      required: false
+      description: |
+        1-based page number. **Presence of this parameter switches the
+        response shape** to `{ games, pagination }`. Values < 1 or invalid
+        are normalized to `1`.
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+      example: 1
+    Limit:
+      name: limit
+      in: query
+      required: false
+      description: Page size when `page` is present. Clamped to `1..200`; defaults to `num`.
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 200
+      example: 20
+    Q:
+      name: q
+      in: query
+      required: true
+      description: Free-text query, matched case-insensitively against `title` and `category`.
+      schema:
+        type: string
+        minLength: 1
+      example: kart
+    GameId:
+      name: id
+      in: path
+      required: true
+      description: |
+        Game id — `local-*` (first-party), `gm-*` (GameMonetize) or
+        `gp-*` (GamePix). URL-encoded in the path.
+      schema:
+        type: string
+      example: local-kicau-mania
+  headers:
+    AccessControlAllowOrigin:
+      description: Wildcard CORS — accepted policy for public read-only JSON endpoints (@knowledge §5).
+      schema:
+        type: string
+        example: '*'
+    CacheControlCatalog:
+      description: 30-minute edge cache (`CACHE_TTL_SECONDS = 1800`).
+      schema:
+        type: string
+        example: public, max-age=1800
+    XRequestId:
+      description: Per-request correlation UUID (also present on every other response).
+      schema:
+        type: string
+        format: uuid
+        example: 914c3d7f-37cf-4b02-a6b0-6ca315efb967
+  schemas:
+    Game:
+      type: object
+      description: Normalized game record (external feed sources for `/api/*`; merged with `local-*` for `/share`, `/play`, `/sitemap.xml`).
+      required: [id, title, category, url, thumb]
+      properties:
+        id:
+          type: string
+          description: Namespaced id — `gm-`/`gp-` for feed games, `local-` for first-party.
+          examples: [gm-82714, gp-737HCH, local-kicau-mania]
+        title:
+          type: string
+          examples: [Kicau Mania, Sample Game]
+        category:
+          type: string
+          description: Normalized genre label (empty feed values fall back to `Arcade`).
+          examples: [Arcade, Puzzle]
+        url:
+          type: string
+          description: Embed/play URL (absolute for feed games, site-relative path for first-party games).
+          examples: ['https://example-embed.invalid/play/gm-82714', /games/kicau-mania/index.html]
+        thumb:
+          type: string
+          description: Thumbnail URL or site-relative path.
+        width:
+          description: Embed width in px, `null` when the feed omits it.
+          type: [integer, 'null']
+          examples: [800, null]
+        height:
+          description: Embed height in px, `null` when the feed omits it.
+          type: [integer, 'null']
+          examples: [600, null]
+    GameList:
+      type: array
+      description: Bare array of games (may be empty).
+      items:
+        $ref: '#/components/schemas/Game'
+    Pagination:
+      type: object
+      required: [page, limit, total]
+      properties:
+        page:
+          type: integer
+          minimum: 1
+          example: 2
+        limit:
+          type: integer
+          minimum: 1
+          example: 2
+        total:
+          type: integer
+          description: Total number of games across all pages.
+          example: 4
+    PagedGames:
+      type: object
+      description: Response shape of `/api/games` when the `page` parameter is present.
+      required: [games, pagination]
+      properties:
+        games:
+          $ref: '#/components/schemas/GameList'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+    ErrorResponse:
+      type: object
+      description: Error body — no `request_id` in the body by PRD decision (@knowledge §5).
+      required: [error]
+      properties:
+        error:
+          type: string
+          examples: ['Missing required query param "q"', 'Search failed', 'Rate limit exceeded']
+    FeedError:
+      type: object
+      description: '`/api/games` when both upstream feeds produced zero games.'
+      required: [error, gameMonetize, gamePix]
+      properties:
+        error:
+          type: string
+          example: Both game feeds failed
+        gameMonetize:
+          type: string
+          enum: [fulfilled, rejected]
+          example: rejected
+        gamePix:
+          type: string
+          enum: [fulfilled, rejected]
+          example: rejected
+  responses:
+    MethodNotAllowed:
+      description: Method outside `GET`/`HEAD`/`OPTIONS`.
+      headers:
+        Allow:
+          schema:
+            type: string
+          example: GET, HEAD, OPTIONS
+        x-request-id:
+          $ref: '#/components/headers/XRequestId'
+      content:
+        text/plain:
+          schema:
+            type: string
+          example: Method Not Allowed
+    TooManyRequests:
+      description: Per-IP rate limit exceeded (100 requests / 60 s).
+      headers:
+        x-request-id:
+          $ref: '#/components/headers/XRequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error: Rate limit exceeded
+security: []
