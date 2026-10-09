@@ -17,6 +17,7 @@ vitest.config.js
 vitest.e2e.config.js
 e2e/
 docs/
+loadtest/
 .prettierrc
 .prettierignore
 changelog.md
