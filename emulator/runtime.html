@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Emulator Runtime — Gimboot</title>
+</head>
+<body>
+<div id="game"></div>
+<script>
+(function () {
+  var loaded = false;
+  var ALLOWED_CORES = { nes: 1, snes: 1, gb: 1, gba: 1, segaMD: 1 };
+  var MAX_ROM_SIZE = 134217728; // 128 MB sanity cap
+
+  window.addEventListener('message', function (e) {
+    if (e.origin !== location.origin) return;
+    var d = e.data;
+    if (!d || d.type !== 'gimboot:load' || loaded) return;
+    if (typeof d.core !== 'string' || !ALLOWED_CORES[d.core]) return;
+    if (!(d.rom instanceof File) || d.rom.size === 0 || d.rom.size > MAX_ROM_SIZE) return;
+
+    loaded = true;
+
+    window.EJS_player = '#game';
+    window.EJS_core = d.core;
+    window.EJS_gameUrl = URL.createObjectURL(d.rom);
+    window.EJS_biosUrl = (d.bios instanceof File && d.bios.size > 0)
+      ? URL.createObjectURL(d.bios)
+      : '';
+    window.EJS_pathtodata = '/vendor/emulatorjs/';
+    window.EJS_language = 'en-US';
+    window.EJS_disableAutoLang = false;
+    window.EJS_startOnLoaded = true;
+
+    window.EJS_ready = function () {
+      parent.postMessage({ type: 'gimboot:started' }, location.origin);
+    };
+
+    var s = document.createElement('script');
+    s.src = '/vendor/emulatorjs/loader.js';
+    document.head.appendChild(s);
+  });
+
+  // Tell the parent this runtime is ready to accept a ROM.
+  parent.postMessage({ type: 'gimboot:runtime-ready' }, location.origin);
+})();
+</script>
+</body>
+</html>

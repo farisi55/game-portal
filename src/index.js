@@ -188,6 +188,8 @@ export default {
           headers: { 'Content-Type': 'application/json', 'x-request-id': requestId },
         }),
         requestId,
+        url.hostname,
+        url.pathname,
       );
     }
 
@@ -239,7 +241,7 @@ export default {
       response = await env.ASSETS.fetch(request);
     }
 
-    return withSecurityHeaders(response, requestId);
+    return withSecurityHeaders(response, requestId, url.hostname, url.pathname);
   },
 };
 
@@ -270,7 +272,7 @@ function handleApiHealth() {
   );
 }
 
-function withSecurityHeaders(response, requestId = '') {
+function withSecurityHeaders(response, requestId = '', hostname = '', pathname = '') {
   const headers = new Headers(response.headers);
   const nonce = isHtmlResponse(response) ? createNonce() : null;
   let body = response.body;
@@ -285,7 +287,7 @@ function withSecurityHeaders(response, requestId = '') {
     headers.delete('ETag');
   }
 
-  headers.set('Content-Security-Policy', buildContentSecurityPolicy(nonce));
+  headers.set('Content-Security-Policy', buildContentSecurityPolicy(nonce, hostname, pathname));
   if (requestId) {
     headers.set('x-request-id', requestId);
   }
@@ -312,11 +314,35 @@ function createNonce() {
   return btoa(binary);
 }
 
-function buildContentSecurityPolicy(nonce) {
-  const scriptSource = nonce ? `'nonce-${nonce}' 'strict-dynamic'` : "'none'";
-  const scriptElementSource = nonce ? `'nonce-${nonce}'` : "'none'";
+function buildContentSecurityPolicy(nonce, hostname = '', pathname = '') {
+  const isEmulatorPath = pathname.startsWith('/emulator/');
 
-  return `default-src 'self'; script-src ${scriptSource}; script-src-elem ${scriptElementSource}; script-src-attr 'none'; style-src 'self'; style-src-elem 'self'; style-src-attr 'none'; worker-src 'self'; font-src 'self' data:; img-src 'self' https: data:; connect-src 'self'; frame-src 'self' https://html5.gamemonetize.co https://*.gamemonetize.co https://gamemonetize.com https://*.gamemonetize.com https://play.gamepix.com https://*.gamepix.com; object-src 'none'; base-uri 'self'; frame-ancestors 'self'; form-action 'self'; upgrade-insecure-requests`;
+  // EmulatorJS's runtime uses eval() for dynamic code (game-specific logic).
+  // 'unsafe-eval' is added to script-src only on /emulator/* paths.
+  const scriptSource = nonce
+    ? `'nonce-${nonce}' 'strict-dynamic' 'wasm-unsafe-eval'${isEmulatorPath ? " 'unsafe-eval'" : ''}`
+    : "'none'";
+  const scriptElementSource = nonce ? `'nonce-${nonce}' 'strict-dynamic'` : "'none'";
+
+  // upgrade-insecure-requests rewrites same-origin http:// URLs (including
+  // iframe src) to https:// in the browser. On loopback (wrangler dev /
+  // the E2E suite) the Worker serves plain HTTP, so the directive would
+  // upgrade the /emulator iframe src to https://127.0.0.1:PORT — which the
+  // browser then blocks as a frame-src 'self' violation. Skip it on loopback,
+  // mirroring the loopback-gated http→https 301 below.
+  const upgradeDirective = isLoopbackHost(hostname) ? '' : ' upgrade-insecure-requests';
+
+  // EmulatorJS applies inline styles programmatically (element.style.x),
+  // creates blob: workers, and fetches a version-check from the CDN.
+  // The /emulator/* path gets a relaxed CSP; all other paths keep the
+  // strict policy.
+  const styleSrcAttr = isEmulatorPath ? "'unsafe-inline'" : "'none'";
+  const workerSrc = isEmulatorPath ? "'self' blob:" : "'self'";
+  const connectSrc = isEmulatorPath
+    ? "'self' blob: https://cdn.emulatorjs.org"
+    : "'self'";
+
+  return `default-src 'self'; script-src ${scriptSource}; script-src-elem ${scriptElementSource}; script-src-attr 'none'; style-src 'self'; style-src-elem 'self'; style-src-attr ${styleSrcAttr}; worker-src ${workerSrc}; font-src 'self' data:; img-src 'self' https: data:; connect-src ${connectSrc}; frame-src 'self' https://html5.gamemonetize.co https://*.gamemonetize.co https://gamemonetize.com https://*.gamemonetize.com https://play.gamepix.com https://*.gamepix.com; object-src 'none'; base-uri 'self'; frame-ancestors 'self'; form-action 'self';${upgradeDirective}`;
 }
 
 /**
