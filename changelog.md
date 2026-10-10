@@ -1,7 +1,7 @@
 ---
 project: Gimboot
-knowledge_version: 1.6.8
-changelog_version: 1.0.30
+knowledge_version: 1.6.9
+changelog_version: 1.0.31
 created: 2026-08-28
 status: in_progress
 milestone: 1 of 1
@@ -46,7 +46,7 @@ simple_mode: false
 
 ## [NEXT TASKS]
 
-(none — 24 task selesai: 22 task P04 + Task #023 (ad-hoc, security scan remediation) + Task #024 (ad-hoc, emulator full-systems); seluruh roadmap terpenuhi)
+(none — 25 task selesai: 22 task P04 + Task #023 (ad-hoc, security scan remediation) + Task #024 (ad-hoc, emulator full-systems) + Task #025 (ad-hoc, disclaimer translation); seluruh roadmap terpenuhi)
 
 ## [COMPLETED]
 > **Catatan format:** empat entri retroaktif di bawah ini BUKAN task yang dieksekusi lewat proses changelog/gate P04 ini — proses itu baru mulai berlaku sejak Task #001. Entri-entri ini disusun 2026-08-30 dari kondisi kode saat diaudit (2026-08-28) untuk mencatat bahwa produk sudah live sebelum changelog ini ada, sebagaimana disebut `knowledge.md` §1 ("Phase 1 & Phase 3 ... selesai"). Karena itu, tidak ada field "Files to create/modify", "Acceptance criteria" bercentang, atau "Dependencies" seperti task lain — tidak ada catatan asli semacam itu untuk pekerjaan ini, dan menuliskannya di sini akan memberi kesan presisi yang tidak benar-benar ada.
@@ -1373,6 +1373,7 @@ Satu Cloudflare Worker dengan static assets (`src/index.js`) menangani seluruh r
 > v1.0.28 (2026-10-09): Task #023 completed — External Security Scan Findings Remediation (ad-hoc, permintaan langsung developer; di luar urutan 22 task P04). Dua temuan low dari scan app.pentest-tools.com **45403422** vs `https://gimboot.com/` (0 critical/high/medium) terdisposisi **tanpa perubahan kode**: (1) "Server software and technology found" (CWE-200 — HTTP/3, Open Graph, PWA, Cloudflare, HSTS) → risk-accepted per-item: header platform edge tak terhapus dari Worker dan tanpa versi software, HSTS/OG/PWA = keamanan/produk yang tidak boleh dibuang demi scanner, disclosure ber-versi di bawah kendali kami = 0; (2) "Robots.txt file found" → review bersih (`User-agent: *` + `Allow: /` + `Sitemap`, 0 path sensitif), file dipertahankan. Bonus: drift header zone terdokumentasi (gimboot.com: HSTS `15552000`+XFO `DENY`+Speculation-Rules vs kode/workers.dev: `31536000; preload`+`SAMEORIGIN` — `15552000` tak pernah ada di git history → zone-level, kedua nilai aman; API zone 403 code 9109 → dashboard-only). Security FULL + Scalability FULL (0 skips). 165 tests, lint clean, build+audit 0 vulns. **@knowledge v1.6.5 → v1.6.6** (§8 security scan monitoring + disposition policy). Tidak ada promosi — [NEXT TASKS] tetap kosong, Task #022 tetap satu-satunya [IN PROGRESS].
 > v1.0.29 (2026-10-10): Task #022 completed — Build Emulator Feature: EmulatorJS Integration, Client-Side ROM/BIOS, Self-Hosted Core. Fitur emulator pertama Gimboot: `/emulator` shell (`emulator/index.html` + `runtime.html` + `style.css` + `emulator-ui.js`) yang meng-iframe-kan EmulatorJS v4.2.3 self-hosted di `/vendor/emulatorjs/` (13 MB, 36 file, GPL-3.0, build resmi via tag `v4.2.3` + `npm i --omit=optional` + `npm run minify` — Windows absolute-glob bug di-patch di clone temp). Sistem launch: NES, SNES, GB/GBC, GBA, Genesis/Mega Drive. ROM/BIOS 100% client-side (File → postMessage → `createObjectURL()`; tidak pernah menyentuh server). Tab "Emulator" di `tab-bar`. CSP di-relaksasi path-spesifik untuk `/emulator/*` (`wasm-unsafe-eval`, `unsafe-eval`, `style-src-attr 'unsafe-inline'`, `worker-src blob:`, `connect-src blob:` + CDN version check); `upgrade-insecure-requests` di-skip di loopback (fix bug E2E yang sudah ada sejak Task #015 — iframe game di-`http://127.0.0.1` di-upgrade ke `https://` oleh browser, memicu frame-src violation). `script-src-elem` dapat `'strict-dynamic'` (dynamically injected loader.js sebelumnya di-block). E2E test baru (`e2e/emulator-flow.test.js`) mencakup: tab navigation, WASM compile probe, ROM upload via fixture iNES programmatically generated, no-POST guard, core data fetch assertion, CSP violation check. **165 unit tests + 4 E2E tests pass**, lint clean, build + audit 0 vulns. **@knowledge v1.6.6 → v1.6.7** (§2 EmulatorJS v4.2.3, §3 emulator subsystem status + CSP relaxation notes, §9 vendor size 13 MB). Security FULL (HIGH-RISK OVERRIDE — file upload/download) + Scalability FULL (0 skips).
 > v1.0.30 (2026-10-10): Task #024 completed — Expand Emulator Browser ke Seluruh 35 Sistem EmulatorJS v4.2.3, Grouped Dropdown, Cross-Origin Isolation (ad-hoc, permintaan langsung developer: *"tampilkan semua support ROM bisa dalam bentuk dropdown list"*; scope dikonfirmasi via question tool: *"Semua 33 sistem (~80 MB)"* — aktual vendor 102 MB, diterima). Picker radio-group 5 sistem → `<select id="sys-select">`: **35 opsi dalam 7 optgroup** (Nintendo/Sony/Sega/Atari/Arcade/Computers/Other consoles), value = EmulatorJS system key, `data-accept` per sistem, `data-bios` (required: psx, segaSaturn, pcfx, 3do; recommended: amiga) + hint BIOS aria-live. Vendor **+89 MB → 102 MB total** (65 file `.data` + 33 report): kedua non-thread variant untuk core normal; thread variants hanya `ppsspp-thread-wasm.data` + `dosbox_pure-thread-{legacy-,}wasm.data`; core alternatif tidak di-shipped (konsisten #022, caveat 404); **Dreamcast/flycast tidak ada di v4.2.3** → excluded (diinformasikan ke developer). Cross-origin isolation **path-scoped `/emulator*`** di `withSecurityHeaders` (`Cross-Origin-Opener-Policy: same-origin` + `Cross-Origin-Embedder-Policy: require-corp`) → `crossOriginIsolated` + SharedArrayBuffer top-level & in-iframe (prasyarat `EJS_threads` utk THREAD_CORES {psp,dos}); catalog/play/game TIDAK diisolasi (iframe game pihak ketiga aman). Handshake race fix: iframe src extensionless `/emulator/runtime` + retry post `gimboot:load` 500 ms × maks 20 sampai `gimboot:started` (runtime one-shot guard). E2E diperluas: 7 optgroup + 35 opsi, isolation top-level + in-iframe, HEAD probes 5 core/report (200), core GET-only (poll & find difilter — HEAD probe test sendiri sebelumnya memenuhi poll lebih dulu = race). **169 unit tests + 4 E2E tests pass (2× consecutive full pass)**, lint clean, build + audit 0 vulns. **@knowledge v1.6.7 → v1.6.8** (§2 getCores mapping + varian strategy + threads/webgl2 + vendor 102 MB; §3 dropdown/THREAD_CORES/COOP-COEP/retry handshake; §9 vendor evaluation). Security FULL (HIGH-RISK OVERRIDE — file upload/download) + Scalability FULL (0 skips).
+> v1.0.31 (2026-10-11): Task #025 completed — Ad-hoc: Translate Emulator Disclaimer to English (permintaan langsung developer; di luar urutan task P04). Satu-satunya paragraf berbahasa Indonesia di halaman `/emulator` (blockquote `<section class="emu-disclaimer">`, halaman `lang="en"` dengan seluruh copy lain sudah Inggris) diterjemahkan ke bahasa Inggris: *"This emulator only runs ROMs that you legally own. Gimboot does not provide, distribute, or endorse piracy…"* — link sumber legal (itch.io, nesdoug.com, Hagen's Alley) dipertahankan. Mengaktifkan opsi **"revisi bahasa = keputusan developer terpisah"** yang sudah dinyatakan lebih dulu di keputusan D7 Task #022 (kutipan literal prd.md pada saat itu; kepatuhan spec mengalahkan konsistensi bahasa — kini developer mengambil keputusan revisinya). Copy-only: 0 perubahan logic/behavior; E2E tidak memuat assertion atas teks disclaimer (grep diverifikasi). Dokumentasi: changelog v1.0.31, **@knowledge v1.6.8 → v1.6.9** (§7 disclaimer wording), **prd v1.6.2 → v1.6.3** (§5 catatan [REVISI AD-HOC 2026-10-11] + teks final Inggris + intro version note). 169 unit tests, lint clean, build + audit 0 vulns. Security FULL (0 skips; copy-only, mayoritas N/A) + Scalability FULL (0 skips).
 
 ### Task #022 — Build Emulator Feature: EmulatorJS Integration, Client-Side ROM/BIOS, Self-Hosted Core ✅
 - **Completed:** 2026-10-10
@@ -1668,3 +1669,130 @@ Satu Cloudflare Worker dengan static assets (`src/index.js`) menangani seluruh r
   - Total vendor: **102 MB** (65 `.data` + 33 report; cores ~100 MB) — §9 evaluation: lazy-loaded per halaman + 1 core per boot; acceptable utk workload emulator
   - Production deploy: commit ini = push ke `dev`; deploy ke production = merge ke `main` (separate action, belum dilakukan)
 - **Knowledge drift:** UPDATE REQUIRED: @knowledge §2 (EmulatorJS library), §3 (emulator subsystem + folder tree), §9 (vendor size); **diedit pada task ini**: §2 += getCores full mapping 35 key + strategi varian core + requiresThreads/requiresWebGL2 + report-driven default + Dreamcast absent + vendor 102 MB; §3 += folder tree (dropdown select, THREAD_CORES, retry, extensionless URL) + subsystem scope "SELURUH 35 sistem" + handshake race fix + COOP/COEP isolation + EJS_core 35 key; §9 += vendor evaluation 102 MB — knowledge v1.6.7 → **v1.6.8**, `knowledge_version` changelog disinkronkan ke 1.6.8; prd.md → v1.6.2 (catatan scope-change §1/§5). Pemicu: expand scope emulator menghasilkan detail teknis baru (isolation headers, varian core, thread requirement) yang belum tercatat di knowledge
+
+### Task #025 — Ad-hoc: Translate Emulator Disclaimer to English ✅
+- **Completed:** 2026-10-11
+- **Phase:** Ad-hoc (permintaan langsung developer; di luar urutan task P04 — mengikuti pola ad-hoc Task #023/#024)
+- **Status:** OK
+- **Branch:** feat/task-025-adhoc-disclaimer-english
+- **Files created / modified:**
+  - `emulator/index.html` — diubah: paragraf blockquote di `<section class="emu-disclaimer">` diterjemahkan dari Bahasa Indonesia ke **bahasa Inggris** — *"This emulator only runs ROMs that you legally own. Gimboot does not provide, distribute, or endorse piracy. Make sure the ROMs you use come from copies you own yourself or from sources that legally distribute them. Some examples of legal homebrew ROM sources: itch.io, nesdoug.com, and Hagen's Alley."* — link ketiga sumber legal (itch.io, nesdoug.com, Hagen's Alley) + struktur HTML dipertahankan persis; ini satu-satunya teks non-Inggris di halaman (document `lang="en"`, seluruh copy lain — intro, picker, how-to, footer, meta description — sudah Inggris sejak Task #022/#024)
+  - `changelog.md` — entry ini (bump 1.0.30 → 1.0.31, `knowledge_version` sinkron 1.6.9)
+  - `knowledge.md` — v1.6.8 → **v1.6.9**: §7 disclaimer wording diperbarui (teks kini bahasa Inggris, revisi ad-hoc 2026-10-11, aktivasi opsi revisi bahasa dari D7 Task #022; panduan substansi tetap di PRD §5)
+  - `prd.md` — v1.6.2 → **v1.6.3**: §5 += catatan **[REVISI AD-HOC 2026-10-11 — Task #025]** dengan teks final bahasa Inggris yang dikutip, sebelum blok "wording final" Indonesia (blok tetap berlaku sebagai panduan substansi); bullet wording-final dirujuk ke revisi; intro version note += kalimat 1.6.2–1.6.3
+- **Acceptance criteria met:**
+  - [x] Teks disclaimer di halaman `/emulator` kini berbahasa Inggris, konsisten dengan seluruh halaman (`lang="en"`; grep `emulator/index.html` = 0 sisa teks Indonesia)
+  - [x] Substansi/hukum tidak berubah: hanya-Romi-milik-legal, anti-pembajakan, dan ketiga rujukan homebrew legal (itch.io, nesdoug.com, Hagen's Alley) tetap ada dengan link yang sama
+  - [x] Tidak ada perubahan perilaku/struktur (copy statis murni — 0 perubahan JS/CSS/logic; DOM & class identik)
+  - [x] Seluruh perubahan ad-hoc tercatat di `changelog.md` (entry ini), `knowledge.md` (v1.6.9 §7), dan `prd.md` (v1.6.3 §5)
+- **Security gate:** FULL — all checks passed (simple_mode: false → **0 items skipped**; copy-only change; item N/A per bentuk perubahan ditandai eksplisit)
+  - BASIC (13/13):
+    - [x] 1. No secrets hardcoded — ✓ teks statis, tanpa credential
+    - [x] 2. Sensitive config via env/secure config saja — N/A (tanpa config)
+    - [x] 3. Tanpa eval()/exec() dengan input eksternal — ✓ tanpa perubahan JS (teks HTML literal)
+    - [x] 4. Error message tanpa stack trace/path internal — N/A (tanpa error path baru)
+    - [x] 5. Debug mode OFF non-local — ✓ tanpa kode debug (grep `TEMP|__dbg` tetap 0)
+    - [x] 6. CORS whitelist origin tepercaya — ✓ tanpa perubahan request/header; link keluar tetap `rel="noopener noreferrer"`
+    - [x] 7. `.gitignore` memuat `.env`, `*.pem`, `*.key`, `*.p12` — ✓ (Task #001, tak berubah)
+    - [x] 8. Tanpa default admin credentials/backdoor — N/A (tanpa auth surface)
+    - [x] 9. Pre-commit hook aktif — ✓ `.husky/pre-commit` (lint+test+build) berjalan pada commit task ini
+    - [x] 10. CI/CD: tanpa shell debug-tracing berisi secret; secrets masked — ✓ tak tersentuh
+    - [x] 11. Third-party CI actions pinned SHA — N/A (tanpa `.github/workflows`)
+    - [x] 12. Branch protection main/production — ✓ rule `main` aktif; task ini hanya menyentuh `dev`
+    - [x] 13. Container: tanpa `ARG` secret di Dockerfile — N/A (tanpa Dockerfile)
+  - STANDARD (24/24):
+    - [x] 1. Validasi/sanitasi input eksternal — ✓ tanpa input baru (konten statis)
+    - [x] 2. Regex input bebas catastrophic backtracking — ✓ tanpa regex baru
+    - [x] 3. Body size limit; upload size + magic-bytes — N/A (tanpa upload)
+    - [x] 4. Auth pada tiap route terlindungi — N/A (route publik read-only, tak berubah)
+    - [x] 5. Authz di layer service (IDOR) — N/A (tanpa resource/data user)
+    - [x] 6. Admin route: role check + namespace + audit log — N/A (tanpa admin route)
+    - [x] 7. DB parameterized/ORM — N/A (tanpa DB)
+    - [x] 8. File path canonicalized — ✓ tanpa path baru (edit in-place pada file yang sudah ada)
+    - [x] 9. PII tidak di log — ✓ tanpa logging
+    - [x] 10. Konten user di-log di-escape (log injection) — N/A (tanpa logging baru)
+    - [x] 11. Output HTML di-escape — ✓ teks literal dalam blockquote (tanpa interpolasi user input); struktur `<a>` dipertahankan apa adanya
+    - [x] 12. Field sensitif di-mask di UI — N/A (tanpa field sensitif)
+    - [x] 13. Redirect divalidasi vs allowlist — ✓ tanpa redirect baru
+    - [x] 14. Brute-force protection — ✓ rate limiter tak berubah (tanpa endpoint baru)
+    - [x] 15. Password vs HIBP — N/A (tanpa password)
+    - [x] 16. Password reset token — N/A (tanpa reset)
+    - [x] 17. Access token short-lived/refresh rotation — N/A (tanpa token)
+    - [x] 18. Session regeneration setelah login — N/A (tanpa login)
+    - [x] 19. Logout invalidate server-side — N/A (tanpa logout)
+    - [x] 20. Set-Cookie HttpOnly/Secure/SameSite — N/A (tanpa cookie)
+    - [x] 21. Secure storage mobile/desktop — ✓ tanpa storage baru
+    - [x] 22. HTTP method override disabled — ✓ tak disentuh
+    - [x] 23. Content-Type divalidasi sebelum body — N/A (tanpa endpoint body)
+    - [x] 24. Perubahan skema API hanya additive — ✓ tanpa perubahan API (static HTML asset)
+  - FULL (22/22):
+    - [x] 1. Rate limit per-IP utk endpoint tak-terautentikasi (skip simple_mode) — ✓ tak berubah; simple_mode=false
+    - [x] 2. Rate limit per-user/API-key shared-store (skip jika simple+single) — N/A (tanpa auth/key)
+    - [x] 3. Infra-level rate limiting dikonfigurasi (skip simple_mode) — ✓ tak berubah; simple_mode=false
+    - [x] 4. CSRF utk operasi state-changing (skip jika auth via header) — N/A (tanpa operasi state-changing)
+    - [x] 5. Security headers HSTS/XFO/XCTO/Referrer/Permissions — ✓ tak berubah (hanya isi HTML)
+    - [x] 6. CSP tanpa `unsafe-inline`/`unsafe-eval` — ✓ tak berubah; link anchor keluar tetap diizinkan `frame-src`/`default-src` sedia kala (konten teks, bukan resource baru)
+    - [x] 7. Perbandingan secret constant-time — N/A (tanpa secret)
+    - [x] 8. JWT alg pinned — N/A (tanpa JWT)
+    - [x] 9. CVE scan 0 high/critical — ✓ `npm audit --audit-level=high` 0 vulnerabilities (gerbang build saat commit)
+    - [x] 10. Lockfile pins dependency; CI clean-install — ✓ `package-lock.json` tak berubah
+    - [x] 11. API response hanya field perlu; mass-assignment — N/A (tanpa endpoint)
+    - [x] 12. Price/total server-side — N/A (tanpa pembayaran)
+    - [x] 13. Payment entitlement server-to-server — N/A (tanpa pembayaran)
+    - [x] 14. Data sensitif terenkripsi at rest — N/A (tanpa data persisten)
+    - [x] 15. MFA utk admin/payment [DECISION NEEDED jika unnamed] — N/A (tanpa admin/payment)
+    - [x] 16. SSRF prevention — ✓ tanpa outbound fetch baru; link = anchor HTML biasa (bukan server fetch)
+    - [x] 17. LLM calls isolation — N/A (tanpa LLM)
+    - [x] 18. XML XXE disabled — N/A (tanpa parser XML)
+    - [x] 19. CDN assets SRI — N/A (tanpa aset CDN baru; link eksternal = navigasi, bukan resource ter-embed)
+    - [x] 20. Production build tanpa source map publik — ✓ tak berubah (tanpa aset build baru)
+    - [x] 21. Error tracking scrub PII/secret — ✓ tak berubah (tanpa error path baru)
+    - [x] 22. Webhook/OTA signature constant-time + timestamp — N/A (tanpa webhook/OTA)
+- **Scalability gate:** FULL — all checks passed (simple_mode: false → **0 items skipped**; copy-only change; item N/A ditandai eksplisit)
+  - BASIC (7/7):
+    - [x] 1. Tanpa blocking sync di async handler — ✓ tanpa perubahan handler
+    - [x] 2. Tanpa hardcoded pool size/timeout/batch limit tanpa justifikasi — ✓ tanpa limit baru
+    - [x] 3. DB connection pool — N/A (tanpa DB)
+    - [x] 4. Explicit timeout I/O eksternal — ✓ tanpa I/O baru
+    - [x] 5. Tanpa mutable state global antar-request — ✓ static HTML (stateless)
+    - [x] 6. Correlation ID di entry point — ✓ tak berubah (`x-request-id`)
+    - [x] 7. Structured logger async non-blocking — ✓ tak berubah
+  - STANDARD (12/12):
+    - [x] 1. Validasi murah sebelum operasi mahal — N/A (tanpa operasi baru)
+    - [x] 2. Token-revocation lookup <1ms — N/A (tanpa token)
+    - [x] 3. Query plan check — N/A (tanpa query)
+    - [x] 4. Tanpa N+1 query — N/A (tanpa query)
+    - [x] 5. Authz reuses data fetched — N/A (tanpa authz)
+    - [x] 6. Pagination di layer server — ✓ tak disentuh
+    - [x] 7. Semua I/O async non-blocking — ✓ tanpa I/O baru
+    - [x] 8. Tanpa akumulasi memori tak-terbatas — ✓ teks menggantikan teks (paragraf sama panjang ±; tanpa akumulasi)
+    - [x] 9. Soft-delete — N/A (tanpa data persisten)
+    - [x] 10. Transaksi multi-tabel — N/A (tanpa DB)
+    - [x] 11. Migrations non-blocking — N/A (tanpa DB)
+    - [x] 12. GraphQL limits — N/A (REST saja)
+  - FULL (16/16):
+    - [x] 1. Caching implemented+tested (skip simple_mode) — ✓ halaman `/emulator` = static asset edge-cached (tak berubah; isi HTML berubah → cache ter-invalidate normal setelah deploy); simple_mode=false
+    - [x] 2. DB pooling verified — N/A (tanpa DB)
+    - [x] 3. Stateless: tanpa state in-process — ✓ static HTML
+    - [x] 4. Operasi panjang → background job — N/A (tanpa operasi panjang)
+    - [x] 5. Resource dilepas saat selesai/error — ✓ tanpa resource baru
+    - [x] 6. Outbound HTTP explicit timeout — ✓ tak berubah (tanpa outbound HTTP baru)
+    - [x] 7. Circuit breaker/fallback per integrasi (skip simple_mode) — ✓ tak berubah; simple_mode=false
+    - [x] 8. Queue depth bounded/backpressure — N/A (tanpa queue)
+    - [x] 9. Infra rate limiting edge/WAF (skip simple_mode) — ✓ tak berubah; simple_mode=false
+    - [x] 10. API Gateway utk high_scale non-microservices — N/A (tanpa API baru)
+    - [x] 11. Horizontal autoscaling — ✓ static asset, platform-managed
+    - [x] 12. Idempotency key utk retryable API — ✓ GET-only, idempoten by design (tak berubah)
+    - [x] 13. Health endpoints per §8 — ✓ `/api/health` tak tersentuh
+    - [x] 14. Load baseline Stage1 smoke wajib (Server) — ✓ baseline #016 berlaku; perubahan isi HTML (tanpa runtime change)
+    - [x] 15. Static-Hosting: Core Web Vitals — ⚠️ project_shape: fullstack / Server variant → N/A per gate; catatan: teks ± sama panjang → tanpa dampak layout/LCP (CLS 0 — blockquote menggantikan blockquote)
+    - [x] 16. App-Store/Installer: staged rollout — N/A (bukan app store/installer)
+- **Regression:** Passed **169 unit tests** + lint clean + `npm run build` pass dengan `npm audit --audit-level=high` 0 vulnerabilities (pre-commit hook penuh pada commit task ini). E2E TIDAK dijalankan ulang: `grep -rn "disclaimer|Emulator ini|legal ROM" e2e/ src/*.test.js js/*.test.js` = **0 assertion** atas teks yang diubah (perubahan murni copy statis, DOM/class identik)
+- **Decisions made:**
+  - [DOC] **D1 — bahasa Inggris**: halaman `/emulator` ber-`lang="en"` dan seluruh copy lain sudah Inggris sejak #022/#024 — paragraf Indonesia = inkonsistensi terakhir; permintaan developer mengaktifkan opsi eksplisit **"revisi bahasa = keputusan developer terpisah"** dari keputusan D7 Task #022 (saat itu kepatuhan spec PRD mengalahkan konsistensi bahasa; kini keputusan revisinya sendiri sudah diambil)
+  - [DOC] **D2 — PRD §5 blok "wording final" tidak dihapus/diterjemahkan penuh**: dipertahankan apa adanya sebagai panduan substansi (aturan sumber sah: dump sendiri, homebrew, public domain — PRD = dokumen berbahasa Indonesia); teks final Inggris yang dikutip di halaman didokumentasikan lewat catatan [REVISI AD-HOC 2026-10-11] sebelum blok tersebut
+- **Notes:**
+  - Judul section (`Disclaimer & legal ROM sources`), how-to, picker, footer, dan meta description sudah Inggris sebelumnya — hanya isi blockquote yang tertinggal dalam Bahasa Indonesia
+  - Ketiga link (itch.io, nesdoug.com, hagensalley.itch.io) + atribut `target="_blank" rel="noopener noreferrer"` dipertahankan identik (0 perubahan URL)
+  - Copy-only → deploy = invalidate cache halaman `/emulator` secara normal setelah merge ke `main`; tanpa perubahan Worker/binary vendor
+- **Knowledge drift:** UPDATE REQUIRED: @knowledge §7 (disclaimer wording); **diedit pada task ini**: §7 += teks disclaimer kini bahasa Inggris (revisi ad-hoc 2026-10-11/Task #025, aktivasi opsi revisi bahasa dari D7 Task #022, rujukan prd v1.6.3) — knowledge v1.6.8 → **v1.6.9**, `knowledge_version` changelog disinkronkan ke 1.6.9; prd.md → v1.6.3 (§5 catatan [REVISI AD-HOC] + teks final Inggris + intro version note). Pemicu: revisi copy langsung atas permintaan developer, harus tercatat lintas dokumen

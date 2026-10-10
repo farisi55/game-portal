@@ -1,6 +1,6 @@
 ---
 doc_id: PRD-GIMBOOT-001
-version: 1.6.2
+version: 1.6.3
 status: ready
 created: 2026-08-28
 flow_compatibility: vibe-coding-v1.7
@@ -133,7 +133,7 @@ game-portal/
   4. Meta tag dinamis via Worker (`src/index.js`, [AUDIT KODE] bukan `functions/share/[id].js` yang non-aktif) dibanding halaman HTML statis terpisah per game — menghindari duplikasi N halaman sambil tetap mendapat OG tag/canonical link presisi per game/rute untuk keperluan SEO & viral sharing.
   5. Tailwind CSS utility-first dibanding framework SPA (React/Vue) untuk shell portal — bundel tetap tipis, konsisten dengan constraint "tanpa reactive framework" pada game.
   6. [AUDIT KODE — BARU, sebelumnya tidak tercatat] Agregasi katalog live dari GameMonetize + GamePix dibanding kurasi manual murni — memperbesar jumlah judul yang bisa ditawarkan tanpa menambah beban development per game, dengan trade-off ketergantungan pada uptime dua API eksternal (dimitigasi `Promise.allSettled` per-sumber + cache edge 30 menit, belum diuji beban — lihat §9 Phase 7).
-  7. [DIJAWAB 2026-09-12 — BARU] `emulator/index.html` (shell) mengirim objek `File` ROM/BIOS ke `emulator/runtime.html` via `window.postMessage` ke iframe yang sudah dimuat, BUKAN membuat `URL.createObjectURL()` di parent lalu mengoper string blob URL lewat query string — `File`/`Blob` bisa di-structured-clone lewat `postMessage`, dan `runtime.html` yang memanggil `createObjectURL()` sendiri secara lokal. Ini menghindari isu partisi blob URL lintas-frame yang sudah berlaku/berubah di sebagian browser modern (harus diverifikasi lagi saat implementasi, browser support bisa berubah). Sejalan dengan pola isolasi iframe yang sudah dipakai `js/player.js` untuk semua game lain.
+  7. [DIJAWAB 2026-09-12 — BARU] `emulator/index.html` (shell) mengirim objek `File` ROM/BIOS ke `emulator/runtime.html` via `window.postMessage` ke iframe yang sudah dimuat, BUKAN membuat `URL.createObjectURL()` di parent lalu mengoper string blob URL lewat query string — `File`/`Blob` bisa di-structured-clone lewat `postMessage`, dan `runtime.html` yang memanggil `createObjectURL()` sendiri secara lokal. Ini menghindari isu partisi blob URL lintas-frame yang sudah berlaku/berubah di sebagian browser modern (harus diverifikasi lagi saat implementasi, browser support bisa berubah). Sejalan dengan pola isolasi iframe yang sudah dipakai `js/player.js` untuk semua game lain. Versi 1.6.2–1.6.3 (2026-10-10/11): scope-change Task #024 (launch = seluruh 35 sistem EmulatorJS, ditandai "[SCOPE CHANGE 2026-10-10]" di §1/§5) dan revisi ad-hoc teks disclaimer emulator ke bahasa Inggris (Task #025, ditandai "[REVISI AD-HOC 2026-10-11]" di §5).
 
 ### 4.3 Code Standards
 - **Naming — files:** kebab-case (dikonfirmasi dari struktur asli: `ayo-kopdes`, `kejar-koruptor`, `ui-share.js`).
@@ -227,7 +227,11 @@ Diomit sesuai aturan template: §4.1 Database = "none", sehingga Phase 2 (Domain
   - [HARD RULE, lihat §3.2 & §8] Gimboot tidak menautkan ke situs distribusi ROM/BIOS komersial berhak cipta dalam bentuk apa pun.
   - Core EmulatorJS di-self-host di `/vendor/emulatorjs/` (GPL-3.0, dipakai apa adanya tanpa modifikasi source) — bukan CDN resmi mereka, supaya CSP (`connect-src 'self'`) tidak perlu diubah.
   - **[SCOPE CHANGE 2026-10-10 — Task #024]** Sistem berbasis BIOS (PS1, Sega Saturn, PC-FX, 3DO, Amiga) kini MASUK di launch — BIOS diunggah user sendiri juga (sama seperti ROM), bukan disediakan Gimboot; UI menandai required (psx, segaSaturn, pcfx, 3do) / recommended (amiga).
-  - **Konten halaman "Cara Mendapatkan ROM & BIOS" (wording final, [DIJAWAB 2026-09-12]):**
+  - **[REVISI AD-HOC 2026-10-11 — Task #025]** Paragraf disclaimer di halaman `/emulator` (blockquote di `<section class="emu-disclaimer">`) diubah dari Bahasa Indonesia ke **bahasa Inggris** atas permintaan developer — mengaktifkan opsi "revisi bahasa = keputusan developer terpisah" yang sudah dinyatakan lebih dulu di changelog Task #022 (keputusan D7). Teks final yang dikirim di halaman:
+    > This emulator only runs ROMs that you legally own. Gimboot does not provide, distribute, or endorse piracy. Make sure the ROMs you use come from copies you own yourself or from sources that legally distribute them. Some examples of legal homebrew ROM sources: itch.io, nesdoug.com, and Hagen's Alley.
+    >
+    Blok wording Indonesia di bawah TETAP berlaku sebagai panduan substansi (sumber sah, homebrew, public domain) — dokumen PRD sendiri tetap berbahasa Indonesia; yang dipakai ulang di halaman hanyalah paragraf disclaimer, kini dalam bahasa Inggris.
+  - **Konten halaman "Cara Mendapatkan ROM & BIOS" (wording final, [DIJAWAB 2026-09-12]; lihat revisi ad-hoc 2026-10-11 di atas):**
     > Gimboot Emulator hanya menyediakan tool emulator (EmulatorJS) — kami tidak menghosting, menjual, atau membagikan file ROM atau BIOS apa pun. Kamu bertanggung jawab penuh atas legalitas file yang kamu unggah sendiri.
     >
     > ROM/BIOS yang sah untuk dipakai di sini:
