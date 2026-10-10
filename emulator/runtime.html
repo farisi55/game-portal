@@ -32,14 +32,19 @@
   // SAB only exists on this page because /emulator/* is cross-origin
   // isolated (COOP: same-origin + COEP: require-corp set by the Worker).
   var THREAD_CORES = { psp: 1, dos: 1 };
-  var MAX_ROM_SIZE = 134217728; // 128 MB sanity cap
+  var MB = 1048576;
+  var DEFAULT_MAX_ROM_SIZE = 128 * MB;
+  var SYSTEM_MAX_ROM_SIZE = { psx: 999 * MB, psp: 2048 * MB };
+  function maxRomSizeFor(core) {
+    return SYSTEM_MAX_ROM_SIZE[core] || DEFAULT_MAX_ROM_SIZE;
+  }
 
   window.addEventListener('message', function (e) {
     if (e.origin !== location.origin) return;
     var d = e.data;
     if (!d || d.type !== 'gimboot:load' || loaded) return;
     if (typeof d.core !== 'string' || !ALLOWED_CORES[d.core]) return;
-    if (!(d.rom instanceof File) || d.rom.size === 0 || d.rom.size > MAX_ROM_SIZE) return;
+    if (!(d.rom instanceof File) || d.rom.size === 0 || d.rom.size > maxRomSizeFor(d.core)) return;
 
     loaded = true;
 

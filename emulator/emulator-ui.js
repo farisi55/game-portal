@@ -15,7 +15,17 @@
 // URL.createObjectURL() and feeds it to EmulatorJS.
 // ============================================================================
 
-const MAX_ROM_BYTES = 134217728; // 128 MB sanity cap
+const MB = 1048576;
+const DEFAULT_MAX_ROM_BYTES = 128 * MB;
+// Per-system ROM size caps (larger than the default for disc/UMD systems).
+const SYSTEM_MAX_ROM_BYTES = {
+  psx: 999 * MB,
+  psp: 2048 * MB,
+};
+
+function maxRomBytesFor(core) {
+  return SYSTEM_MAX_ROM_BYTES[core] || DEFAULT_MAX_ROM_BYTES;
+}
 
 const state = {
   selectedSystem: null,
@@ -94,10 +104,11 @@ function onRomChange() {
     updateLoadButton();
     return;
   }
-  if (file.size > MAX_ROM_BYTES) {
+  const maxBytes = maxRomBytesFor(state.selectedCore);
+  if (file.size > maxBytes) {
     state.romFile = null;
     els.romInput.value = '';
-    els.romStatus.textContent = 'File too large (max 128 MB).';
+    els.romStatus.textContent = `File too large (max ${formatBytes(maxBytes)}).`;
     updateLoadButton();
     return;
   }
@@ -117,7 +128,8 @@ function onBiosChange() {
 function formatBytes(bytes) {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1048576) return `${(bytes / 1024).toFixed(1)} KB`;
-  return `${(bytes / 1048576).toFixed(1)} MB`;
+  if (bytes < 1073741824) return `${(bytes / 1048576).toFixed(1)} MB`;
+  return `${(bytes / 1073741824).toFixed(1)} GB`;
 }
 
 // ---------------------------------------------------------------------------
