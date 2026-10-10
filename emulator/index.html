@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Emulator — Gimboot</title>
+<meta name="description" content="Play NES, SNES, Game Boy, Game Boy Advance, and Sega Mega Drive games in your browser. Upload your own legally-dumped ROM files — they never leave your device.">
+<link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/icon-192.png">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#0e0b1a">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Gimboot">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Gimboot">
+<meta property="og:title" content="Emulator — Gimboot">
+<meta property="og:description" content="Play NES, SNES, Game Boy, Game Boy Advance, and Sega Mega Drive games in your browser. Upload your own legally-dumped ROM files — they never leave your device.">
+
+<link rel="stylesheet" href="/css/style.css">
+<link rel="stylesheet" href="/emulator/style.css">
+</head>
+<body class="emulator-page">
+
+<header class="site-header">
+  <div class="chase-strip" aria-hidden="true"></div>
+  <div class="header-inner">
+    <a href="/" class="brand-lockup">
+      <img src="/icon-192.png" alt="" class="brand-icon" width="64" height="64">
+      <span class="brand-text">
+        <span class="wordmark">GIMBOOT</span>
+        <span class="tagline">No Install, Just Play, Have Fun</span>
+      </span>
+    </a>
+  </div>
+</header>
+
+<main class="emulator-main">
+
+  <section class="emu-intro">
+    <h1>Emulator</h1>
+    <p class="emu-sub">Play NES, SNES, Game Boy / Color, Game Boy Advance, and Sega Mega Drive / Genesis ROMs directly in your browser — no install, no upload to a server.</p>
+  </section>
+
+  <section class="emu-pick" aria-labelledby="emu-pick-heading">
+    <h2 id="emu-pick-heading">1 &mdash; Pick a system</h2>
+    <div class="sys-grid" role="radiogroup" aria-label="Console system">
+      <button type="button" class="sys-btn" data-system="nes" data-core="nes" data-accept=".nes" role="radio" aria-checked="false">NES</button>
+      <button type="button" class="sys-btn" data-system="snes" data-core="snes" data-accept=".sfc,.smc" role="radio" aria-checked="false">SNES</button>
+      <button type="button" class="sys-btn" data-system="gb" data-core="gb" data-accept=".gb,.gbc" role="radio" aria-checked="false">Game Boy / Color</button>
+      <button type="button" class="sys-btn" data-system="gba" data-core="gba" data-accept=".gba" role="radio" aria-checked="false">Game Boy Advance</button>
+      <button type="button" class="sys-btn" data-system="segaMD" data-core="segaMD" data-accept=".md,.bin,.gen,.smd" role="radio" aria-checked="false">Sega Mega Drive / Genesis</button>
+    </div>
+  </section>
+
+  <section class="emu-upload" aria-labelledby="emu-upload-heading">
+    <h2 id="emu-upload-heading">2 &mdash; Upload your ROM</h2>
+
+    <div class="file-row">
+      <label for="rom-file" class="file-label">ROM file</label>
+      <input type="file" id="rom-file" class="file-input" disabled>
+      <span id="rom-status" class="file-status" aria-live="polite">Select a system first.</span>
+    </div>
+
+    <div class="file-row file-row--bios">
+      <label for="bios-file" class="file-label">BIOS file <span class="file-label__optional">(optional — not required for launch systems)</span></label>
+      <input type="file" id="bios-file" class="file-input" disabled>
+      <span id="bios-status" class="file-status" aria-live="polite"></span>
+    </div>
+  </section>
+
+  <section class="emu-launch" aria-labelledby="emu-launch-heading">
+    <h2 id="emu-launch-heading">3 &mdash; Play</h2>
+    <button type="button" id="btn-load" class="btn btn--primary" disabled>Load Game</button>
+    <p id="load-status" class="load-status" role="status" aria-live="polite"></p>
+  </section>
+
+  <section class="emu-stage" hidden aria-label="Emulator">
+    <div id="stage-status" class="stage-status">Booting emulator&hellip;</div>
+    <iframe id="emu-iframe" title="Emulator game" allow="autoplay; fullscreen"></iframe>
+  </section>
+
+  <section class="emu-howto" aria-labelledby="emu-howto-heading">
+    <h2 id="emu-howto-heading">How to use</h2>
+    <ol>
+      <li><strong>Pick a system</strong> from the list above (NES, SNES, Game Boy / Color, GBA, or Sega Mega Drive / Genesis).</li>
+      <li><strong>Upload your ROM file</strong> using the file picker. Your ROM is loaded directly from your device — it is never sent to any server.</li>
+      <li><strong>Click Load Game.</strong> The emulator boots in the stage below. Use your keyboard to play (arrow keys, Z/X or A/S, Enter = Start, Shift = Select) or connect a gamepad and press a button.</li>
+      <li><strong>Full screen:</strong> hover the game and click the full-screen icon in the emulator toolbar, or press <kbd>F</kbd> while the game has focus.</li>
+      <li><strong>Save states:</strong> open the emulator menu (gear icon) to save or load state at any time. Save states are stored in your browser&rsquo;s local storage.</li>
+    </ol>
+  </section>
+
+  <section class="emu-disclaimer" aria-labelledby="emu-disclaimer-heading">
+    <h2 id="emu-disclaimer-heading">Disclaimer &amp; legal ROM sources</h2>
+    <blockquote>
+      Emulator ini hanya menjalankan ROM yang Anda miliki secara legal. Gimboot tidak menyediakan, mendistribusikan, atau mendukung pembajakan. Pastikan ROM yang Anda gunakan berasal dari salinan yang Anda miliki sendiri atau dari sumber yang melegalkan distribusinya. Beberapa contoh sumber ROM homebrew legal: <a href="https://itch.io" target="_blank" rel="noopener noreferrer">itch.io</a>, <a href="https://www.nesdoug.com" target="_blank" rel="noopener noreferrer">nesdoug.com</a>, dan <a href="https://hagensalley.itch.io" target="_blank" rel="noopener noreferrer">Hagen&rsquo;s Alley</a>.
+    </blockquote>
+  </section>
+
+</main>
+
+<footer class="site-footer">
+  <p>Gimboot Emulator &mdash; powered by <a href="https://github.com/EmulatorJS/EmulatorJS" target="_blank" rel="noopener noreferrer">EmulatorJS</a> (GPL-3.0). ROMs are loaded locally and never leave your device.</p>
+</footer>
+
+<script type="module" src="/emulator/emulator-ui.js"></script>
+</body>
+</html>

@@ -1,0 +1,200 @@
+/* ============================================================================
+   GIMBOOT — Emulator page styles
+   Inherits design tokens from /css/style.css (:root vars).
+   Inline styles are blocked by CSP (style-src-attr 'none') — everything
+   lives here.
+   ============================================================================ */
+
+.emulator-page .emulator-main {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 24px 20px 48px;
+  width: 100%;
+}
+
+/* ---------- Intro ---------- */
+
+.emu-intro h1 {
+  font-family: var(--font-display);
+  font-size: clamp(1.8rem, 4vw, 2.6rem);
+  margin: 0 0 8px;
+  background: linear-gradient(90deg, var(--cyan), var(--magenta));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.emu-sub {
+  color: var(--text-muted);
+  margin: 0 0 28px;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+/* ---------- Section headings ---------- */
+
+.emu-pick h2,
+.emu-upload h2,
+.emu-launch h2,
+.emu-howto h2,
+.emu-disclaimer h2 {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--cyan);
+  margin: 28px 0 12px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+/* ---------- System picker ---------- */
+
+.sys-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.sys-btn {
+  background: var(--surface);
+  border: 1.5px solid var(--surface-border);
+  border-radius: var(--radius-md);
+  color: var(--text);
+  cursor: pointer;
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 10px 16px;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.sys-btn:hover {
+  background: var(--surface-hover);
+}
+
+.sys-btn[aria-checked='true'] {
+  border-color: var(--cyan);
+  background: var(--surface-hover);
+}
+
+/* ---------- File inputs ---------- */
+
+.file-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.file-label {
+  font-weight: 600;
+  font-size: 0.9rem;
+  min-width: 90px;
+}
+
+.file-label__optional {
+  color: var(--text-muted);
+  font-weight: 400;
+  font-size: 0.8rem;
+}
+
+.file-input {
+  color: var(--text-muted);
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+}
+
+.file-input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.file-status {
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  flex: 1 1 200px;
+}
+
+/* ---------- Load button ---------- */
+
+.btn-load-emu {
+  margin-top: 4px;
+}
+
+#btn-load:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.load-status {
+  margin: 10px 0 0;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+/* ---------- Stage (iframe) ---------- */
+
+.emu-stage {
+  margin-top: 20px;
+}
+
+.emu-stage[hidden] {
+  display: none;
+}
+
+.stage-status {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  margin-bottom: 8px;
+}
+
+#emu-iframe {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  min-height: 300px;
+  background: #000;
+  border: 1.5px solid var(--surface-border);
+  border-radius: var(--radius-md);
+}
+
+/* ---------- How-to ---------- */
+
+.emu-howto ol {
+  margin: 0;
+  padding-left: 20px;
+  color: var(--text);
+  font-size: 0.9rem;
+  line-height: 1.7;
+}
+
+.emu-howto kbd {
+  background: var(--surface);
+  border: 1px solid var(--surface-border);
+  border-radius: 4px;
+  font-family: var(--font-mono);
+  font-size: 0.78em;
+  padding: 1px 5px;
+}
+
+/* ---------- Disclaimer ---------- */
+
+.emu-disclaimer blockquote {
+  background: var(--surface);
+  border-left: 3px solid var(--gold);
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  line-height: 1.6;
+  margin: 0;
+  padding: 16px 20px;
+}
+
+.emu-disclaimer a {
+  color: var(--cyan);
+  text-decoration: underline;
+}
+
+.emu-disclaimer a:hover {
+  color: var(--magenta);
+}
