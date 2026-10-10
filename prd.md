@@ -1,6 +1,6 @@
 ---
 doc_id: PRD-GIMBOOT-001
-version: 1.6.1
+version: 1.6.2
 status: ready
 created: 2026-08-28
 flow_compatibility: vibe-coding-v1.7
@@ -35,7 +35,7 @@ project_shape: fullstack
 | Viral Sharing & High Score System | P0 — MVP | Modul `ui-share.js`: animasi confetti saat rekor pecah + Web Share API dengan copywriting dinamis |
 | PWA (Progressive Web App) | P0 — MVP | Instalasi ke home screen + offline caching via `manifest.json` & `sw.js` |
 | Serverless API Backend | P0 — MVP | [AUDIT KODE] Endpoint edge untuk katalog & pencarian game, serta generator meta-sharing/play dinamis — seluruhnya dilayani satu Cloudflare Worker (`src/index.js`), BUKAN `functions/api/`/`functions/share/` (dikonfirmasi non-aktif pada model deploy saat ini) |
-| Emulator Browser (EmulatorJS) | P1 | [DIJAWAB 2026-09-12] Menu baru `/emulator`: emulator berbasis EmulatorJS (self-hosted) untuk sistem yang tidak butuh BIOS (NES, SNES, GB/GBC/GBA, Genesis/Mega Drive) di launch; sistem berbasis BIOS (PS1, Saturn, dll.) menyusul dengan BIOS diunggah user sendiri. ROM & BIOS 100% client-side (`URL.createObjectURL`/`postMessage`, tidak pernah dikirim ke server Gimboot). Termasuk halaman how-to lengkap + rujukan sumber ROM legal (homebrew). Lihat spesifikasi penuh di §5. **Digate [DIKONFIRMASI 2026-09-12]:** dikerjakan TERAKHIR — seluruh hardening Task #013–#019 (§9 Phase 6–7) harus selesai lebih dulu, tanpa paralel. Lihat §9 Development Phases (Phase 9) dan changelog Task #022. |
+| Emulator Browser (EmulatorJS) | P1 | [DIJAWAB 2026-09-12] Menu baru `/emulator`: emulator berbasis EmulatorJS (self-hosted). **[SCOPE CHANGE 2026-10-10 — Task #024]** launch = SELURUH 35 sistem yang didukung EmulatorJS v4.2.3, disajikan sebagai dropdown ter-group (7 optgroup) — termasuk sistem berbasis BIOS (PS1, Saturn, PC-FX, 3DO, Amiga) dengan BIOS diunggah user sendiri (ditandai required/recommended di UI); sebelumnya (Task #022) launch terbatas 5 sistem tanpa BIOS. ROM & BIOS 100% client-side (`URL.createObjectURL`/`postMessage`, tidak pernah dikirim ke server Gimboot). Termasuk halaman how-to lengkap + rujukan sumber ROM legal (homebrew). Lihat spesifikasi penuh di §5. **Digate [DIKONFIRMASI 2026-09-12]:** dikerjakan TERAKHIR — seluruh hardening Task #013–#019 (§9 Phase 6–7) harus selesai lebih dulu, tanpa paralel. Lihat §9 Development Phases (Phase 9) dan changelog Task #022. |
 
 Catatan prioritas: [AUDIT KODE — KOREKSI] premis "katalog baru berisi 4 judul" pada draf sebelumnya sudah tidak akurat — katalog live saat ini mencakup hingga ~200 judul gabungan (first-party + GameMonetize + GamePix), sehingga fitur pencarian (`search.js`/`handleApiSearch`) justru lebih relevan dipertahankan di P0, bukan kandidat penurunan ke P1.
 
@@ -215,7 +215,7 @@ Diomit sesuai aturan template: §4.1 Database = "none", sehingga Phase 2 (Domain
 ### Feature: Emulator Browser (EmulatorJS) [DIJAWAB 2026-09-12 — BARU]
 - **User story:** Sebagai pengguna yang punya koleksi ROM/BIOS legal sendiri (dump cartridge sendiri atau game homebrew), saya ingin memainkannya langsung di browser tanpa install software emulator terpisah, sehingga saya bisa main game retro semudah main game lain di Gimboot.
 - **Acceptance criteria:**
-  - [ ] Halaman `/emulator` menyediakan pilihan sistem (launch: NES, SNES, GB/GBC/GBA, Genesis/Mega Drive — tidak butuh BIOS), tombol upload ROM (dan upload BIOS untuk sistem yang membutuhkannya di fase berikutnya), lalu memuat game via EmulatorJS.
+  - [ ] Halaman `/emulator` menyediakan pilihan sistem **[SCOPE CHANGE 2026-10-10 — Task #024]: dropdown SELURUH 35 sistem yang didukung EmulatorJS v4.2.3 (7 optgroup — Nintendo/Sony/Sega/Atari/Arcade/Computers/Other consoles), termasuk sistem ber-BIOS (BIOS opsional diunggah user, ditandai required/recommended)**, tombol upload ROM (+ upload BIOS bila relevan), lalu memuat game via EmulatorJS. (Scope awal 2026-09-12: 5 sistem tanpa BIOS — NES, SNES, GB/GBC/GBA, Genesis/Mega Drive.)
   - [ ] ROM & BIOS tidak pernah terkirim/di-upload ke server Gimboot dalam bentuk apa pun — diverifikasi manual (tab Network kosong dari request berisi file game) sebelum rilis.
   - [ ] Halaman berisi panduan cara pakai lengkap dari awal (pilih sistem → upload ROM/BIOS → kontrol & fullscreen → save state) sampai selesai, ditambah daftar sistem yang didukung.
   - [ ] Disclaimer & rujukan sumber ROM/BIOS legal (lihat blok wording di bawah) tampil sebagai teks statis di halaman — [DIJAWAB 2026-09-12] tanpa checkbox/acknowledgment interaktif.
@@ -226,7 +226,7 @@ Diomit sesuai aturan template: §4.1 Database = "none", sehingga Phase 2 (Domain
   - ROM & BIOS 100% tanggung jawab pengguna, ditangani 100% client-side (`File` → `postMessage` ke iframe → `URL.createObjectURL()` lokal di `emulator/runtime.html`; lihat §4.2 architectural decision #7). Gimboot tidak pernah menyimpan, meng-cache, atau meneruskan file ini ke pihak mana pun.
   - [HARD RULE, lihat §3.2 & §8] Gimboot tidak menautkan ke situs distribusi ROM/BIOS komersial berhak cipta dalam bentuk apa pun.
   - Core EmulatorJS di-self-host di `/vendor/emulatorjs/` (GPL-3.0, dipakai apa adanya tanpa modifikasi source) — bukan CDN resmi mereka, supaya CSP (`connect-src 'self'`) tidak perlu diubah.
-  - Sistem berbasis BIOS (PS1, Sega Saturn, dll.) di-exclude dari launch; masuk fase berikutnya dengan BIOS diunggah user sendiri juga (sama seperti ROM) — bukan disediakan Gimboot.
+  - **[SCOPE CHANGE 2026-10-10 — Task #024]** Sistem berbasis BIOS (PS1, Sega Saturn, PC-FX, 3DO, Amiga) kini MASUK di launch — BIOS diunggah user sendiri juga (sama seperti ROM), bukan disediakan Gimboot; UI menandai required (psx, segaSaturn, pcfx, 3do) / recommended (amiga).
   - **Konten halaman "Cara Mendapatkan ROM & BIOS" (wording final, [DIJAWAB 2026-09-12]):**
     > Gimboot Emulator hanya menyediakan tool emulator (EmulatorJS) — kami tidak menghosting, menjual, atau membagikan file ROM atau BIOS apa pun. Kamu bertanggung jawab penuh atas legalitas file yang kamu unggah sendiri.
     >

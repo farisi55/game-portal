@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Emulator — Gimboot</title>
-<meta name="description" content="Play NES, SNES, Game Boy, Game Boy Advance, and Sega Mega Drive games in your browser. Upload your own legally-dumped ROM files — they never leave your device.">
+<meta name="description" content="Play 35 retro systems — NES, SNES, Game Boy, GBA, N64, DS, PlayStation, PSP, Sega, Atari, arcade, MS-DOS, Amiga, Commodore and more — in your browser. Upload your own legally-dumped ROM files — they never leave your device.">
 <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="/icon-192.png">
@@ -18,7 +18,7 @@
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Gimboot">
 <meta property="og:title" content="Emulator — Gimboot">
-<meta property="og:description" content="Play NES, SNES, Game Boy, Game Boy Advance, and Sega Mega Drive games in your browser. Upload your own legally-dumped ROM files — they never leave your device.">
+<meta property="og:description" content="Play 35 retro systems — NES, SNES, Game Boy, GBA, N64, DS, PlayStation, PSP, Sega, Atari, arcade, MS-DOS, Amiga, Commodore and more — in your browser. Upload your own legally-dumped ROM files — they never leave your device.">
 
 <link rel="stylesheet" href="/css/style.css">
 <link rel="stylesheet" href="/emulator/style.css">
@@ -42,18 +42,64 @@
 
   <section class="emu-intro">
     <h1>Emulator</h1>
-    <p class="emu-sub">Play NES, SNES, Game Boy / Color, Game Boy Advance, and Sega Mega Drive / Genesis ROMs directly in your browser — no install, no upload to a server.</p>
+    <p class="emu-sub">Play 35 retro systems directly in your browser — no install, no upload to a server. Nintendo, Sony, Sega, Atari, arcade, MS-DOS, Amiga, Commodore and more.</p>
   </section>
 
   <section class="emu-pick" aria-labelledby="emu-pick-heading">
     <h2 id="emu-pick-heading">1 &mdash; Pick a system</h2>
-    <div class="sys-grid" role="radiogroup" aria-label="Console system">
-      <button type="button" class="sys-btn" data-system="nes" data-core="nes" data-accept=".nes" role="radio" aria-checked="false">NES</button>
-      <button type="button" class="sys-btn" data-system="snes" data-core="snes" data-accept=".sfc,.smc" role="radio" aria-checked="false">SNES</button>
-      <button type="button" class="sys-btn" data-system="gb" data-core="gb" data-accept=".gb,.gbc" role="radio" aria-checked="false">Game Boy / Color</button>
-      <button type="button" class="sys-btn" data-system="gba" data-core="gba" data-accept=".gba" role="radio" aria-checked="false">Game Boy Advance</button>
-      <button type="button" class="sys-btn" data-system="segaMD" data-core="segaMD" data-accept=".md,.bin,.gen,.smd" role="radio" aria-checked="false">Sega Mega Drive / Genesis</button>
-    </div>
+    <select id="sys-select" class="sys-select" aria-label="Console system">
+      <option value="" selected disabled hidden>Choose a system&hellip;</option>
+      <optgroup label="Nintendo">
+        <option value="nes" data-accept=".nes,.zip">NES / Famicom</option>
+        <option value="snes" data-accept=".sfc,.smc,.zip">Super Nintendo (SNES)</option>
+        <option value="gb" data-accept=".gb,.gbc">Game Boy / Game Boy Color</option>
+        <option value="gba" data-accept=".gba,.zip">Game Boy Advance</option>
+        <option value="n64" data-accept=".n64,.z64,.v64">Nintendo 64</option>
+        <option value="nds" data-accept=".nds">Nintendo DS</option>
+        <option value="vb" data-accept=".vb">Virtual Boy</option>
+      </optgroup>
+      <optgroup label="Sony">
+        <option value="psx" data-accept=".bin,.cue,.img,.chd,.pbp" data-bios="required">PlayStation (PS1)</option>
+        <option value="psp" data-accept=".iso,.cso,.pbp">PlayStation Portable (PSP)</option>
+      </optgroup>
+      <optgroup label="Sega">
+        <option value="segaMD" data-accept=".md,.bin,.gen,.smd">Mega Drive / Genesis</option>
+        <option value="segaMS" data-accept=".sms,.bin">Master System</option>
+        <option value="segaGG" data-accept=".gg,.bin">Game Gear</option>
+        <option value="segaCD" data-accept=".cue,.bin,.chd,.iso">Sega CD / Mega-CD</option>
+        <option value="sega32x" data-accept=".32x,.bin">Sega 32X</option>
+        <option value="segaSaturn" data-accept=".cue,.bin,.chd" data-bios="required">Sega Saturn</option>
+      </optgroup>
+      <optgroup label="Atari">
+        <option value="atari2600" data-accept=".a26,.bin">Atari 2600</option>
+        <option value="atari5200" data-accept=".a52,.bin">Atari 5200</option>
+        <option value="atari7800" data-accept=".a78,.bin">Atari 7800</option>
+        <option value="lynx" data-accept=".lnx,.zip">Atari Lynx</option>
+        <option value="jaguar" data-accept=".j64,.abs,.zip">Atari Jaguar</option>
+      </optgroup>
+      <optgroup label="Arcade">
+        <option value="arcade" data-accept=".zip">Arcade &middot; FinalBurn Neo (Neo Geo, CPS1/2)</option>
+        <option value="mame" data-accept=".zip">Arcade &middot; MAME 2003+</option>
+      </optgroup>
+      <optgroup label="Computers">
+        <option value="dos" data-accept=".zip,.exe,.com,.bat">MS-DOS (DOSBox Pure)</option>
+        <option value="amiga" data-accept=".adf,.adz,.hdf,.ipf,.lha,.dms" data-bios="recommended">Commodore Amiga</option>
+        <option value="c64" data-accept=".d64,.g64,.t64,.prg,.crt,.tap,.zip">Commodore 64</option>
+        <option value="c128" data-accept=".d64,.d71,.d81,.g64,.prg,.crt">Commodore 128</option>
+        <option value="pet" data-accept=".d64,.prg,.tap">Commodore PET</option>
+        <option value="plus4" data-accept=".d64,.prg,.tap">Commodore Plus/4</option>
+        <option value="vic20" data-accept=".d64,.g64,.prg,.tap">Commodore VIC-20</option>
+      </optgroup>
+      <optgroup label="Other consoles">
+        <option value="coleco" data-accept=".col,.rom,.bin,.zip">ColecoVision</option>
+        <option value="pce" data-accept=".pce,.cue,.bin,.chd">PC Engine / TurboGrafx-16</option>
+        <option value="pcfx" data-accept=".cue,.bin,.chd" data-bios="required">PC-FX</option>
+        <option value="ws" data-accept=".ws,.wsc">WonderSwan / Color</option>
+        <option value="ngp" data-accept=".ngp,.ngc">Neo Geo Pocket / Color</option>
+        <option value="3do" data-accept=".cue,.bin,.chd,.iso" data-bios="required">3DO</option>
+      </optgroup>
+    </select>
+    <p id="sys-hint" class="sys-hint" aria-live="polite"></p>
   </section>
 
   <section class="emu-upload" aria-labelledby="emu-upload-heading">
@@ -66,7 +112,7 @@
     </div>
 
     <div class="file-row file-row--bios">
-      <label for="bios-file" class="file-label">BIOS file <span class="file-label__optional">(optional — not required for launch systems)</span></label>
+      <label for="bios-file" class="file-label">BIOS file <span class="file-label__optional">(optional — required for some systems)</span></label>
       <input type="file" id="bios-file" class="file-input" disabled>
       <span id="bios-status" class="file-status" aria-live="polite"></span>
     </div>
@@ -86,8 +132,8 @@
   <section class="emu-howto" aria-labelledby="emu-howto-heading">
     <h2 id="emu-howto-heading">How to use</h2>
     <ol>
-      <li><strong>Pick a system</strong> from the list above (NES, SNES, Game Boy / Color, GBA, or Sega Mega Drive / Genesis).</li>
-      <li><strong>Upload your ROM file</strong> using the file picker. Your ROM is loaded directly from your device — it is never sent to any server.</li>
+      <li><strong>Pick a system</strong> from the dropdown above — 35 systems across Nintendo, Sony, Sega, Atari, arcade, computers and more.</li>
+      <li><strong>Upload your ROM file</strong> using the file picker. Your ROM is loaded directly from your device — it is never sent to any server. Some systems (PS1, Saturn, PC-FX, 3DO, Amiga) also need a BIOS file you provide yourself.</li>
       <li><strong>Click Load Game.</strong> The emulator boots in the stage below. Use your keyboard to play (arrow keys, Z/X or A/S, Enter = Start, Shift = Select) or connect a gamepad and press a button.</li>
       <li><strong>Full screen:</strong> hover the game and click the full-screen icon in the emulator toolbar, or press <kbd>F</kbd> while the game has focus.</li>
       <li><strong>Save states:</strong> open the emulator menu (gear icon) to save or load state at any time. Save states are stored in your browser&rsquo;s local storage.</li>

@@ -6,7 +6,7 @@
 // available. External fetch calls (GameMonetize/GamePix feeds) are mocked.
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import {
+import worker, {
   handleApiGames,
   handleApiSearch,
   handleShareRoute,
@@ -941,5 +941,40 @@ describe('Output Encoding — Share/Play/Game Routes', () => {
       expect(isLoopbackHost(null)).toBe(false);
       expect(isLoopbackHost(undefined)).toBe(false);
     });
+  });
+});
+
+describe('Cross-origin isolation headers (Task #024)', () => {
+  // COOP/COEP must be scoped strictly to /emulator* so SharedArrayBuffer
+  // exists there (thread-required cores: PPSSPP, DOSBox Pure), while the
+  // catalog / play / game pages stay non-isolated — third-party game
+  // iframes (gamemonetize etc.) must never be COEP-blocked.
+  async function fetchThroughWorker(path) {
+    const req = new Request(`https://gimboot.com${path}`);
+    return worker.fetch(req, createMockEnv(), createMockCtx());
+  }
+
+  it('sets COOP + COEP on /emulator/', async () => {
+    const res = await fetchThroughWorker('/emulator/');
+    expect(res.headers.get('Cross-Origin-Opener-Policy')).toBe('same-origin');
+    expect(res.headers.get('Cross-Origin-Embedder-Policy')).toBe('require-corp');
+  });
+
+  it('sets COOP + COEP on /emulator/runtime.html', async () => {
+    const res = await fetchThroughWorker('/emulator/runtime.html');
+    expect(res.headers.get('Cross-Origin-Opener-Policy')).toBe('same-origin');
+    expect(res.headers.get('Cross-Origin-Embedder-Policy')).toBe('require-corp');
+  });
+
+  it('does NOT set them on the catalog (/)', async () => {
+    const res = await fetchThroughWorker('/');
+    expect(res.headers.get('Cross-Origin-Opener-Policy')).toBe(null);
+    expect(res.headers.get('Cross-Origin-Embedder-Policy')).toBe(null);
+  });
+
+  it('does NOT set them on static assets (/css/style.css)', async () => {
+    const res = await fetchThroughWorker('/css/style.css');
+    expect(res.headers.get('Cross-Origin-Opener-Policy')).toBe(null);
+    expect(res.headers.get('Cross-Origin-Embedder-Policy')).toBe(null);
   });
 });
