@@ -9,6 +9,7 @@ const TABS = [
   { id: 'popular', label: 'Popular' },
   { id: 'new', label: 'New' },
   { id: 'trending', label: 'Trending' },
+  { id: 'emulator', label: 'Emulator' },
   { id: 'more', label: 'More' },
 ];
 
@@ -565,6 +566,10 @@ function bindEvents() {
 
     const btn = e.target.closest('.tab-btn');
     if (!btn) return;
+    if (btn.dataset.tab === 'emulator') {
+      window.location.assign('/emulator');
+      return;
+    }
     state.activeTab = btn.dataset.tab;
     if (state.activeTab === 'all') state.activeCategory = 'All';
     closeGenreMenu();
