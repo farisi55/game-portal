@@ -1,7 +1,7 @@
 ---
 project: Gimboot
-knowledge_version: 1.6.9
-changelog_version: 1.0.31
+knowledge_version: 1.6.10
+changelog_version: 1.0.32
 created: 2026-08-28
 status: in_progress
 milestone: 1 of 1
@@ -46,7 +46,7 @@ simple_mode: false
 
 ## [NEXT TASKS]
 
-(none — 25 task selesai: 22 task P04 + Task #023 (ad-hoc, security scan remediation) + Task #024 (ad-hoc, emulator full-systems) + Task #025 (ad-hoc, disclaimer translation); seluruh roadmap terpenuhi)
+(none — 26 task selesai: 22 task P04 + Task #023 (ad-hoc, security scan remediation) + Task #024 (ad-hoc, emulator full-systems) + Task #025 (ad-hoc, disclaimer translation) + Task #026 (ad-hoc, per-system ROM size cap); seluruh roadmap terpenuhi)
 
 ## [COMPLETED]
 > **Catatan format:** empat entri retroaktif di bawah ini BUKAN task yang dieksekusi lewat proses changelog/gate P04 ini — proses itu baru mulai berlaku sejak Task #001. Entri-entri ini disusun 2026-08-30 dari kondisi kode saat diaudit (2026-08-28) untuk mencatat bahwa produk sudah live sebelum changelog ini ada, sebagaimana disebut `knowledge.md` §1 ("Phase 1 & Phase 3 ... selesai"). Karena itu, tidak ada field "Files to create/modify", "Acceptance criteria" bercentang, atau "Dependencies" seperti task lain — tidak ada catatan asli semacam itu untuk pekerjaan ini, dan menuliskannya di sini akan memberi kesan presisi yang tidak benar-benar ada.
@@ -1374,6 +1374,7 @@ Satu Cloudflare Worker dengan static assets (`src/index.js`) menangani seluruh r
 > v1.0.29 (2026-10-10): Task #022 completed — Build Emulator Feature: EmulatorJS Integration, Client-Side ROM/BIOS, Self-Hosted Core. Fitur emulator pertama Gimboot: `/emulator` shell (`emulator/index.html` + `runtime.html` + `style.css` + `emulator-ui.js`) yang meng-iframe-kan EmulatorJS v4.2.3 self-hosted di `/vendor/emulatorjs/` (13 MB, 36 file, GPL-3.0, build resmi via tag `v4.2.3` + `npm i --omit=optional` + `npm run minify` — Windows absolute-glob bug di-patch di clone temp). Sistem launch: NES, SNES, GB/GBC, GBA, Genesis/Mega Drive. ROM/BIOS 100% client-side (File → postMessage → `createObjectURL()`; tidak pernah menyentuh server). Tab "Emulator" di `tab-bar`. CSP di-relaksasi path-spesifik untuk `/emulator/*` (`wasm-unsafe-eval`, `unsafe-eval`, `style-src-attr 'unsafe-inline'`, `worker-src blob:`, `connect-src blob:` + CDN version check); `upgrade-insecure-requests` di-skip di loopback (fix bug E2E yang sudah ada sejak Task #015 — iframe game di-`http://127.0.0.1` di-upgrade ke `https://` oleh browser, memicu frame-src violation). `script-src-elem` dapat `'strict-dynamic'` (dynamically injected loader.js sebelumnya di-block). E2E test baru (`e2e/emulator-flow.test.js`) mencakup: tab navigation, WASM compile probe, ROM upload via fixture iNES programmatically generated, no-POST guard, core data fetch assertion, CSP violation check. **165 unit tests + 4 E2E tests pass**, lint clean, build + audit 0 vulns. **@knowledge v1.6.6 → v1.6.7** (§2 EmulatorJS v4.2.3, §3 emulator subsystem status + CSP relaxation notes, §9 vendor size 13 MB). Security FULL (HIGH-RISK OVERRIDE — file upload/download) + Scalability FULL (0 skips).
 > v1.0.30 (2026-10-10): Task #024 completed — Expand Emulator Browser ke Seluruh 35 Sistem EmulatorJS v4.2.3, Grouped Dropdown, Cross-Origin Isolation (ad-hoc, permintaan langsung developer: *"tampilkan semua support ROM bisa dalam bentuk dropdown list"*; scope dikonfirmasi via question tool: *"Semua 33 sistem (~80 MB)"* — aktual vendor 102 MB, diterima). Picker radio-group 5 sistem → `<select id="sys-select">`: **35 opsi dalam 7 optgroup** (Nintendo/Sony/Sega/Atari/Arcade/Computers/Other consoles), value = EmulatorJS system key, `data-accept` per sistem, `data-bios` (required: psx, segaSaturn, pcfx, 3do; recommended: amiga) + hint BIOS aria-live. Vendor **+89 MB → 102 MB total** (65 file `.data` + 33 report): kedua non-thread variant untuk core normal; thread variants hanya `ppsspp-thread-wasm.data` + `dosbox_pure-thread-{legacy-,}wasm.data`; core alternatif tidak di-shipped (konsisten #022, caveat 404); **Dreamcast/flycast tidak ada di v4.2.3** → excluded (diinformasikan ke developer). Cross-origin isolation **path-scoped `/emulator*`** di `withSecurityHeaders` (`Cross-Origin-Opener-Policy: same-origin` + `Cross-Origin-Embedder-Policy: require-corp`) → `crossOriginIsolated` + SharedArrayBuffer top-level & in-iframe (prasyarat `EJS_threads` utk THREAD_CORES {psp,dos}); catalog/play/game TIDAK diisolasi (iframe game pihak ketiga aman). Handshake race fix: iframe src extensionless `/emulator/runtime` + retry post `gimboot:load` 500 ms × maks 20 sampai `gimboot:started` (runtime one-shot guard). E2E diperluas: 7 optgroup + 35 opsi, isolation top-level + in-iframe, HEAD probes 5 core/report (200), core GET-only (poll & find difilter — HEAD probe test sendiri sebelumnya memenuhi poll lebih dulu = race). **169 unit tests + 4 E2E tests pass (2× consecutive full pass)**, lint clean, build + audit 0 vulns. **@knowledge v1.6.7 → v1.6.8** (§2 getCores mapping + varian strategy + threads/webgl2 + vendor 102 MB; §3 dropdown/THREAD_CORES/COOP-COEP/retry handshake; §9 vendor evaluation). Security FULL (HIGH-RISK OVERRIDE — file upload/download) + Scalability FULL (0 skips).
 > v1.0.31 (2026-10-11): Task #025 completed — Ad-hoc: Translate Emulator Disclaimer to English (permintaan langsung developer; di luar urutan task P04). Satu-satunya paragraf berbahasa Indonesia di halaman `/emulator` (blockquote `<section class="emu-disclaimer">`, halaman `lang="en"` dengan seluruh copy lain sudah Inggris) diterjemahkan ke bahasa Inggris: *"This emulator only runs ROMs that you legally own. Gimboot does not provide, distribute, or endorse piracy…"* — link sumber legal (itch.io, nesdoug.com, Hagen's Alley) dipertahankan. Mengaktifkan opsi **"revisi bahasa = keputusan developer terpisah"** yang sudah dinyatakan lebih dulu di keputusan D7 Task #022 (kutipan literal prd.md pada saat itu; kepatuhan spec mengalahkan konsistensi bahasa — kini developer mengambil keputusan revisinya). Copy-only: 0 perubahan logic/behavior; E2E tidak memuat assertion atas teks disclaimer (grep diverifikasi). Dokumentasi: changelog v1.0.31, **@knowledge v1.6.8 → v1.6.9** (§7 disclaimer wording), **prd v1.6.2 → v1.6.3** (§5 catatan [REVISI AD-HOC 2026-10-11] + teks final Inggris + intro version note). 169 unit tests, lint clean, build + audit 0 vulns. Security FULL (0 skips; copy-only, mayoritas N/A) + Scalability FULL (0 skips).
+> v1.0.32 (2026-10-11): Task #026 completed — Ad-hoc: Per-System ROM Size Cap untuk PS1 (999 MB) & PSP (2 GB) (permintaan langsung developer via UI screenshot: *"seharusnya untuk PS1 dan PSP bisa lebih besar lagi ukuran file nya… PS1 = 999MB, PSP = 2GB"*; di luar urutan task P04, mengikuti pola ad-hoc #023/#024/#025). Cap 128 MB tunggal (diperkenalkan Task #022 sebagai client-side sanity cap) diganti menjadi **per-sistem**: `SYSTEM_MAX_ROM_BYTES = { psx: 999 MB, psp: 2 GB }`, default 128 MB dipertahankan untuk 35 sistem lainnya; divalidasi di dua lapis — `emulator/emulator-ui.js` (tolak sebelum postMessage + pesan error menampilkan cap sistem aktif) dan `emulator/runtime.html` (guard runtime terhadap `maxRomSizeFor(core)`, defense-in-depth). `formatBytes()` diperluas mendukung GB. Justifikasi: PS1 (CD ~700 MB) & PSP (UMD ~1.8 GB) memang melampaui 128 MB — cap lama menolak file valid; tetap capped (bukan unlimited) sebagai client-side resource guard terhadap OOM browser. Dokumentasi: changelog v1.0.32, **@knowledge v1.6.9 → v1.6.10** (§3 runtime size check per-sistem), **prd v1.6.3 → v1.6.4** (§5 catatan [REVISI AD-HOC 2026-10-11 — Task #026]). 169 unit tests, lint clean.
 
 ### Task #022 — Build Emulator Feature: EmulatorJS Integration, Client-Side ROM/BIOS, Self-Hosted Core ✅
 - **Completed:** 2026-10-10
@@ -1796,3 +1797,134 @@ Satu Cloudflare Worker dengan static assets (`src/index.js`) menangani seluruh r
   - Ketiga link (itch.io, nesdoug.com, hagensalley.itch.io) + atribut `target="_blank" rel="noopener noreferrer"` dipertahankan identik (0 perubahan URL)
   - Copy-only → deploy = invalidate cache halaman `/emulator` secara normal setelah merge ke `main`; tanpa perubahan Worker/binary vendor
 - **Knowledge drift:** UPDATE REQUIRED: @knowledge §7 (disclaimer wording); **diedit pada task ini**: §7 += teks disclaimer kini bahasa Inggris (revisi ad-hoc 2026-10-11/Task #025, aktivasi opsi revisi bahasa dari D7 Task #022, rujukan prd v1.6.3) — knowledge v1.6.8 → **v1.6.9**, `knowledge_version` changelog disinkronkan ke 1.6.9; prd.md → v1.6.3 (§5 catatan [REVISI AD-HOC] + teks final Inggris + intro version note). Pemicu: revisi copy langsung atas permintaan developer, harus tercatat lintas dokumen
+
+### Task #026 — Ad-hoc: Per-System ROM Size Cap — PS1 999 MB & PSP 2 GB ✅
+- **Completed:** 2026-10-11
+- **Phase:** Ad-hoc (permintaan langsung developer; di luar urutan task P04 — mengikuti pola ad-hoc Task #023/#024/#025)
+- **Status:** OK
+- **Branch:** (di-commit langsung ke branch kerja aktif; perubahan kecil ad-hoc)
+- **Files created / modified:**
+  - `emulator/emulator-ui.js` — diubah: konstanta tunggal `MAX_ROM_BYTES = 128 MB` diganti per-sistem — `DEFAULT_MAX_ROM_BYTES = 128 MB` + `SYSTEM_MAX_ROM_BYTES = { psx: 999 MB, psp: 2048 MB }` + helper `maxRomBytesFor(core)`; `onRomChange()` memakai cap sistem yang dipilih (menangani sistem diganti setelah file dipilih); pesan error kini dinamis: `File too large (max ${formatBytes(maxBytes)}).` (mis. "max 999.0 MB" / "max 2.0 GB" / "max 128.0 MB"); `formatBytes()` diperluas mendukung unit GB (`≥ 1 GB → "x.x GB"`)
+  - `emulator/runtime.html` — diubah (defense-in-depth, guard runtime terhadap pesan postMessage): pola sama — `DEFAULT_MAX_ROM_SIZE` + `SYSTEM_MAX_ROM_SIZE { psx, psp }` + `maxRomSizeFor(core)`; validasi `d.rom.size > maxRomSizeFor(d.core)` menggantikan `> MAX_ROM_SIZE` tunggal
+  - `changelog.md` — entry ini (bump 1.0.31 → 1.0.32, `knowledge_version` sinkron 1.6.10)
+  - `knowledge.md` — v1.6.9 → **v1.6.10**: §3 runtime.html size check didokumentasikan per-sistem (0 < size ≤ cap per sistem: psx 999 MB, psp 2 GB, lainnya 128 MB)
+  - `prd.md` — v1.6.3 → **v1.6.4**: §5 += catatan **[REVISI AD-HOC 2026-10-11 — Task #026]** (business rule ROM size cap per-sistem); intro version note += kalimat 1.6.3–1.6.4
+- **Acceptance criteria met:**
+  - [x] ROM PS1 hingga 999 MB diterima UI dan runtime (di bawah cap ditolak dengan pesan "File too large (max 999.0 MB).")
+  - [x] ROM PSP hingga 2 GB diterima UI dan runtime (di bawah cap ditolak dengan pesan "File too large (max 2.0 GB).")
+  - [x] Sistem selain psx/psp tetap dibatasi 128 MB (default tak berubah — behavior 35 sistem lain identik)
+  - [x] Cap divalidasi di dua lapis konsisten (UI `emulator-ui.js` + guard runtime `runtime.html` — `maxRomBytesFor`/`maxRomSizeFor` memakai map nilai identik)
+  - [x] Pesan error menampilkan limit yang benar per sistem aktif (formatBytes mendukung MB & GB)
+  - [x] Tidak ada upload ke server (validasi murni client-side sebelum postMessage — unchanged architecture)
+  - [x] Seluruh perubahan ad-hoc tercatat di `changelog.md` (entry ini), `knowledge.md` (v1.6.10 §3), dan `prd.md` (v1.6.4 §5)
+- **Security gate:** FULL — all checks passed (simple_mode: false → **0 items skipped**; perubahan kecil client-side validation; item N/A ditandai eksplisit)
+  - BASIC (13/13):
+    - [x] 1. No secrets hardcoded — ✓ hanya konstanta angka (128/999/2048 MB)
+    - [x] 2. Sensitive config via env/secure config saja — N/A (tanpa config baru)
+    - [x] 3. Tanpa eval()/exec() dengan input eksternal — ✓ tanpa pola baru
+    - [x] 4. Error message tanpa stack trace/path internal — ✓ pesan statis template, tanpa interpolasi selain angka hasil formatBytes
+    - [x] 5. Debug mode OFF non-local — ✓ tanpa kode debug
+    - [x] 6. CORS whitelist origin tepercaya — ✓ tak berubah
+    - [x] 7. `.gitignore` memuat `.env`, `*.pem`, `*.key`, `*.p12` — ✓ (Task #001, tak berubah)
+    - [x] 8. Tanpa default admin credentials/backdoor — N/A (tanpa auth surface)
+    - [x] 9. Pre-commit hook aktif — ✓ (lint+test+build berjalan pada commit)
+    - [x] 10. CI/CD: tanpa shell debug-tracing berisi secret; secrets masked — ✓ tak tersentuh
+    - [x] 11. Third-party CI actions pinned SHA — N/A (tanpa `.github/workflows`)
+    - [x] 12. Branch protection main/production — ✓
+    - [x] 13. Container: tanpa `ARG` secret di Dockerfile — N/A (tanpa Dockerfile)
+  - STANDARD (24/24):
+    - [x] 1. Validasi/sanitasi input eksternal — ✓ ROM File size tervalidasi per-sistem di UI sebelum postMessage DAN di runtime guard (dua lapis, konsisten)
+    - [x] 2. Regex input bebas catastrophic backtracking — N/A (tanpa regex baru)
+    - [x] 3. Body size limit; upload size + magic-bytes — ✓ upload size = cap per-sistem (psx 999 MB, psp 2 GB, default 128 MB) di UI + runtime; upload = File object via postMessage, bukan HTTP body (tidak menyentuh server); magic-bytes tetap di luar scope (diverifikasi core emulator)
+    - [x] 4. Auth pada tiap route terlindungi — N/A (route publik read-only, tak berubah)
+    - [x] 5. Authz di layer service (IDOR) — N/A (tanpa resource/data user)
+    - [x] 6. Admin route: role check + namespace + audit log — N/A (tanpa admin route)
+    - [x] 7. DB parameterized/ORM — N/A (tanpa DB)
+    - [x] 8. File path canonicalized — ✓ tanpa path baru
+    - [x] 9. PII tidak di log — ✓ tanpa logging
+    - [x] 10. Konten user di-log di-escape (log injection) — N/A (tanpa logging baru)
+    - [x] 11. Output HTML di-escape — ✓ pesan status textContent (bukan innerHTML)
+    - [x] 12. Field sensitif di-mask di UI — N/A
+    - [x] 13. Redirect divalidasi vs allowlist — ✓ tanpa redirect baru
+    - [x] 14. Brute-force protection — ✓ rate limiter tak berubah
+    - [x] 15. Password vs HIBP — N/A
+    - [x] 16. Password reset token — N/A
+    - [x] 17. Access token short-lived/refresh rotation — N/A
+    - [x] 18. Session regeneration setelah login — N/A
+    - [x] 19. Logout invalidate server-side — N/A
+    - [x] 20. Set-Cookie HttpOnly/Secure/SameSite — N/A
+    - [x] 21. Secure storage mobile/desktop — ✓ tanpa storage baru (File in-memory, unchanged)
+    - [x] 22. HTTP method override disabled — ✓ tak disentuh
+    - [x] 23. Content-Type divalidasi sebelum body — N/A (tanpa endpoint body)
+    - [x] 24. Perubahan skema API hanya additive — ✓ tanpa perubahan API
+  - FULL (22/22):
+    - [x] 1. Rate limit per-IP utk endpoint tak-terautentikasi (skip simple_mode) — ✓ tak berubah; simple_mode=false
+    - [x] 2. Rate limit per-user/API-key shared-store — N/A
+    - [x] 3. Infra-level rate limiting dikonfigurasi (skip simple_mode) — ✓ tak berubah
+    - [x] 4. CSRF utk operasi state-changing — N/A
+    - [x] 5. Security headers HSTS/XFO/XCTO/Referrer/Permissions — ✓ tak berubah
+    - [x] 6. CSP tanpa `unsafe-inline`/`unsafe-eval` — ✓ tak berubah
+    - [x] 7. Perbandingan secret constant-time — N/A
+    - [x] 8. JWT alg pinned — N/A
+    - [x] 9. CVE scan 0 high/critical — ✓ `npm audit` 0 vulnerabilities (gerbang build)
+    - [x] 10. Lockfile pins dependency; CI clean-install — ✓ `package-lock.json` tak berubah
+    - [x] 11. API response hanya field perlu; mass-assignment — N/A
+    - [x] 12. Price/total server-side — N/A
+    - [x] 13. Payment entitlement server-to-server — N/A
+    - [x] 14. Data sensitif terenkripsi at rest — N/A
+    - [x] 15. MFA utk admin/payment — N/A
+    - [x] 16. SSRF prevention — ✓ tanpa outbound fetch baru
+    - [x] 17. LLM calls isolation — N/A
+    - [x] 18. XML XXE disabled — N/A
+    - [x] 19. CDN assets SRI — N/A
+    - [x] 20. Production build tanpa source map publik — ✓ tak berubah
+    - [x] 21. Error tracking scrub PII/secret — ✓ tak berubah
+    - [x] 22. Webhook/OTA signature constant-time + timestamp — N/A
+- **Scalability gate:** FULL — all checks passed (simple_mode: false → **0 items skipped**)
+  - BASIC (7/7):
+    - [x] 1. Tanpa blocking sync di async handler — ✓ tanpa handler baru
+    - [x] 2. Tanpa hardcoded pool size/timeout/batch limit tanpa justifikasi — ✓ cap per-sistem = justified client-side resource guard: PS1 CD ~700 MB & PSP UMD ~1.8 GB memang melampaui cap lama 128 MB (menolak file valid); tetap capped (bukan unlimited) mencegah OOM browser; bukan server limit (ROM = File object, bukan HTTP body)
+    - [x] 3. DB connection pool — N/A (tanpa DB)
+    - [x] 4. Explicit timeout I/O eksternal — ✓ tanpa I/O baru
+    - [x] 5. Tanpa mutable state global antar-request — ✓ client-side, stateless
+    - [x] 6. Correlation ID di entry point — ✓ tak berubah
+    - [x] 7. Structured logger async non-blocking — ✓ tak berubah
+  - STANDARD (12/12):
+    - [x] 1. Validasi murah sebelum operasi mahal — ✓ perbandingan integer size sebelum createObjectURL/EmulatorJS boot (validasi termurah yang mungkin)
+    - [x] 2. Token-revocation lookup <1ms — N/A
+    - [x] 3. Query plan check — N/A
+    - [x] 4. Tanpa N+1 query — N/A
+    - [x] 5. Authz reuses data fetched — N/A
+    - [x] 6. Pagination di layer server — ✓ tak disentuh
+    - [x] 7. Semua I/O async non-blocking — ✓ tanpa I/O baru
+    - [x] 8. Tanpa akumulasi memori tak-terbatas — ✓ cap justru MELONGGAR guard terhadap file besar (psx/psp) sambil mempertahankannya untuk 35 sistem lain; `URL.createObjectURL()` tetap browser-managed
+    - [x] 9. Soft-delete — N/A
+    - [x] 10. Transaksi multi-tabel — N/A
+    - [x] 11. Migrations non-blocking — N/A
+    - [x] 12. GraphQL limits — N/A
+  - FULL (16/16):
+    - [x] 1. Caching implemented+tested (skip simple_mode) — ✓ tak berubah; simple_mode=false
+    - [x] 2. DB pooling verified — N/A
+    - [x] 3. Stateless: tanpa state in-process — ✓ client-side
+    - [x] 4. Operasi panjang → background job — N/A
+    - [x] 5. Resource dilepas saat selesai/error — ✓ tanpa resource baru
+    - [x] 6. Outbound HTTP explicit timeout — ✓ tak berubah
+    - [x] 7. Circuit breaker/fallback per integrasi (skip simple_mode) — ✓ tak berubah
+    - [x] 8. Queue depth bounded/backpressure — N/A
+    - [x] 9. Infra rate limiting edge/WAF (skip simple_mode) — ✓ tak berubah
+    - [x] 10. API Gateway utk high_scale non-microservices — N/A
+    - [x] 11. Horizontal autoscaling — ✓ static asset, platform-managed
+    - [x] 12. Idempotency key utk retryable API — ✓ GET-only, idempoten (tak berubah)
+    - [x] 13. Health endpoints per §8 — ✓ `/api/health` tak tersentuh
+    - [x] 14. Load baseline Stage1 smoke wajib (Server) — ✓ baseline #016 berlaku; perubahan murni client-side validation (0 runtime Worker change)
+    - [x] 15. Static-Hosting: Core Web Vitals — N/A per gate (project_shape: fullstack / Server variant); catatan: pesan error ± sama pendek → tanpa dampak layout
+    - [x] 16. App-Store/Installer: staged rollout — N/A
+- **Regression:** Passed **169 unit tests** + lint clean (`npm run lint`, `npm test` keduanya exit 0). Unit test tidak memuat assertion atas `MAX_ROM_BYTES`/cap (grep diverifikasi — `emulator/*.js` tidak dicakup unit test suite); E2E tidak dijalankan ulang (perubahan kecil client-side validation, tanpa perubahan DOM structure/handshake protocol)
+- **Decisions made:**
+  - [CODE] **D1 — cap per-sistem, bukan unlimited**: developer menawarkan opsi "jangan dibatasi atau PS1 = 999 MB, PSP = 2 GB" — dipilih capped, konsisten dengan filosofi cap lama (client-side resource guard mencegah OOM browser pada file multi-GB yang tak terprediksi); nilai 999 MB (PS1 CD ~700 MB) dan 2 GB (PSP UMD ~1.8 GB) memberi headroom di atas ukuran disc fisik normal
+  - [CODE] **D2 — validasi dua lapis dipertahankan**: pola UI-check + runtime-guard (Task #022) tidak disederhanakan — runtime tetap punya guard sendiri sehingga pesan postMessage yang dimanipulasi/bug di UI tidak lolos ke EmulatorJS
+- **Notes:**
+  - `SYSTEM_MAX_ROM_BYTES`/`SYSTEM_MAX_ROM_SIZE` memakai system key (`psx`, `psp`) — konsisten dengan value dropdown & `EJS_core`
+  - `formatBytes()` kini mendukung GB — unit sebelumnya berhenti di MB (akan menampilkan "2048.0 MB" untuk 2 GB; kini "2.0 GB")
+  - Cap hanya berlaku ROM; BIOS file tetap tanpa cap signifikan (BIOS berukuran kecil, beberapa KB–beberapa MB)
+- **Knowledge drift:** UPDATE REQUIRED: @knowledge §3 (runtime size check "≤ 128 MB" → per-sistem); **diedit pada task ini**: §3 runtime.html size check = per-sistem (psx 999 MB, psp 2 GB, default 128 MB; divalidasi UI + runtime) — knowledge v1.6.9 → **v1.6.10**, `knowledge_version` changelog disinkronkan ke 1.6.10; prd.md → v1.6.4 (§5 catatan [REVISI AD-HOC — Task #026] + intro version note). Pemicu: revisi limit langsung atas permintaan developer, harus tercatat lintas dokumen
