@@ -10,7 +10,28 @@
 <script>
 (function () {
   var loaded = false;
-  var ALLOWED_CORES = { nes: 1, snes: 1, gb: 1, gba: 1, segaMD: 1 };
+  // Task #024: every system key shipped in the /emulator dropdown. The
+  // aggregate "sega" alias is intentionally excluded (covered by segaMD).
+  var ALLOWED_CORES = {
+    // Nintendo
+    nes: 1, snes: 1, gb: 1, gba: 1, n64: 1, nds: 1, vb: 1,
+    // Sony
+    psx: 1, psp: 1,
+    // Sega
+    segaMD: 1, segaMS: 1, segaGG: 1, segaCD: 1, sega32x: 1, segaSaturn: 1,
+    // Atari
+    atari2600: 1, atari5200: 1, atari7800: 1, lynx: 1, jaguar: 1,
+    // Arcade
+    arcade: 1, mame: 1,
+    // Computers
+    dos: 1, amiga: 1, c64: 1, c128: 1, pet: 1, plus4: 1, vic20: 1,
+    // Other consoles
+    coleco: 1, pce: 1, pcfx: 1, ws: 1, ngp: 1, "3do": 1
+  };
+  // Cores that hard-require SharedArrayBuffer (EmulatorJS: requiresThreads).
+  // SAB only exists on this page because /emulator/* is cross-origin
+  // isolated (COOP: same-origin + COEP: require-corp set by the Worker).
+  var THREAD_CORES = { psp: 1, dos: 1 };
   var MAX_ROM_SIZE = 134217728; // 128 MB sanity cap
 
   window.addEventListener('message', function (e) {
@@ -24,6 +45,9 @@
 
     window.EJS_player = '#game';
     window.EJS_core = d.core;
+    if (THREAD_CORES[d.core]) {
+      window.EJS_threads = true;
+    }
     window.EJS_gameUrl = URL.createObjectURL(d.rom);
     window.EJS_biosUrl = (d.bios instanceof File && d.bios.size > 0)
       ? URL.createObjectURL(d.bios)

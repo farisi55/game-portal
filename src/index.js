@@ -288,6 +288,16 @@ function withSecurityHeaders(response, requestId = '', hostname = '', pathname =
   }
 
   headers.set('Content-Security-Policy', buildContentSecurityPolicy(nonce, hostname, pathname));
+
+  // Task #024: cross-origin isolate /emulator/* so SharedArrayBuffer is
+  // exposed and thread-required cores (PPSSPP, DOSBox Pure) can boot.
+  // Scoped strictly to emulator paths — the catalog / play / game pages
+  // stay non-isolated, so third-party game iframes are unaffected.
+  // COOP/COEP are only meaningful on documents; harmless on assets.
+  if (pathname.startsWith('/emulator')) {
+    headers.set('Cross-Origin-Opener-Policy', 'same-origin');
+    headers.set('Cross-Origin-Embedder-Policy', 'require-corp');
+  }
   if (requestId) {
     headers.set('x-request-id', requestId);
   }

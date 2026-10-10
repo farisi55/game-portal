@@ -1,13 +1,15 @@
 // ==========================================================================
-// e2e/emulator-flow.test.js — Emulator End-to-End Test (Task #022)
+// e2e/emulator-flow.test.js — Emulator End-to-End Test (Tasks #022 + #024)
 //
 // Exercises the /emulator page against a REAL wrangler dev server and a
 // REAL Chromium browser (Playwright):
 //
-//   Catalog (/) → click Emulator tab → /emulator/ → pick NES →
-//   upload a programmatically-generated valid iNES ROM → Load Game →
-//   runtime iframe boots → core data file downloads → no POST requests
-//   ever leave the origin.
+//   Catalog (/) → click Emulator tab → /emulator/ → dropdown shows all
+//   35 systems → cross-origin isolation (COOP/COEP) is active top-level
+//   AND inside the runtime iframe (SharedArrayBuffer exposed → thread
+//   cores PPSSPP/DOSBox can boot) → pick NES → upload a programmatically
+//   generated valid iNES ROM → Load Game → runtime iframe boots → core
+//   data file downloads → no POST requests ever leave the origin.
 //
 // Determinism strategy:
 //   - The external games feed is stubbed at the network layer (Playwright
@@ -170,16 +172,95 @@ describe('Gimboot end-to-end: emulator page', () => {
       });
       expect(wasmOk).toBe(true);
 
-      // ---- Step 5: Pick NES system ------------------------------------------
-      await page.locator('.sys-btn[data-system="nes"]').click();
-      await expect(page.locator('.sys-btn[data-system="nes"]')).toHaveAttribute(
-        'aria-checked',
-        'true',
+      // ---- Step 5: Dropdown lists all 35 systems (Task #024) ---------------
+      const groupLabels = await page.$$eval('#sys-select optgroup', (gs) =>
+        gs.map((g) => g.label),
       );
-      const romInput = page.locator('#rom-file');
-      await expect(romInput).toBeEnabled();
+      expect(groupLabels).toEqual([
+        'Nintendo',
+        'Sony',
+        'Sega',
+        'Atari',
+        'Arcade',
+        'Computers',
+        'Other consoles',
+      ]);
 
-      // ---- Step 6: Upload tiny iNES ROM fixture -----------------------------
+      const systemValues = await page.$$eval('#sys-select option', (opts) =>
+        opts.map((o) => o.value).filter(Boolean),
+      );
+      expect(systemValues.length).toBe(35);
+      // Spot-check one key per category, incl. thread cores + BIOS systems.
+      for (const key of [
+        'nes', 'snes', 'gb', 'gba', 'n64', 'nds', 'vb',
+        'psx', 'psp',
+        'segaMD', 'segaMS', 'segaGG', 'segaCD', 'sega32x', 'segaSaturn',
+        'atari2600', 'atari5200', 'atari7800', 'lynx', 'jaguar',
+        'arcade', 'mame',
+        'dos', 'amiga', 'c64', 'c128', 'pet', 'plus4', 'vic20',
+        'coleco', 'pce', 'pcfx', 'ws', 'ngp', '3do',
+      ]) {
+        expect(systemValues).toContain(key);
+      }
+
+      // ---- Step 6: Cross-origin isolation is active (COOP/COEP) ------------
+      // Thread-required cores (PPSSPP, DOSBox Pure) hard-fail without
+      // SharedArrayBuffer, which only exists when crossOriginIsolated.
+      const topIso = await page.evaluate(() => ({
+        isolated: window.crossOriginIsolated,
+        sab: typeof window.SharedArrayBuffer,
+      }));
+      expect(topIso.isolated).toBe(true);
+      expect(topIso.sab).toBe('function');
+
+      // The runtime iframe (a same-origin child served from /emulator/)
+      // must be isolated too — it is the document that boots the cores.
+      await page.waitForFunction(
+        () => {
+          const f = document.getElementById('emu-iframe');
+          return Boolean(f && f.contentWindow);
+        },
+        null,
+        { timeout: 10_000 },
+      );
+      const frameIso = await page.evaluate(() => {
+        const w = document.getElementById('emu-iframe').contentWindow;
+        return { isolated: w.crossOriginIsolated, sab: typeof w.SharedArrayBuffer };
+      });
+      expect(frameIso.isolated).toBe(true);
+      expect(frameIso.sab).toBe('function');
+
+      // ---- Step 7: Newly shipped core files are served (Task #024) ---------
+      const coreHeadStatus = await page.evaluate(async () => {
+        const urls = [
+          '/vendor/emulatorjs/cores/mupen64plus_next-wasm.data', // N64
+          '/vendor/emulatorjs/cores/fbneo-wasm.data', // Arcade
+          '/vendor/emulatorjs/cores/ppsspp-thread-wasm.data', // PSP (threads)
+          '/vendor/emulatorjs/cores/dosbox_pure-thread-legacy-wasm.data', // DOS
+          '/vendor/emulatorjs/cores/reports/melonds.json',
+        ];
+        const out = {};
+        for (const u of urls) {
+          try {
+            out[u] = (await fetch(u, { method: 'HEAD' })).status;
+          } catch (err) {
+            out[u] = String(err);
+          }
+        }
+        return out;
+      });
+      for (const [u, status] of Object.entries(coreHeadStatus)) {
+        expect(status, `${u} should be served`).toBe(200);
+      }
+
+      // ---- Step 8: Pick NES system ------------------------------------------
+      const romInput = page.locator('#rom-file');
+      await expect(romInput).toBeDisabled();
+      await page.locator('#sys-select').selectOption('nes');
+      await expect(romInput).toBeEnabled();
+      await expect(page.locator('#rom-status')).toContainText('Selected: NES / Famicom');
+
+      // ---- Step 9: Upload tiny iNES ROM fixture -----------------------------
       const romBuffer = makeTinyNesRom();
       expect(romBuffer.length).toBe(16 + 16384); // header + 1 bank
       // Verify magic bytes
@@ -192,7 +273,7 @@ describe('Gimboot end-to-end: emulator page', () => {
       });
       await expect(page.locator('#rom-status')).toContainText('e2e-test.nes');
 
-      // ---- Step 7: Load Game → runtime boots -------------------------------
+      // ---- Step 10: Load Game → runtime boots ------------------------------
       const loadBtn = page.locator('#btn-load');
       await expect(loadBtn).toBeEnabled();
       await loadBtn.click();
@@ -200,11 +281,17 @@ describe('Gimboot end-to-end: emulator page', () => {
       // Stage becomes visible
       await expect(page.locator('.emu-stage')).toBeVisible({ timeout: 10_000 });
 
-      // Wait for the core data file to be requested (proves EmulatorJS booted)
+      // Wait for the core data file to be REQUESTED VIA GET (proves
+      // EmulatorJS actually booted — exclude this test's own HEAD probes)
       try {
         await expect
           .poll(
-            () => networkLog.some((r) => /\/vendor\/emulatorjs\/cores\/.*-wasm\.data/.test(r.url)),
+            () =>
+              networkLog.some(
+                (r) =>
+                  r.method === 'GET' &&
+                  /\/vendor\/emulatorjs\/cores\/.*-wasm\.data/.test(r.url),
+              ),
             { timeout: 60_000, interval: 1_000 },
           )
           .toBe(true);
@@ -214,14 +301,19 @@ describe('Gimboot end-to-end: emulator page', () => {
         throw pollErr;
       }
 
-      // The core data request must be a GET
-      const coreReq = networkLog.find((r) =>
-        /\/vendor\/emulatorjs\/cores\/.*-wasm\.data/.test(r.url),
+      // The core data request must be a GET (skip the HEAD probes above)
+      const coreReq = networkLog.find(
+        (r) => r.method === 'GET' && /\/vendor\/emulatorjs\/cores\/.*-wasm\.data/.test(r.url),
       );
+      expect(coreReq).toBeTruthy();
       expect(coreReq.method).toBe('GET');
 
-      // ---- Step 8: Network guard — no POST / no cross-origin non-feed --------
-      const nonGetRequests = networkLog.filter((r) => r.method !== 'GET');
+      // ---- Step 11: Network guard — no POST / no cross-origin non-feed -----
+      // No POST / no non-GET traffic — except the same-origin HEAD probes
+      // this test itself issues in step 7 (verify shipped core files).
+      const nonGetRequests = networkLog.filter(
+        (r) => r.method !== 'GET' && !(r.method === 'HEAD' && r.url.startsWith(baseUrl)),
+      );
       expect(nonGetRequests).toEqual([]);
 
       // All non-feed requests must be same-origin, with two known
@@ -242,7 +334,7 @@ describe('Gimboot end-to-end: emulator page', () => {
       });
       expect(crossOrigin).toEqual([]);
 
-      // ---- Step 9: Console clean post-boot (no CSP violations, no errors) ---
+      // ---- Step 12: Console clean post-boot (no CSP/COEP violations) --------
       await page.waitForTimeout(3_000);
       const cspViolations = consoleErrors.filter(
         (e) => e.includes('Content Security Policy') || e.includes('csp'),
