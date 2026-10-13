@@ -1,51 +1,57 @@
 # Gimboot — Multi-Source Game Portal
 
-**No install, just play, have fun.** A static, no-build-tool HTML5 game portal in the vein of CrazyGames — installable as a PWA, with programmatically generated SEO landing pages for every game in the catalog.
+**No install, just play, have fun.** A static-HTML5, no-framework game portal in the vein of CrazyGames — installable as a PWA, with programmatically generated SEO landing pages for every game in the catalog, plus a self-hosted retro **Emulator Browser**.
 
-The catalog is a live merge of three sources:
+The game catalog is a live server-side merge of three sources:
 
-- **GameMonetize** — fetched server-side from their game feed
-- **GamePix** — fetched server-side from their JSON feed
-- **First-party** — games built and hosted directly in this repo: Ayo Kopdes, Kejar Koruptor, Mobil MBG, and Kicau Mania, all confirmed active. `src/index.js` (the Worker) now recognizes all four in its `LOCAL_GAMES` — sync completed (`changelog.md` Task #002).
+- **GameMonetize** — fetched from their game feed (parsed server-side)
+- **GamePix** — fetched from their JSON feed
+- **First-party** — four HTML5 Canvas games hosted directly in this repo: Ayo ke Kopdes, Kejar Koruptor, Mobil MBG, and Kicau Mania — all confirmed active and registered in `LOCAL_GAMES` in **both** `js/config.js` (client) and `src/index.js` (Worker), so `/play/`, `/share/`, and sitemap entries work for all four
 
-> **Related docs:** this README covers setup and architecture for someone working in the repo. Product scope and open decisions live in [`prd.md`](./prd.md), the full technical reference is [`knowledge.md`](./knowledge.md), and current task status/backlog is [`changelog.md`](./changelog.md). All three were reconciled against this codebase on 2026-08-28.
+> **Related docs:** this README is the getting-started/architecture guide for contributors. Product scope lives in [`prd.md`](./prd.md), the full technical reference in [`knowledge.md`](./knowledge.md), and task history in [`changelog.md`](./changelog.md) (26 tasks, all complete). Operational procedures are in [`docs/deployment-runbook.md`](./docs/deployment-runbook.md); the public API is specced in [`docs/api.yaml`](./docs/api.yaml) (OpenAPI 3.1).
 
 ## Status
 
-Live in production. Foundation hardening — automated tests, `/api/health`, a clean-code pass on unused files — is in progress. See `changelog.md` for the task list and `prd.md` §10 for the open technical decisions referenced throughout this file.
+Live in production at **https://gimboot.com** (Cloudflare Worker `games`, custom domain). All 26 tracked tasks are complete — including foundation hardening (tests, linting, security headers, rate limiting, health endpoint, load testing), SEO fixes from Google Search Console feedback, and the Emulator Browser feature. Remaining ideas (e.g. a provider filter on the catalog grid) are listed under [Roadmap](#roadmap).
 
 ## Features
 
-- **Aggregated catalog** — hundreds of games from GameMonetize + GamePix, merged with first-party titles server-side and cached at the edge (30 min)
-- **Programmatic SEO** — every game gets a real, crawlable `/play/{id}/{slug}` URL with a server-injected title, meta description, Open Graph/Twitter tags, and canonical link — no page is hand-written
-- **Dynamic sitemap** — `/sitemap.xml` lists every game's `/play/` URL, generated live from the same merged catalog
-- **PWA** — installable to the home screen via standard manifest/service-worker installability, with an offline app shell
-- **Viral sharing** — confetti + Web Share API when a player beats their high score, with a clipboard-copy fallback, plus an OG-tagged `/share/{id}` page for the link itself
-- **Zero backend state** — no database, no accounts; scores and preferences live in `localStorage` on the player's device
+- **Aggregated catalog** — hundreds of games from GameMonetize + GamePix, merged server-side with the four first-party titles and cached at the edge (~30 min); `/api/games` supports `page`/`limit` pagination, `/api/search` does hybrid server-side search
+- **Programmatic SEO** — every game gets a real, crawlable `/play/{id}/{slug}` URL with a server-injected title, meta description, Open Graph/Twitter tags, and canonical link (stream-transformed via Cloudflare's HTMLRewriter — no hand-written pages)
+- **Canonical URL hygiene** — legacy `/game.html?id=X` and `/game?id=X` 301 straight to `/play/{id}/{slug}` in a single hop; HTTP→HTTPS and `/index.html` normalization are also single-hop; `/sitemap.xml` emits only canonical HTTPS URLs (fixed per Google Search Console)
+- **Dynamic sitemap** — `/sitemap.xml` lists every game's `/play/` URL, generated live from the merged catalog and pointed to by `robots.txt`
+- **Emulator Browser** — self-hosted [EmulatorJS](https://github.com/EmulatorJS/emulatorjs) v4.2.3 at `/emulator`, supporting all 35 systems (NES through PS1/PSP), with ROM & BIOS 100% client-side (see below)
+- **PWA** — installable to the home screen (manifest + service worker), with an offline app shell and stale-while-revalidate caching
+- **Viral sharing** — confetti + Web Share API when a player beats their high score, clipboard-copy fallback, and an OG-tagged `/share/{id}` page for the link itself
+- **Zero backend state** — no database, no accounts, no PII; scores and preferences live in `localStorage` on the player's device; Worker-side rate limiting (100 req/min/IP) on the API routes
 
 ## How it's wired together
 
 ```
 Browser
-  ├─ GET /                         → index.html   (catalog: grid, search, category filter)
-  ├─ GET /play/{id}/{slug}         → src/index.js  (SEO landing page, see below)
-  ├─ GET /game?...                 → src/index.js  (clean query-param player + per-game meta)
-  ├─ GET /game.html?...            → 301 → /game?...  (legacy extension stripped, query kept)
-  ├─ GET /share/{id}               → src/index.js  (OG-tagged share page for a specific score)
-  ├─ GET /api/games, /api/search   → src/index.js  (Cloudflare Worker)
-  ├─ GET /sitemap.xml              → src/index.js  (every /play/ URL, for crawlers)
+  ├─ GET /                          → index.html   (catalog: grid, search, category tabs)
+  ├─ GET /emulator                  → emulator/index.html  (EmulatorJS shell, 35 systems)
+  ├─ GET /play/{id}/{slug}          → src/index.js  (SEO landing page, see below)
+  ├─ GET /game.html?id=X | /game?id=X
+  │                                 → src/index.js  (single 301 → /play/{id}/{slug}; /game
+  │                                    without id still serves the query-param game shell)
+  ├─ GET /share/{id}                → src/index.js  (OG-tagged share page)
+  ├─ GET /api/games, /api/search, /api/health
+  │                                 → src/index.js  (Cloudflare Worker, rate-limited)
+  ├─ GET /sitemap.xml               → src/index.js  (every /play/ URL, for crawlers)
   │                                       │
-  │                                       ├─ fetch → gamemonetize.com/feed.php  (server-side, parsed from RSS/XML)
-  │                                       ├─ fetch → feeds.gamepix.com/v2/json  (server-side, already JSON)
-  │                                       ├─ normalize both into one common shape, merge with LOCAL_GAMES
-  │                                       └─ cache the merged result at the edge (Cache API, 30 min)
+  │                                       ├─ fetch → gamemonetize.com/feed.php  (parsed from RSS/XML)
+  │                                       ├─ fetch → feeds.gamepix.com/v2/json  (already JSON)
+  │                                       ├─ normalize → merge with LOCAL_GAMES → edge cache (~30 min)
+  │                                       └─ 5s fetch timeout; feed failures degrade gracefully
   │
-  ├─ <iframe src="https://html5.gamemonetize.co/...">   (a GameMonetize game)
-  ├─ <iframe src="https://play.gamepix.com/.../embed">   (a GamePix game)
-  └─ <iframe src="/games/kicau-mania/index.html">         (a game hosted directly)
+  ├─ <iframe src="https://html5.gamemonetize.co/...">   (GameMonetize game)
+  ├─ <iframe src="https://play.gamepix.com/.../embed">  (GamePix game)
+  ├─ <iframe src="/games/kicau-mania/index.html">       (first-party game)
+  └─ <iframe src="/emulator/runtime.html">              (emulator runtime, postMessage handshake)
 ```
 
-Every response — static or dynamic — passes through the Worker first (`run_worker_first = ["/*"]` in `wrangler.toml`), so one nonce-based Content-Security-Policy can be applied consistently to everything, rather than relying on the static `_headers` file (kept only as a fallback for the rare case the Worker doesn't run).
+Every response — static or dynamic — passes through the Worker first (`run_worker_first = ["/*"]` in `wrangler.toml`), so one nonce-based Content-Security-Policy can be applied consistently to everything. The one scoped exception: `/emulator/*` paths get a path-specific CSP relaxation plus COOP/COEP headers (needed for `SharedArrayBuffer`), because EmulatorJS requires `blob:` and `unsafe-eval` — catalog/play/game pages keep the strict policy. The static `_headers` file is kept only as a fallback for the rare case the Worker doesn't run.
 
 ## Programmatic SEO: `/play/{id}/{slug}`
 
@@ -59,27 +65,47 @@ Only the `{id}` segment is ever read — `{slug}` exists purely so the URL reads
 
 One thing to know if you touch routing: because `/play/{id}/{slug}` sits two path segments deep and `/` sits at zero, a relative asset path like `href="css/style.css"` resolves differently at each depth. Every asset reference in `index.html`, `game.html`, `js/config.js`, and `js/pwa.js`'s service-worker registration uses a root-relative path (`/css/style.css`) instead, so the same markup works identically regardless of URL depth.
 
+Canonicalization is enforced single-hop (a past Google Search Console finding — no redirect chains): HTTP→HTTPS, `/index.html`→`/`, and legacy `/game.html?id=X`/`/game?id=X`→`/play/{id}/{slug}` each produce exactly one 301, and `/sitemap.xml` emits only canonical HTTPS URLs.
+
+## Emulator Browser: `/emulator`
+
+A retro-console page built on **EmulatorJS v4.2.3**, self-hosted in `vendor/emulatorjs/` (~102 MB of cores — deliberately no external CDN dependency, consistent with the rest of the portal):
+
+- **All 35 supported systems** (NES, SNES, GB/GBC, GBA, N64, DS, PS1, PSP, the Sega and Atari families, arcade, DOS, Amiga, C64, …) in a grouped dropdown. BIOS-requiring systems (PS1, Saturn, PC-FX, 3DO) and recommended-BIOS systems (Amiga) are labeled in the UI.
+- **ROM & BIOS are 100% client-side** — picked via file input and handed to the emulator through `URL.createObjectURL`/`postMessage`; they never touch the server or any storage. Per-system ROM size caps: 128 MB by default, 999 MB for PS1, 2 GB for PSP — enforced in both `emulator/emulator-ui.js` and `emulator/runtime.html`.
+- **Legal stance (hard rule):** the page links to no ROM sources — only legal homebrew references (itch.io etc.) — and EmulatorJS is used unmodified (GPL-3.0) to avoid copyleft obligations. See `knowledge.md` §9.
+- PSP and DOS cores require threads: `/emulator*` responses carry COOP/COEP headers for cross-origin isolation (`SharedArrayBuffer`), and get the only path-scoped CSP relaxation in the app.
+- The runtime is an isolated iframe (`/emulator/runtime.html`) talking to the shell over `postMessage`, following the same isolation pattern as embedded games.
+
 ## Design & branding
 
-The current identity: "GIMBOOT" wordmark in Press Start 2P, "No Install, Just Play, Have Fun" underneath in Space Mono, body text in Plus Jakarta Sans. A pixel-art joystick icon (cyan-to-magenta gradient, gold button) was designed as part of this rebrand to serve as the favicon and PWA icon set (`icon-192.png` / `icon-512.png`, including a maskable variant). `favicon.svg` is the confirmed official favicon file, though its current content doesn't yet match that description and it isn't wired into `index.html`/`game.html`/`manifest.json` — see [Known issues](#known-issues--roadmap). The footer credits both GameMonetize and GamePix.
+The current identity: "GIMBOOT" wordmark in Press Start 2P, "No Install, Just Play, Have Fun" underneath in Space Mono, body text in Plus Jakarta Sans. `favicon.svg` is the official favicon, wired into `index.html`/`game.html` via `<link rel="icon">`; the PWA icon set (`icon-192.png` / `icon-512.png`, including a maskable variant) is derived from the same pixel-art branding. The footer credits both GameMonetize and GamePix.
 
 ## Getting started
 
-```bash
-npm install -g wrangler          # if you don't already have it
+Requires Node ≥ 20 and npm ≥ 10.
 
-npx wrangler dev                 # local dev — runs src/index.js AND serves static assets
+```bash
+npm install                      # dev tooling only (wrangler, vitest, eslint, playwright)
+
+npm run dev*                     # local dev — npx wrangler dev runs the Worker + serves assets
+npm test                         # unit tests (Vitest + @cloudflare/vitest-plugin)
+npm run test:e2e                 # Playwright E2E (run `npx playwright install` once)
+npm run lint                     # ESLint, zero warnings allowed
+npm run build                    # quality gate: lint + unit tests + npm audit --audit-level=high
 npx wrangler deploy              # deploy to production
 ```
 
-There's no build step and no `package.json` yet (tracked in `changelog.md` Task #004) — the frontend is plain ES modules and Tailwind loads from a CDN, so `wrangler dev` is the only tool needed to run the whole thing locally.
+\* there's no `dev` script in `package.json` — use `npx wrangler dev` directly (the frontend is plain ES modules and Tailwind loads from a CDN, so there is **no bundler and no production build step**; `npm run build` is a gate, not a compile step).
 
 **Rolling back a bad deploy:**
 
 ```bash
-wrangler deployments list        # find the version to roll back to
-wrangler rollback <version-id>   # or omit the id to roll back to the previous version
+npx wrangler deployments list    # find the version to roll back to
+npx wrangler rollback <version-id>  # or omit the id to roll back to the previous version
 ```
+
+Staging/preview (`npx wrangler preview`), smoke-test checklists, and the canary procedure for high-traffic periods are documented in [`docs/deployment-runbook.md`](./docs/deployment-runbook.md).
 
 ## Deployment model: Worker with static assets, not Pages
 
@@ -92,79 +118,93 @@ directory = "."
 run_worker_first = ["/*"]
 ```
 
-`npx wrangler deploy` is the correct command; `wrangler pages deploy` does not apply to this configuration.
-
-`functions/api/games.js`, `functions/api/search.js`, and `functions/share/[id].js` follow the Cloudflare **Pages** Functions convention, which this deployment model doesn't use — they are not invoked in production. They've been kept as a manually-synced reference copy of part of `src/index.js`'s logic, but are now confirmed for removal; `changelog.md` Task #002 tracks the deletion.
+`npx wrangler deploy` is the correct command; `wrangler pages deploy` does not apply to this configuration. CI/CD is **Cloudflare Workers Builds** (auto-deploy on push/merge to production; preview builds exist but are not enabled for branch pushes — the manual preview path is in the runbook). An old `functions/` directory (Pages-Functions-style copies of the Worker logic) was deleted in `changelog.md` Task #002 — it was never invoked under this deploy model; `src/index.js` is the single source of backend truth.
 
 ## Project structure
 
 ```
 gimboot/
-├── index.html                   Catalog landing page — grid, search, category filter
-├── game.html                    Legacy query-param player; requests to it 301 to /game
-├── manifest.json                PWA manifest — name "Gimboot", pixel icons
+├── index.html                   Catalog landing page — grid, search, category tabs
+├── game.html                    Query-param player shell (legacy; /game?id= & /game.html?id= 301 → /play)
+├── manifest.json                PWA manifest — "Gimboot", pixel icons, wide screenshot
 ├── sw.js                        Service worker — offline app shell + stale-while-revalidate
-├── favicon.svg                   Official favicon — content/wiring still needs verification, see Known issues
-├── .avicon.svg                   Unreferenced; candidate for removal now that favicon.svg is confirmed, see Known issues
-├── icon-192.png / icon-512.png  Raster icons for home-screen install (in active use)
-├── screenshot-desktop.png       PWA install-UI screenshots — currently identical to each other
-├── screenshot-mobile.png        (see Known issues)
+├── favicon.svg                  Official favicon — wired into index.html/game.html
+├── icon-192.png / icon-512.png  Raster icons for home-screen install (incl. maskable)
 ├── ads.txt                      GameMonetize / GamePix ad-network verification
 ├── robots.txt                   Points crawlers at /sitemap.xml
 ├── _headers                     Fallback security headers (the Worker applies the real CSP per-response)
-├── .gitignore                   Currently only excludes AI-tool folders — no secret patterns yet
-├── .assetsignore                Excludes src/, functions/, and repo metadata from static-asset serving
-├── wrangler.toml                Worker + static-assets config
+├── wrangler.toml                Worker + static-assets + [previews] config
+├── package.json                 Dev tooling only (test/lint/build scripts) — no bundler
+├── eslint.config.js / .prettierrc / .husky/   Lint & pre-commit hook (Task #001, #005)
+├── vitest.config.js / vitest.e2e.config.js    Test runner configs (unit / Playwright E2E)
 ├── css/
-│   └── style.css                Design tokens (Plus Jakarta Sans / Press Start 2P / Space Mono) + components
+│   └── style.css                Design tokens (Plus Jakarta Sans / Press Start 2P / Space Mono)
 ├── js/
 │   ├── config.js                 Tunable constants, LOCAL_GAMES (client), embed allowlist
 │   ├── utils.js                   escapeHtml, debounce, slugify, buildPlayUrl, fetchGameCatalog, isAllowedEmbedUrl
 │   ├── tailwind-config.js         Tailwind theme extension
-│   ├── catalog.js                 Fetch, render grid, filter, search
+│   ├── catalog.js                 Fetch, render grid, filter, search, category tabs (incl. Emulator tab)
 │   ├── player.js                  Resolves game data, favorites, recently-played, fullscreen, native share
 │   ├── pwa.js                     Service worker registration + cross-game high score via postMessage
-│   └── state.js                   localStorage wrapper — favorites & recently-played only (not scores)
+│   ├── ad-loader.js               Ad-script loader with 3s timeout fallback (never blocks games)
+│   └── state.js                   localStorage wrapper — favorites & recently-played (not scores)
 ├── games/
-│   ├── kicau-mania/               First-party game, active
-│   ├── ayo-kopdes/                First-party game, active — pending sync in src/index.js, see Known issues
-│   ├── kejar-koruptor/            First-party game, active — pending sync in src/index.js, see Known issues
-│   ├── mobil-mbg/                 First-party game, active — pending sync in src/index.js, see Known issues
+│   ├── kicau-mania/               First-party game
+│   ├── ayo-kopdes/                First-party game
+│   ├── kejar-koruptor/            First-party game
+│   ├── mobil-mbg/                 First-party game
 │   └── shared/                    ui-share.js/css — confetti + share-prompt module
+├── emulator/
+│   ├── index.html                 Shell — 35-system dropdown (7 optgroups), ROM/BIOS pickers, how-to + legal disclaimer
+│   ├── runtime.html               Iframed EmulatorJS runtime — core config, size caps, handshake
+│   ├── emulator-ui.js             UI logic — validation, postMessage protocol, formatBytes
+│   └── style.css
+├── vendor/emulatorjs/             Self-hosted EmulatorJS v4.2.3 + cores (~102 MB)
 ├── src/
-│   └── index.js                  Worker: /api/games, /api/search, /share/:id, /play/{id}/{slug}, /game, /sitemap.xml
+│   ├── index.js                   Worker — all routes, security headers, rate limiting, redirects
+│   └── index.test.js              Worker unit tests (routes, escaping, redirects, handlers)
+├── e2e/                           Playwright flows (catalog→play, emulator upload flow)
+├── loadtest/                      k6 suites (smoke, capacity, cache-cold herd) + RESULTS.md
+└── docs/                          api.yaml (OpenAPI 3.1), deployment-runbook.md, manual-qa-checklist.md
 ```
 
 Per-game high scores live inside each `games/{slug}/game.js`, not in `js/state.js`. A separate, cross-game high score also exists in `js/pwa.js`, updated via `window.postMessage` from both first-party games and embedded GamePix games (GamePix sends this natively; GameMonetize embeds have no equivalent hook).
 
 ## Configuration
 
-No secrets are currently required. When one is needed (e.g. a GameMonetize site ID), add it as a Cloudflare environment variable — never commit it to source.
+No secrets are currently required; `.gitignore` already excludes `.env`, `*.pem`, `*.key`, `*.p12`, and `secrets/` — add any future secret (e.g. a GameMonetize site ID) as a Cloudflare environment variable, never to source.
 
 - **Turning on GameMonetize monetization** — paste your real snippet from the GameMonetize dashboard into `ads.txt`, replacing the placeholder line, then redeploy. GameMonetize checks `https://<your-domain>/ads.txt` at the root.
 - **SEO title/description template** — `handlePlayRoute()` in `src/index.js` (`seoTitle` / `seoDescription`).
-- **GameMonetize catalog size** — `js/config.js` → `DEFAULT_GAME_COUNT`.
+- **GameMonetize catalog size** — `js/config.js` → `DEFAULT_GAME_COUNT` (server-side clamp: `MAX_GAME_COUNT` = 200).
 - **GamePix page size / site ID** — `GAMEPIX_PAGINATION` / `GAMEPIX_DEFAULT_SID` at the top of `src/index.js`. Worth double-checking against your GamePix dashboard — `ads.txt` currently has two different GamePix property IDs in its comments.
+- **Ad script loading** — `js/ad-loader.js` wraps external ad scripts with a 3s timeout so they can never block game rendering; swap `DEFAULT_TIMEOUT_MS` there if needed.
 - **Adding another first-party game** — drop it under `games/<name>/`, then add an entry to **both** `LOCAL_GAMES` in `js/config.js` (client) and `LOCAL_GAMES` in `src/index.js` (server — needed for its `/play/`, `/share/`, and sitemap entries to work). The two lists are intentionally duplicated rather than shared, since the Worker and the browser's ES modules don't go through a build step together — keep them in sync by hand.
+- **Emulator ROM size caps** — per-system map in `emulator/emulator-ui.js` + `emulator/runtime.html` (default 128 MB; PS1 999 MB; PSP 2 GB).
 - **Colors & typography** — CSS custom properties at the top of `css/style.css`.
 
 ## Security notes
 
-- `isAllowedEmbedUrl()` in `js/utils.js` only allows (a) absolute `https://` URLs on the GameMonetize/GamePix allowlist, or (b) a same-origin path under `/games/`.
-- Every value injected into `/share/:id`, `/play/:id/:slug`, and `/game`'s HTML/meta output is escaped (`escapeHtmlAttr`/`escapeJsonLd` in `src/index.js`) before it reaches the response.
-- `/api/games` and `/api/search` return `Access-Control-Allow-Origin: *`. This is an intentional, accepted policy for these two endpoints since they're public, read-only, and carry no sensitive or authenticated data — the project's CORS policy was revised to allow this rather than narrowing the header. Wildcard CORS should still be avoided on any future endpoint that requires authentication or writes state.
-- **Known gap:** `.gitignore` doesn't yet exclude `.env`, `*.pem`, `*.key`, `*.p12`, or `secrets/` — add these before any real secret is introduced (`changelog.md` Task #001).
+- **Embed allowlist** — `isAllowedEmbedUrl()` in `js/utils.js` only allows (a) absolute `https://` URLs on the GameMonetize/GamePix allowlist, or (b) a same-origin path under `/games/`.
+- **Output escaping** — every value injected into `/share/:id`, `/play/:id/:slug`, and `/game`'s HTML/meta output is escaped (`escapeHtmlAttr`/`escapeJsonLd` in `src/index.js`) before it reaches the response — covered by unit tests (`changelog.md` Task #010).
+- **CSP** — nonce + `strict-dynamic`, no `unsafe-inline`/`unsafe-eval` on catalog/play pages. The only relaxation is path-scoped to `/emulator/*` (`blob:`, `unsafe-eval`, CDN version check) plus COOP/COEP for `SharedArrayBuffer` — required by EmulatorJS.
+- **Rate limiting** — in-Worker, 100 requests/minute/IP on the API routes (`src/index.js`, `RATE_LIMIT_MAX`).
+- **CORS** — `/api/games` and `/api/search` return `Access-Control-Allow-Origin: *`. This is an intentional, accepted policy for these two endpoints since they're public, read-only, and carry no sensitive or authenticated data — the project's CORS policy was revised to allow this rather than narrowing the header. Wildcard CORS should still be avoided on any future endpoint that requires authentication or writes state.
+- **Security scanning** — periodic external scans (pentest-tools.com) with a documented per-item disposition policy; latest scan: 0 critical/high/medium, 2 accepted low (platform fingerprint). See `knowledge.md` §8.
+- **Dependencies** — all npm dependencies are dev-only; production ships zero npm code. `npm audit --audit-level=high` is part of the build gate.
 
 ## Testing
 
-No automated tests exist yet, and there's no `package.json`, linter, or test runner in the repo (`changelog.md` Task #004). Manual smoke-testing is the only current QA step for the Canvas games. See `changelog.md` for the planned first test targets — `js/state.js`, `js/utils.js`, and `src/index.js`'s route handlers.
+- **Unit** — Vitest (`npm test`): Worker routes, redirects, and escaping in `src/index.test.js`, plus `js/` suites for utils, state, catalog, and the ad loader (~170 tests).
+- **E2E** — Playwright (`npm run test:e2e`): catalog→play flow (`e2e/full-flow.test.js`) and the emulator upload flow (`e2e/emulator-flow.test.js`).
+- **Load** — k6 suites under `loadtest/` (smoke, 1,000-VU capacity, cache-cold herd); latest results in `loadtest/RESULTS.md`.
+- **Gates** — `npm run build` = lint + unit tests + high/critical CVE scan; a Husky pre-commit hook enforces checks locally. Manual QA for the Canvas games uses `docs/manual-qa-checklist.md`.
 
-## Known issues & roadmap
+## Roadmap
 
-- **`src/index.js` `LOCAL_GAMES` needs syncing** — all four first-party games are confirmed active, but `src/index.js` (server) currently only recognizes Kicau Mania. Add Ayo Kopdes, Kejar Koruptor, and Mobil MBG so their `/share/` links and sitemap entries work correctly too (`changelog.md` Task #002).
-- **Delete `functions/api/*`, `functions/share/[id].js`** — confirmed not invoked under the current deploy model; decided to remove them for clean code. **Files deleted** as part of `changelog.md` Task #002.
-- **Verify and wire up `favicon.svg`** — confirmed as the official favicon, wired into `index.html`/`game.html` via `<link rel="icon">`, and referenced in `manifest.json`. **`.avicon.svg` removed** after verification (`changelog.md` Task #002).
-- **`manifest.json` screenshots** — `screenshot-desktop.png` and `screenshot-mobile.png` were identical images. The "narrow" entry removed from `manifest.json`, keeping only "wide" (`changelog.md` Task #002).
-- **Ad-script for GameMonetize/GamePix monetization** — a separate client-side ad unit (with load-timeout fallback so it never blocks game rendering) hasn't been built yet; this is distinct from the catalog-feed integration, which already has its own resilience (`changelog.md` Task #011).
+All 26 tracked tasks are complete (see `changelog.md`); the items previously listed as known issues have been resolved. Open ideas:
+
 - Ping Google/Bing with the sitemap URL after a deploy so indexing starts sooner.
 - A provider filter (All / GameMonetize / GamePix / Original) — the `source` field used for the "Original" badge already exists to build on.
+- Per-system SEO landing pages for the emulator (currently a single `/emulator` page by developer decision).
+- Formal canary/staged rollout once concurrent traffic approaches ~7,000–8,000 users; procedure is already documented in `docs/deployment-runbook.md` §4–§5.
