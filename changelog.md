@@ -1,7 +1,7 @@
 ---
 project: Gimboot
-knowledge_version: 1.6.10
-changelog_version: 1.0.32
+knowledge_version: 1.6.11
+changelog_version: 1.0.33
 created: 2026-08-28
 status: in_progress
 milestone: 1 of 1
@@ -46,7 +46,42 @@ simple_mode: false
 
 ## [NEXT TASKS]
 
-(none — 26 task selesai: 22 task P04 + Task #023 (ad-hoc, security scan remediation) + Task #024 (ad-hoc, emulator full-systems) + Task #025 (ad-hoc, disclaimer translation) + Task #026 (ad-hoc, per-system ROM size cap); seluruh roadmap terpenuhi)
+> Catatan: roadmap P04 asli (26 task) sudah selesai seluruhnya. Task di bawah ini adalah **penambahan baru atas permintaan developer (2026-10-13)** — di luar urutan roadmap awal, mengikuti pola penambahan ad-hoc #023–#026, tapi belum dieksekusi (berstatus NEXT, bukan COMPLETED).
+
+### Task #027 — Integrate First-Party Game: Solitaire (import dari `farisi55/solitaire-puter`)
+- **Phase:** Phase 3 — Core Features (penambahan roster game first-party)
+- **Scope:** Tambah game **Solitaire (Klondike)** sebagai game first-party kelima di `games/solitaire/`, dengan meng-import isi repo https://github.com/farisi55/solitaire-puter (public, 1 commit, milik akun developer yang sama — first-party, tanpa isu lisensi pihak ketiga). Repo sumber: `index.html`, `game.js` (ES module, logika Klondike penuh: drag-drop + tap-to-move, hint, undo 500 langkah, auto-finish, skor standar), `sound.js` (efek suara sintetis Web Audio API), `win.js` (animasi kemenangan canvas), `styles.css`, `manifest.json`, `icon.svg`, `icons/`, `README.md`.
+  Import BUKAN sekadar copy folder — repo sumber berdiri sendiri sebagai app Puter/PWA dan harus diadaptasi ke konvensi & batasan Gimboot:
+  1. **Struktur & penamaan** — konvensi `games/{slug}/` wajib: `index.html`, `game.js`, `style.css`, `thumb.svg` (→ `styles.css` di-rename `style.css`; `icon.svg` dijadikan dasar `thumb.svg` untuk grid katalog). Folder `icons/` + `manifest.json` sumber DIHAPUS — PWA-nya portal (`/manifest.json`) yang berlaku, per-game manifest tidak terpakai (aturan clean-code: tidak ada file tak ter-referensi).
+  2. **Hapus dependensi eksternal** — CSP Gimboot (`script-src` nonce+`strict-dynamic`, `style-src 'self'`, `font-src 'self' data:`, `connect-src 'self'`) akan mem-block semua CDN di repo sumber: `cdn.tailwindcss.com`, `cdn.jsdelivr.net/npm/lucide` (ikon), `fonts.googleapis.com` (font Inter), `builder.puter.com/runtime.js`. Keempatnya wajib dihapus/di-inline (utility Tailwind → CSS lokal di `style.css`, ikon lucide → SVG inline, font → system font stack atau self-host, runtime Puter → dihapus total — hanya dibutuhkan builder.puter.com).
+  3. **Registrasi game di 4 titik wajib** (lihat README "Adding another first-party game"):
+     - `js/config.js` → `LOCAL_GAMES` (client; `id: 'local-solitaire'`, `url: '/games/solitaire/index.html'`, `thumb`, `width`/`height` — game responsif, pakai landscape mis. 1024×768, `source: 'Buatan Sendiri'`, kategori baru `'Cards'`)
+     - `src/index.js` → `LOCAL_GAMES` (server; **harus mirror persis** — sumber `/share/:id`, `/play/:id/:slug`, `/sitemap.xml`; `source: 'Original'`)
+     - `games/shared/ui-share.js` → `GAME_ID_BY_SLUG` += `'solitaire': 'local-solitaire'` + entri `COPY` (copywriting share berbahasa Indonesia dengan placeholder `{SKOR}`, mengikuti pola 4 game lain)
+     - `eslint.config.js` → `ignores` += `games/solitaire/**` (per-game files dikecualikan dari lint pass, konsisten dengan 4 game lain)
+  4. **Integrasi skor/share** — pastikan high score solitaire disimpan per-game di `localStorage` (try-catch untuk mode privat) dan rekor baru memicu `ViralShare.show('solitaire', skor)` (confetti + Web Share API), plus `postMessage {type:'arcade-score', score}` ke tracker global `js/pwa.js` bila skor relevan — keduanya selaras dengan §7 knowledge.
+  5. **Regresi otomatis yang pasti terdampak** — `e2e/full-flow.test.js:174` meng-assert jumlah kartu katalog = **7** (4 LOCAL_GAMES + 3 stub remote) → jadi **8** setelah game ke-5 terdaftar; komentar di `e2e/full-flow.test.js:175` & `docs/manual-qa-checklist.md:91` ikut diperbarui. Periksa juga asumsi jumlah game lain (README roster, `docs/manual-qa-checklist.md` Results table).
+- **Files to create / modify:**
+  - `games/solitaire/` — baru: `index.html`, `game.js`, `sound.js`, `win.js`, `style.css`, `thumb.svg` (hasil adaptasi repo sumber — tanpa `manifest.json`, `icons/`, dan seluruh referensi CDN/Puter)
+  - `js/config.js` — `LOCAL_GAMES` += entry `local-solitaire`
+  - `src/index.js` — `LOCAL_GAMES` += entry `local-solitaire` (mirror `js/config.js`)
+  - `games/shared/ui-share.js` — `GAME_ID_BY_SLUG` += `solitaire`, `COPY` += template share solitaire
+  - `eslint.config.js` — `ignores` += `games/solitaire/**`
+  - `e2e/full-flow.test.js` — update assert jumlah kartu 7 → 8 + komentar terkait
+  - `docs/manual-qa-checklist.md` — tambah baris smoke-test Solitaire ke Results + repeatable checklist
+  - `README.md` — roster first-party (baris "First-party — games built and hosted directly…") += Solitaire
+  - `knowledge.md` / `prd.md` — sinkronisasi versi & dokumentasi (lihat field Knowledge drift); `changelog.md` — entry ini (bump 1.0.32 → 1.0.33)
+- **Acceptance criteria:**
+  - [ ] `/games/solitaire/index.html` load dan playable penuh (deal → main → menang/game-over) tanpa console error, dengan **0 CSP violation** di console (tidak ada script/style/font/connect eksternal)
+  - [ ] Game muncul di grid katalog dengan thumbnail & kategori benar; klik → `/play/local-solitaire/solitaire` menampilkan meta/canonical/JSON-LD benar; `/share/local-solitaire` menghasilkan OG tag benar; URL-nya ada di `/sitemap.xml`
+  - [ ] Tidak ada satu pun request ke `cdn.tailwindcss.com`, `cdn.jsdelivr.net`, `fonts.googleapis.com`, atau `builder.puter.com` saat game dibuka (verifikasi tab Network)
+  - [ ] High score tersimpan di `localStorage` per-game (aman di mode privat) dan rekor baru memicu confetti + share prompt via `ui-share.js`
+  - [ ] `npm run lint` exit 0, `npm test` pass, `npm run build` pass (audit 0 vulnerabilities); `npm run test:e2e` pass dengan jumlah kartu yang sudah diperbarui (8)
+  - [ ] Tidak ada file tak ter-referensi (folder `icons/`, `manifest.json`, `README.md` sumber tidak ikut ke repo kecuali memang dipakai)
+- **Dependencies:** none — roadmap sebelumnya sudah selesai seluruhnya; task ini bisa dikerjakan kapan saja tanpa menunggu task lain
+- **Decisions made:** Belum dieksekusi — isi setelah task selesai.
+- **Knowledge drift:** UPDATE REQUIRED saat eksekusi: @knowledge §3 (folder tree `games/solitaire/`), §7 (roster first-party → 5 game), §4 (bila ada penyesuaian lint/format); @prd §3.1/§4.2 (roster & folder tree). Bump versi keduanya bersama entry changelog ini.
+
 
 ## [COMPLETED]
 > **Catatan format:** empat entri retroaktif di bawah ini BUKAN task yang dieksekusi lewat proses changelog/gate P04 ini — proses itu baru mulai berlaku sejak Task #001. Entri-entri ini disusun 2026-08-30 dari kondisi kode saat diaudit (2026-08-28) untuk mencatat bahwa produk sudah live sebelum changelog ini ada, sebagaimana disebut `knowledge.md` §1 ("Phase 1 & Phase 3 ... selesai"). Karena itu, tidak ada field "Files to create/modify", "Acceptance criteria" bercentang, atau "Dependencies" seperti task lain — tidak ada catatan asli semacam itu untuk pekerjaan ini, dan menuliskannya di sini akan memberi kesan presisi yang tidak benar-benar ada.

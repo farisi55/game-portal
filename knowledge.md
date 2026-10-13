@@ -1,12 +1,13 @@
 ---
 project: Gimboot
-version: 1.6.10
+version: 1.6.11
 source: prd
-last_updated: 2026-10-11
+last_updated: 2026-10-13
 project_shape: fullstack
 simple_mode: false
 ---
 # simple_mode: false — PRD §6.1 6-month target adalah 10.000+ pengguna serentak (di atas ambang ≤100), sehingga syarat pertama tidak terpenuhi meski §6.4 Compliance = none
+# v1.6.11 — Task #027 (2026-10-13, NEXT — belum diimplementasikan, hanya dicatat di changelog [NEXT TASKS]): rencana integrasi game Solitaire hasil porting repo pribadi `github.com/farisi55/solitaire-puter` (1 commit, milik developer yang sama) sebagai game first-party ke-5 di `games/solitaire/`. Adaptasi wajib mengikuti konvensi Gimboot: rename `styles.css` → `style.css`, tambah `thumb.svg`, hapus `manifest.json` + `icons/` sumber, hapus 4 dependensi CDN (Tailwind CDN, lucide via jsdelivr, Google Fonts, `builder.puter.com/runtime.js`) yang melanggar CSP ketat `src/index.js` (inline SVG icon menggantikan lucide; system font stack menggantikan Google Fonts; sound effects Web Audio API lokal menggantikan runtime Puter). Registrasi di 4 titik: `js/config.js` LOCAL_GAMES, `src/index.js` LOCAL_GAMES (mirror), `games/shared/ui-share.js` (GAME_ID_BY_SLUG + COPY), `eslint.config.js` ignores. Regresi terdampak: assert jumlah kartu E2E 7 → 8 di `e2e/full-flow.test.js`. Roster first-party akan jadi 5 game. prd → v1.6.5.
 # v1.6.7 — Task #022 (2026-10-10): implementasi fitur Emulator Browser (EmulatorJS). §2 EmulatorJS v4.2.3 details (build resmi via tag, min.js 426 KB, system→getCores mapping, legacy-wasm default, thread skipped, localization skipped, CDN version check); §3 emulator/ folder tree (index.html, runtime.html, style.css, emulator-ui.js) + subsystem status "implemented" + CSP path-specific relaxation table + postMessage handshake protocol + EJS_pathtodata variable + Windows minify glob bug workaround; §9 vendor size 13 MB evaluation. changelog → v1.0.29.
 # v1.6.8 — Task #024 (2026-10-10): emulator di-expand dari 5 sistem launch ke SELURUH 35 sistem dukungan EmulatorJS v4.2.3 (dropdown ter-group 7 optgroup; pilihan developer via question tool: "Semua 33 sistem (~80 MB)" — aktual vendor 102 MB, diterima). §2: getCores() = 36 key (35 sistem nyata; aggregate "sega" di-exclude dari UI), mapping key→core lengkap, strategi varian core (non-thread both variants; ppsspp-thread; dosbox_pure thread×2), requiresThreads={ppsspp,dosbox_pure} + requiresWebGL2={ppsspp} + report-driven legacy/non-legacy default, core alternatif & Dreamcast/flycast (tidak ada di 4.2.3) excluded. §3: select dropdown + THREAD_CORES {psp,dos} → EJS_threads=true, COOP/COEP cross-origin isolation path-scoped /emulator* (SharedArrayBuffer utk core threads), handshake retry 500ms×20 + runtime URL extensionless, BIOS required/recommended hints. §9: vendor 102 MB evaluation. changelog → v1.0.30.
 # v1.6.9 — Task #025 (2026-10-11, ad-hoc permintaan langsung developer): teks disclaimer di halaman `/emulator` diubah dari Bahasa Indonesia ke bahasa Inggris (satu-satunya paragraf non-Inggris di halaman ber-`lang="en"`) — mengaktifkan opsi "revisi bahasa = keputusan developer terpisah" yang sudah dinyatakan di keputusan D7 Task #022 (changelog). §7 diperbarui: disclaimer wording kini bahasa Inggris (teks final dikutip di halaman; panduan substansi tetap di PRD §5 — prd → v1.6.3 dengan catatan [REVISI AD-HOC 2026-10-11]). Copy-only, tanpa perubahan logic. changelog → v1.0.31.
@@ -63,6 +64,7 @@ game-portal/
 │   ├── kejar-koruptor/{...}      # struktur sama; status "live" perlu konfirmasi ulang — lihat §7
 │   ├── kicau-mania/{...}         # struktur sama; satu-satunya game first-party yang dikenali src/index.js saat ini
 │   ├── mobil-mbg/{...}           # struktur sama; status "live" perlu konfirmasi ulang — lihat §7
+│   ├── solitaire/                 # [NEXT — Task #027, BELUM ADA di repo] game first-party ke-5, diport dari github.com/farisi55/solitaire-puter; struktur sama ({game.js,index.html,style.css,thumb.svg}) — lihat §7 & changelog [NEXT TASKS]
 │   └── shared/{ui-share.css,ui-share.js}   # modul share/confetti (TIDAK menyimpan skor — lihat §3 "State management")
 ├── js/
 │   ├── ad-loader.js              # ad script loader with timeout fallback (GameMonetize/GamePix)
@@ -158,7 +160,7 @@ game-portal/
 ## 7. Business Logic & Domain Rules
 
 ### Domain Rules & Behavior
-- Setiap game mandiri dalam folder sendiri (`games/{slug}/`) berisi minimal `game.js`, `index.html`, `style.css`, `thumb.svg`; pola ini konsisten di keempat folder game yang ada di repo.
+- Setiap game mandiri dalam folder sendiri (`games/{slug}/`) berisi minimal `game.js`, `index.html`, `style.css`, `thumb.svg`; pola ini konsisten di keempat folder game yang ada di repo. [NEXT — Task #027] Game kelima (Solitaire, diport dari `github.com/farisi55/solitaire-puter`) akan mengikuti pola yang sama; pengecualian ringan yang diperkirakan: game ber-`<script type="module">` (wajib HTTP, bukan file:// — sudah terpenuhi hosting Gimboot) dan tanpa dependensi eksternal (CSP ketat).
 - [DIJAWAB 2026-08-30] Jumlah & status game first-party sempat TIDAK konsisten antar tiga sumber dalam repo yang sama:
   - `js/config.js` (client-side, menentukan apa yang tampil di grid katalog `index.html`) mendaftarkan 4 game sebagai "Buatan Sendiri": Ayo Kopdes, Kejar Koruptor, Mobil MBG, Kicau Mania.
   - `src/index.js` (server-side, konstanta `LOCAL_GAMES`, menentukan hasil `/share/:id`, `/play/:id/:slug`, dan isi `/sitemap.xml`) HANYA mengenali 1 game: Kicau Mania. Komentar di dalam kode ini sendiri menyatakan konstanta ini seharusnya "mirror `js/config.js`'s LOCAL_GAMES exactly" — tapi saat ini tidak.
