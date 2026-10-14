@@ -5,6 +5,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "dev": "wrangler dev",
     "lint": "eslint js/ src/ games/shared/ --max-warnings 0",
     "lint:fix": "eslint js/ src/ games/shared/ --fix",
     "format": "prettier --write \"**/*.{js,json,md}\"",

@@ -127,6 +127,7 @@ function getCardSvg(card) {
   const colorClass = SUIT_COLOR[card.suit] ? 'pip-face--red' : 'pip-face--black';
   const label = RANK_NAMES[card.rank];
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${CW} ${CH}" width="${CW}" height="${CH}">
+  <rect x="0.5" y="0.5" width="${CW - 1}" height="${CH - 1}" rx="12" fill="#fdfbfb" stroke="rgba(0,0,0,0.18)" stroke-width="1"/>
   <foreignObject x="0" y="0" width="${CW}" height="${CH}">
     <div xmlns="http://www.w3.org/1999/xhtml" class="pip-face ${colorClass}">
       <div class="pip-label pip-label--top">${label}</div>
