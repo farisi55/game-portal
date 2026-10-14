@@ -21,6 +21,7 @@
     'ayo-kopdes': 'local-ayo-kopdes',
     'mobil-mbg': 'local-mobil-mbg',
     'kejar-koruptor': 'local-kejar-koruptor',
+    'solitaire': 'local-solitaire',
   };
 
   function resolveGameId (slug) {
@@ -47,6 +48,10 @@
       '\u{1F426}\u{1F525} Gacor pol! Burungku cetak skor {SKOR} di Kicau Mania. ' +
       'Yakin para master kicau bisa ngalahin rekorku? Buktikan di sini! ' +
       '#KicauMania \u2192 ',
+    'solitaire':
+      '\u{1F492}\u{1F389} Baru saja menyelesaikan Solitaire Klondike dengan skor {SKOR}! ' +
+      'Udah siap bersaing untuk merebut rekor tertinggi? Buktikan di sini! ' +
+      '#Solitaire #Gimboot \u2192 ',
   };
 
   var BASE_URL = 'https://gimboot.com/play/';
