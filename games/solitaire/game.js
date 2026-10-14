@@ -1,61 +1,22 @@
 import { Sound } from './sound.js';
-import { startCascade, stopCascade, SUIT_PATHS as SUITS } from './win.js';
+import { SUIT_PATHS, startCascade, stopCascade } from './win.js';
 
-// ---------------------------------------------------------------------------
-// DOM references
-// ---------------------------------------------------------------------------
-const board = document.getElementById('board');
-const toast = document.getElementById('toast');
-const canvas = document.getElementById('winCanvas');
-const winModal = document.getElementById('winModal');
-const playAgainBtn = document.getElementById('playAgainBtn');
-const autoBtn = document.getElementById('autoBtn');
+/* ================= Constants & state ================= */
+const RANKS = ['', 'A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
+const isRed = s => s === 1 || s === 2;
+const suitSvg = s => `<svg viewBox="0 0 24 24"><path fill="currentColor" d="${SUIT_PATHS[s]}"/></svg>`;
+const wait = ms => new Promise(r => setTimeout(r, ms));
 
-const scoreEl = document.getElementById('score');
-const movesEl = document.getElementById('moves');
-const timeEl = document.getElementById('time');
-const winTimeEl = document.getElementById('winTime');
-const winMovesEl = document.getElementById('winMoves');
-const winScoreEl = document.getElementById('winScore');
-const winHighScoreEl = document.getElementById('winHighScore');
+// Lucide "rotate-ccw" inlined (CDN dibuang demi CSP gimboot.com — hanya 'self').
+const ROTATE_CCW_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>';
 
-// Small selector helper used by the button wiring further down.
-const $ = (sel) => document.querySelector(sel);
-
-// ---------------------------------------------------------------------------
-// Constants & integration pattern (mirrors games/kicau-mania/game.js §4)
-// ---------------------------------------------------------------------------
+/* ================= Gimboot integration ================= */
+// Mirrors the pattern in games/kicau-mania/game.js — score is relayed to the
+// portal shell via postMessage, best score persists in localStorage, and the
+// shared ViralShare overlay is offered on a new record.
 const STORAGE_KEY = 'solitaire_highScore';
-const SOUND_PREF_KEY = 'solitaire_soundMuted';
 const PARENT_MESSAGE_TYPE = 'arcade-score';
-const CW = 90, CH = 126;
 
-const SUIT_NAMES = ['Spades', 'Hearts', 'Diamonds', 'Clubs'];
-const SUIT_COLOR = [false, true, true, false]; // black, red, red, black
-const RANK_NAMES = [null, 'A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
-
-// ---------------------------------------------------------------------------
-// State
-// ---------------------------------------------------------------------------
-let tableau = [];
-let foundation = [];
-let stock = [];
-let waste = [];
-let moves = 0;
-let score = 0;
-let seconds = 0;
-let drawCount = 3;
-let history = [];
-let gameActive = false;
-let canUndo = false;
-let highScore = 0;
-let timerId = null;
-let animationId = null;
-let selectedCell = null;
-
-// ---------------------------------------------------------------------------
-// Storage helpers (with private-mode / cross-origin fallback)
-// ---------------------------------------------------------------------------
 function loadHighScore() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -68,14 +29,8 @@ function saveHighScore(value) {
   try { localStorage.setItem(STORAGE_KEY, String(value)); } catch {}
 }
 
-function loadSoundPreference() {
-  try { return localStorage.getItem(SOUND_PREF_KEY) === 'true'; } catch { return false; }
-}
-
-function saveSoundPreference(muted) {
-  try { localStorage.setItem(SOUND_PREF_KEY, String(muted)); } catch {}
-}
-
+// When opened standalone (not inside the portal iframe) window.parent ===
+// window, so this is a harmless no-op.
 function reportScoreToParent(score) {
   if (window.parent === window) return;
   try {
@@ -83,764 +38,680 @@ function reportScoreToParent(score) {
   } catch {}
 }
 
-// ---------------------------------------------------------------------------
-// Card engine
-// ---------------------------------------------------------------------------
-function newDeck() {
-  const d = [];
+const board = document.getElementById('board');
+const $ = id => document.getElementById(id);
+
+const cards = []; // { id, suit, rank, faceUp, el, x, y }
+let S = null;     // { stock, waste, found[4], tab[7] }  (arrays of card ids)
+let drawCount = 1;
+let score = 0, moves = 0, seconds = 0, timerId = null, timerStarted = false;
+let history = [];
+let busy = false, won = false;
+let L = null;     // layout
+const slots = { stock: null, waste: null, found: [], tab: [] };
+let drag = null;
+let highScore = 0;
+
+/* ================= Build DOM ================= */
+function buildCards() {
   for (let s = 0; s < 4; s++) {
-    for (let r = 1; r <= 13; r++) d.push({ suit: s, rank: r, faceUp: false });
-  }
-  return d;
-}
-
-function shuffle(d) {
-  for (let i = d.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [d[i], d[j]] = [d[j], d[i]];
-  }
-  return d;
-}
-
-function canPlaceOnTableau(card, top) {
-  if (!top) return card.rank === 13;
-  if (SUIT_COLOR[card.suit] === SUIT_COLOR[top.suit]) return false;
-  return card.rank === top.rank - 1;
-}
-
-function canPlaceOnFoundation(card, top) {
-  if (!top) return card.rank === 1;
-  if (card.suit !== top.suit) return false;
-  return card.rank === top.rank + 1;
-}
-
-// ---------------------------------------------------------------------------
-// SVG card rendering
-// ---------------------------------------------------------------------------
-const cardCache = new Map();
-
-function getCardSvg(card) {
-  const key = card.suit * 100 + card.rank;
-  if (cardCache.has(key)) return cardCache.get(key);
-
-  const color = SUIT_COLOR[card.suit] ? '#c8283a' : '#1b1f24';
-  const colorClass = SUIT_COLOR[card.suit] ? 'pip-face--red' : 'pip-face--black';
-  const label = RANK_NAMES[card.rank];
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${CW} ${CH}" width="${CW}" height="${CH}">
-  <rect x="0.5" y="0.5" width="${CW - 1}" height="${CH - 1}" rx="12" fill="#fdfbfb" stroke="rgba(0,0,0,0.18)" stroke-width="1"/>
-  <foreignObject x="0" y="0" width="${CW}" height="${CH}">
-    <div xmlns="http://www.w3.org/1999/xhtml" class="pip-face ${colorClass}">
-      <div class="pip-label pip-label--top">${label}</div>
-      <div class="pip-label pip-label--bottom">${label}</div>
-    </div>
-  </foreignObject>
-  <g transform="translate(${CW/2},${CH*0.55})">
-    <path d="${SUITS[card.suit]}" fill="${color}" transform="translate(${-CW*0.21},0) scale(0.42)"/>
-  </g>
-</svg>`;
-  cardCache.set(key, svg);
-  return svg;
-}
-
-const BACK_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${CW} ${CH}" width="${CW}" height="${CH}">
-  <rect width="${CW}" height="${CH}" rx="12" fill="#1f4fa8" stroke="#fdfbfb" stroke-width="7"/>
-  <circle cx="45" cy="63" r="20" fill="rgba(255,255,255,0.16)"/>
-</svg>`;
-
-const EMPTY_SLOT_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${CW} ${CH}" width="${CW}" height="${CH}">
-  <rect width="${CW}" height="${CH}" rx="12" fill="rgba(0,0,0,0.08)" stroke="rgba(255,255,255,0.13)" stroke-width="2" stroke-dasharray="6,4"/>
-  <text x="${CW/2}" y="${CH*0.55}" text-anchor="middle" fill="rgba(255,255,255,0.25)" font-size="24" font-family="system-ui,sans-serif">🂠</text>
-</svg>`;
-
-// ---------------------------------------------------------------------------
-// Board rendering
-// ---------------------------------------------------------------------------
-function renderBoard() {
-  board.innerHTML = '';
-  renderStockArea();
-  renderWasteArea();
-  renderFoundations();
-  renderTableau();
-}
-
-function renderStockArea() {
-  const x = 0;
-  const y = 84;
-  const s = document.createElement('div');
-  s.className = 'slot stock-slot';
-  s.style.left = `${x}px`;
-  s.style.top = `${y}px`;
-  s.dataset.area = 'stock';
-  s.title = 'Click to draw cards';
-  s.innerHTML = `<div class="suit-glyph stock-glyph ${stock.length > 0 ? 'stock-glyph--full' : 'stock-glyph--empty'}">🂠</div>`;
-  s.addEventListener('click', onStockClick);
-  board.appendChild(s);
-}
-
-function renderWasteArea() {
-  const s = document.createElement('div');
-  s.className = 'slot';
-  s.style.left = '100px';
-  s.style.top = '84px';
-  s.dataset.area = 'waste';
-  s.title = 'Waste pile';
-
-  if (waste.length > 0) {
-    s.innerHTML = getCardSvg(waste[waste.length - 1]);
-  } else {
-    s.innerHTML = EMPTY_SLOT_SVG;
-  }
-  board.appendChild(s);
-}
-
-function renderFoundations() {
-  const startX = 260;
-  for (let f = 0; f < 4; f++) {
-    const s = document.createElement('div');
-    s.className = 'slot';
-    s.style.left = `${startX + f * 110}px`;
-    s.style.top = '84px';
-    s.dataset.area = 'foundation';
-    s.dataset.pile = f;
-    s.title = `Foundation: ${SUIT_NAMES[f]}`;
-
-    if (foundation[f].length > 0) {
-      s.innerHTML = getCardSvg(foundation[f][foundation[f].length - 1]);
-    } else {
-      s.innerHTML = EMPTY_SLOT_SVG;
-    }
-    board.appendChild(s);
-  }
-}
-
-function renderTableau() {
-  const colWidth = Math.floor((window.innerWidth - 40) / 7);
-  const startY = 230;
-
-  for (let c = 0; c < 7; c++) {
-    const p = tableau[c];
-    const x = 10 + c * colWidth + Math.floor((colWidth - CW) / 2);
-
-    for (let i = 0; i < p.length; i++) {
-      const card = p[i];
+    for (let r = 1; r <= 13; r++) {
+      const id = cards.length;
       const el = document.createElement('div');
-      el.className = 'card' + (card.faceUp ? ' faceup' : '');
-      el.style.left = `${x}px`;
-      el.style.top = `${startY + i * 24}px`;
-      el.dataset.area = 'tableau';
-      el.dataset.pile = c;
-      el.dataset.index = i;
-      el.innerHTML = card.faceUp ? getCardSvg(card) : BACK_SVG;
-
-      if (card.faceUp && i === p.length - 1) {
-        el.addEventListener('click', () => onCardClick(c, i));
-      }
+      el.className = 'card' + (isRed(s) ? ' red' : '');
+      el.dataset.id = id;
+      let center;
+      if (r > 10) center = `<div class="face-letter">${RANKS[r]}${suitSvg(s)}</div>`;
+      else center = `<div class="pip-big">${suitSvg(s)}</div>`;
+      el.innerHTML = `
+        <div class="card-inner">
+          <div class="face front">
+            <div class="corner tl"><span class="r">${RANKS[r]}</span><span class="s">${suitSvg(s)}</span></div>
+            <div class="corner tr"><span class="s">${suitSvg(s)}</span></div>
+            ${center}
+          </div>
+          <div class="face back"></div>
+        </div>`;
       board.appendChild(el);
-    }
-
-    if (p.length === 0) {
-      const s = document.createElement('div');
-      s.className = 'slot empty-tableau';
-      s.style.left = `${x}px`;
-      s.style.top = `${startY}px`;
-      s.dataset.area = 'tableau';
-      s.dataset.pile = c;
-      s.innerHTML = EMPTY_SLOT_SVG;
-      s.addEventListener('click', () => onCardClick(c, -1));
-      board.appendChild(s);
+      cards.push({ id, suit: s, rank: r, faceUp: false, el, x: 0, y: 0, z: 0, zt: null });
     }
   }
 }
 
-// ---------------------------------------------------------------------------
-// Game setup
-// ---------------------------------------------------------------------------
-function setupGame() {
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
-  canvas.style.display = 'none';
+function buildSlots() {
+  const mk = (cls, html = '') => {
+    const d = document.createElement('div');
+    d.className = 'slot ' + cls;
+    d.innerHTML = html;
+    board.appendChild(d);
+    return d;
+  };
+  slots.stock = mk('stock-slot', ROTATE_CCW_SVG);
+  slots.waste = mk('waste-slot');
+  for (let i = 0; i < 4; i++) slots.found.push(mk('found-slot', suitSvg(i)));
+  for (let i = 0; i < 7; i++) slots.tab.push(mk('tab-slot'));
+}
 
-  const d = shuffle(newDeck());
-  tableau = Array.from({ length: 7 }, () => []);
-  foundation = Array.from({ length: 4 }, () => []);
+/* ================= Layout ================= */
+function computeLayout() {
+  const W = board.clientWidth, H = board.clientHeight;
+  const pad = Math.max(10, Math.min(24, W * 0.025));
+  const gap = Math.max(5, Math.min(18, W * 0.016));
+  const cw = Math.floor(Math.min(112, (W - 2 * pad - 6 * gap) / 7, (H - 2 * pad) / (1.4 * 3.1)));
+  const ch = Math.round(cw * 1.4);
+  const totalW = 7 * cw + 6 * gap;
+  const left = (W - totalW) / 2;
+  const colX = c => left + c * (cw + gap);
+  const topY = pad;
+  const tabY = pad + ch + Math.max(gap * 1.4, 14);
+  document.documentElement.style.setProperty('--cw', cw + 'px');
+  document.documentElement.style.setProperty('--ch', ch + 'px');
+  L = { W, H, pad, gap, cw, ch, colX, topY, tabY };
 
-  let idx = 0;
-  for (let c = 0; c < 7; c++) {
-    for (let i = 0; i <= c; i++) {
-      tableau[c].push(d[idx]);
-      idx++;
-    }
-    tableau[c][tableau[c].length - 1].faceUp = true;
+  place(slots.stock, colX(0), topY);
+  place(slots.waste, colX(1), topY);
+  for (let i = 0; i < 4; i++) place(slots.found[i], colX(3 + i), topY);
+  for (let i = 0; i < 7; i++) place(slots.tab[i], colX(i), tabY);
+}
+function place(el, x, y) { el.style.left = x + 'px'; el.style.top = y + 'px'; }
+
+function tabOffsets(col) {
+  const pile = S.tab[col];
+  let down = L.cw * 0.13, up = L.cw * 0.3;
+  let sum = 0;
+  for (let i = 0; i < pile.length - 1; i++) sum += cards[pile[i]].faceUp ? up : down;
+  const avail = L.H - L.tabY - L.pad - L.ch;
+  const k = sum > avail && sum > 0 ? Math.max(0.35, avail / sum) : 1;
+  return { down: down * k, up: up * k };
+}
+
+/* ================= Render ================= */
+function setCard(c, x, y, z) {
+  const moved = Math.abs(c.x - x) > 0.5 || Math.abs(c.y - y) > 0.5;
+  c.x = x; c.y = y;
+  c.el.style.transform = `translate(${x}px, ${y}px)`;
+  c.el.classList.toggle('faceup', c.faceUp);
+  c.z = z;
+  if (moved) {
+    clearTimeout(c.zt);
+    c.el.style.zIndex = 2000 + z;
+    c.zt = setTimeout(() => { c.el.style.zIndex = c.z; c.zt = null; }, 300);
+  } else if (!c.zt) {
+    c.el.style.zIndex = z;
   }
-
-  stock = d.slice(idx);
-  waste = [];
-  moves = 0;
-  score = 0;
-  seconds = 0;
-  history = [];
-  canUndo = false;
-  selectedCell = null;
-
-  Sound.setMuted(loadSoundPreference());
-  updateSoundIcon();
-  renderBoard();
-  updateDisplay();
-  updateUndoButton();
 }
 
-function startGame() {
-  setupGame();
-  gameActive = true;
-
-  if (timerId) clearInterval(timerId);
-  timerId = setInterval(() => {
-    if (!gameActive) return;
-    seconds++;
-    updateDisplay();
-  }, 1000);
-
-  if (animationId) cancelAnimationFrame(animationId);
-  animationId = requestAnimationFrame(tick);
+function render() {
+  const { colX, topY, tabY, cw } = L;
+  S.stock.forEach((id, i) => {
+    const c = cards[id];
+    const lift = Math.floor(i / 8) * 0.6;
+    setCard(c, colX(0) - lift, topY - lift, 100 + i);
+    c.el.classList.add('in-stock');
+  });
+  const wl = S.waste.length;
+  const fanStart = Math.max(0, wl - (drawCount === 3 ? 3 : 1));
+  S.waste.forEach((id, i) => {
+    const c = cards[id];
+    const off = drawCount === 3 && i >= fanStart ? (i - fanStart) * cw * 0.24 : 0;
+    setCard(c, colX(1) + off, topY, 200 + i);
+    c.el.classList.remove('in-stock');
+  });
+  S.found.forEach((pile, f) => pile.forEach((id, i) => {
+    setCard(cards[id], colX(3 + f), topY, 300 + i);
+    cards[id].el.classList.remove('in-stock');
+  }));
+  S.tab.forEach((pile, col) => {
+    const o = tabOffsets(col);
+    let y = tabY;
+    pile.forEach((id, i) => {
+      const c = cards[id];
+      setCard(c, colX(col), y, 400 + i);
+      c.el.classList.remove('in-stock');
+      y += c.faceUp ? o.up : o.down;
+    });
+  });
+  slots.stock.querySelector('svg')?.style.setProperty('opacity', S.stock.length ? '0' : '1');
+  updateHud();
 }
 
-function tick() {
-  animationId = requestAnimationFrame(tick);
+function renderInstant() {
+  board.classList.add('instant');
+  render();
+  cards.forEach(c => { clearTimeout(c.zt); c.zt = null; c.el.style.zIndex = c.z; });
+  void board.offsetWidth;
+  board.classList.remove('instant');
 }
 
-// ---------------------------------------------------------------------------
-// Display helpers
-// ---------------------------------------------------------------------------
-/** Formats elapsed seconds as m:ss (e.g. 0:00, 12:05). */
-function formatTime(s) {
-  const m = Math.floor(s / 60);
-  const r = s % 60;
-  return `${m}:${String(r).padStart(2, '0')}`;
+/* ================= HUD ================= */
+function fmtTime(s) { return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; }
+function updateHud() {
+  $('score').textContent = score;
+  $('moves').textContent = moves;
+  $('time').textContent = fmtTime(seconds);
+  $('undoBtn').disabled = history.length === 0 || busy;
+  $('autoBtn').classList.toggle('hidden', !canAutoFinish() || busy);
+}
+function startTimer() {
+  if (timerStarted) return;
+  timerStarted = true;
+  timerId = setInterval(() => { seconds++; $('time').textContent = fmtTime(seconds); }, 1000);
+}
+function stopTimer() { clearInterval(timerId); timerId = null; }
+
+let toastT;
+function toast(msg) {
+  const t = $('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastT);
+  toastT = setTimeout(() => t.classList.remove('show'), 2200);
 }
 
-function updateDisplay() {
-  scoreEl.textContent = score;
-  movesEl.textContent = moves;
-  timeEl.textContent = formatTime(seconds);
+/* ================= Rules ================= */
+const top = arr => arr[arr.length - 1];
+function pileOf(ref) {
+  if (ref.t === 'stock') return S.stock;
+  if (ref.t === 'waste') return S.waste;
+  if (ref.t === 'found') return S.found[ref.i];
+  return S.tab[ref.i];
+}
+function locate(id) {
+  let i;
+  if ((i = S.stock.indexOf(id)) >= 0) return { ref: { t: 'stock' }, index: i };
+  if ((i = S.waste.indexOf(id)) >= 0) return { ref: { t: 'waste' }, index: i };
+  for (let f = 0; f < 4; f++) if ((i = S.found[f].indexOf(id)) >= 0) return { ref: { t: 'found', i: f }, index: i };
+  for (let c = 0; c < 7; c++) if ((i = S.tab[c].indexOf(id)) >= 0) return { ref: { t: 'tab', i: c }, index: i };
+  return null;
+}
+function canFound(card, f) {
+  if (card.suit !== f) return false;
+  const p = S.found[f];
+  return p.length === 0 ? card.rank === 1 : cards[top(p)].rank === card.rank - 1;
+}
+function canTab(card, col) {
+  const p = S.tab[col];
+  if (p.length === 0) return card.rank === 13;
+  const t = cards[top(p)];
+  return t.faceUp && isRed(t.suit) !== isRed(card.suit) && t.rank === card.rank + 1;
+}
+function canDrop(ids, ref) {
+  const lead = cards[ids[0]];
+  if (ref.t === 'found') return ids.length === 1 && canFound(lead, ref.i);
+  if (ref.t === 'tab') return canTab(lead, ref.i);
+  return false;
+}
+function canAutoFinish() {
+  if (!S || won) return false;
+  if (S.stock.length || S.waste.length) return false;
+  return S.tab.some(p => p.length) && S.tab.every(p => p.every(id => cards[id].faceUp));
 }
 
-function updateUndoButton() {
-  const btn = $('#undoBtn');
-  if (btn) btn.disabled = !canUndo;
+/* ================= History ================= */
+function snapshot() {
+  history.push({
+    stock: [...S.stock], waste: [...S.waste],
+    found: S.found.map(p => [...p]), tab: S.tab.map(p => [...p]),
+    up: cards.map(c => c.faceUp), score, moves,
+  });
+  if (history.length > 500) history.shift();
+}
+function undo() {
+  if (busy || !history.length) return;
+  clearHints();
+  const h = history.pop();
+  S = { stock: h.stock, waste: h.waste, found: h.found, tab: h.tab };
+  const flipped = cards.some((c, i) => c.faceUp !== h.up[i]);
+  cards.forEach((c, i) => c.faceUp = h.up[i]);
+  score = h.score; moves = h.moves + 1;
+  render();
+  flipped ? Sound.flip() : Sound.place();
 }
 
-function updateSoundIcon() {
-  const btn = $('#soundBtn');
-  if (btn) btn.classList.toggle('muted', Sound.muted);
+/* ================= Actions ================= */
+function moveCards(from, startIndex, to) {
+  snapshot();
+  startTimer();
+  const src = pileOf(from);
+  const moving = src.splice(startIndex);
+  pileOf(to).push(...moving);
+  moves++;
+
+  // Scoring (standard)
+  if (to.t === 'found' && from.t !== 'found') score += 10;
+  if (from.t === 'waste' && to.t === 'tab') score += 5;
+  if (from.t === 'found' && to.t === 'tab') score = Math.max(0, score - 15);
+
+  let flipped = false;
+  if (from.t === 'tab' && src.length && !cards[top(src)].faceUp) {
+    cards[top(src)].faceUp = true;
+    score += 5;
+    flipped = true;
+  }
+  render();
+  to.t === 'found' ? Sound.foundation() : Sound.place();
+  if (flipped) setTimeout(() => Sound.flip(), 120);
+  checkWin();
 }
 
-function showToast(msg) {
-  toast.textContent = msg;
-  toast.classList.add('show');
-  setTimeout(() => toast.classList.remove('show'), 2000);
-}
-
-function clearSelection() {
-  selectedCell = null;
-  renderBoard();
-}
-
-// ---------------------------------------------------------------------------
-// Stock / waste actions
-// ---------------------------------------------------------------------------
-function onStockClick() {
-  if (!gameActive) return;
-  if (stock.length === 0) {
-    // Recycle waste back to stock
-    stock = waste.slice().reverse();
-    waste = [];
-    Sound.recycle();
+function drawStock() {
+  if (busy) return;
+  clearHints();
+  if (!S.stock.length && !S.waste.length) return;
+  snapshot();
+  startTimer();
+  moves++;
+  if (S.stock.length) {
+    const n = Math.min(drawCount, S.stock.length);
+    for (let i = 0; i < n; i++) {
+      const id = S.stock.pop();
+      cards[id].faceUp = true;
+      S.waste.push(id);
+    }
+    render();
+    Sound.flip();
   } else {
-    const count = Math.min(drawCount, stock.length);
-    waste.push(...stock.splice(-count));
-    Sound.deal();
-  }
-  moves++;
-  saveState();
-  renderBoard();
-}
-
-// ---------------------------------------------------------------------------
-// Move validation & execution
-// ---------------------------------------------------------------------------
-function getTopCardInTableau(pileIdx) {
-  const p = tableau[pileIdx];
-  return p.length > 0 ? p[p.length - 1] : null;
-}
-
-function onCardClick(pileIdx, cardIdx) {
-  if (!gameActive || cardIdx === -1) return;
-
-  const card = tableau[pileIdx][cardIdx];
-  if (!card || !card.faceUp) {
-    Sound.invalid();
-    return;
-  }
-
-  // If something is selected, try to move it
-  if (selectedCell && selectedCell.pileIdx === pileIdx && selectedCell.cardIdx === cardIdx) {
-    // Clicked the same card — deselect
-    clearSelection();
-    return;
-  }
-
-  if (selectedCell) {
-    // Try to move the selected run to this card's pile position
-    const run = tableau[selectedCell.pileIdx].slice(selectedCell.cardIdx);
-    if (run.length > 0 && canPlaceOnTableau(run[0], card)) {
-      moveRun(selectedCell.pileIdx, selectedCell.cardIdx, pileIdx);
-      return;
+    while (S.waste.length) {
+      const id = S.waste.pop();
+      cards[id].faceUp = false;
+      S.stock.push(id);
     }
-    // Otherwise reselect
-    selectedCell = { pileIdx, cardIdx };
-    renderBoard();
+    if (drawCount === 1) score = Math.max(0, score - 100);
+    render();
+    Sound.recycle();
+  }
+}
+
+function bestTarget(ids, from) {
+  const lead = cards[ids[0]];
+  if (ids.length === 1 && from.t !== 'found' && canFound(lead, lead.suit)) return { t: 'found', i: lead.suit };
+  const loc = locate(ids[0]);
+  const options = [];
+  for (let c = 0; c < 7; c++) {
+    if (from.t === 'tab' && from.i === c) continue;
+    if (!canTab(lead, c)) continue;
+    // Moving a king that's already at the bottom of a column to an empty one is pointless
+    if (S.tab[c].length === 0 && from.t === 'tab' && loc.index === 0) continue;
+    options.push({ c, empty: S.tab[c].length === 0 });
+  }
+  options.sort((a, b) => a.empty - b.empty);
+  if (options.length) return { t: 'tab', i: options[0].c };
+  return null;
+}
+
+function tapCard(id) {
+  const loc = locate(id);
+  const ids = pileOf(loc.ref).slice(loc.index);
+  const target = bestTarget(ids, loc.ref);
+  if (target) moveCards(loc.ref, loc.index, target);
+  else {
+    Sound.invalid();
+    ids.forEach(i => {
+      const el = cards[i].el;
+      el.classList.remove('shake'); void el.offsetWidth; el.classList.add('shake');
+      setTimeout(() => el.classList.remove('shake'), 400);
+    });
+  }
+}
+
+/* ================= Drag & drop ================= */
+board.addEventListener('pointerdown', e => {
+  if (e.button !== undefined && e.button !== 0) return;
+  Sound.unlock();
+  if (busy || won) return;
+  const slot = e.target.closest('.slot');
+  if (slot === slots.stock) { drawStock(); return; }
+  const el = e.target.closest('.card');
+  if (!el) return;
+  const id = +el.dataset.id;
+  const loc = locate(id);
+  if (!loc) return;
+  if (loc.ref.t === 'stock') { drawStock(); return; }
+  const pile = pileOf(loc.ref);
+  if (!cards[id].faceUp) return;
+  if ((loc.ref.t === 'waste' || loc.ref.t === 'found') && loc.index !== pile.length - 1) return;
+  clearHints();
+  const ids = pile.slice(loc.index);
+  drag = {
+    ids, from: loc.ref, index: loc.index, sx: e.clientX, sy: e.clientY, moved: false,
+    origin: ids.map(i => ({ x: cards[i].x, y: cards[i].y })), target: null,
+  };
+  e.preventDefault();
+});
+
+window.addEventListener('pointermove', e => {
+  if (!drag) return;
+  const dx = e.clientX - drag.sx, dy = e.clientY - drag.sy;
+  if (!drag.moved) {
+    if (Math.hypot(dx, dy) < 6) return;
+    drag.moved = true;
+    drag.ids.forEach((id, k) => {
+      const c = cards[id];
+      clearTimeout(c.zt);
+      c.el.classList.add('dragging');
+      c.el.style.zIndex = 5000 + k;
+    });
+  }
+  drag.ids.forEach((id, k) => {
+    const o = drag.origin[k];
+    cards[id].el.style.transform = `translate(${o.x + dx}px, ${o.y + dy}px) scale(1.03)`;
+  });
+  const t = findDropTarget(drag.origin[0].x + dx, drag.origin[0].y + dy);
+  if (!sameRef(t, drag.target)) {
+    setDropHighlight(drag.target, false);
+    drag.target = t;
+    setDropHighlight(t, true);
+  }
+});
+
+function endDrag(e, cancel) {
+  if (!drag) return;
+  const d = drag;
+  drag = null;
+  setDropHighlight(d.target, false);
+  d.ids.forEach(id => cards[id].el.classList.remove('dragging'));
+  if (!d.moved) {
+    if (!cancel) tapCard(d.ids[0]);
     return;
   }
-
-  // First click — select if it's a valid movable card (top card or a face-up run)
-  if (cardIdx === tableau[pileIdx].length - 1) {
-    selectedCell = { pileIdx, cardIdx };
-    renderBoard();
+  // force animated return/move from current dragged position
+  d.ids.forEach((id, k) => {
+    const c = cards[id];
+    c.x = -9999; // ensure it's treated as moved for z-index bump
+  });
+  if (!cancel && d.target) moveCards(d.from, d.index, d.target);
+  else {
+    if (!cancel) Sound.invalid();
+    render();
   }
 }
+window.addEventListener('pointerup', e => endDrag(e, false));
+window.addEventListener('pointercancel', e => endDrag(e, true));
 
-function tryMoveToFoundation(pileIdx, cardIdx) {
-  if (!gameActive) return false;
+function sameRef(a, b) { return (!a && !b) || (a && b && a.t === b.t && a.i === b.i); }
 
-  const p = tableau[pileIdx];
-  const card = p[cardIdx];
-  if (!card || !card.faceUp) return false;
+function pileRect(ref) {
+  const { colX, topY, tabY, cw, ch } = L;
+  if (ref.t === 'found') return { x: colX(3 + ref.i), y: topY, w: cw, h: ch };
+  const p = S.tab[ref.i];
+  const lastY = p.length ? cards[top(p)].y : tabY;
+  return { x: colX(ref.i), y: tabY, w: cw, h: Math.max(lastY - tabY, 0) + ch };
+}
 
-  // Can only move top card to foundation
-  if (cardIdx !== p.length - 1) return false;
-
-  const f = foundation.findIndex(f => canPlaceOnFoundation(card, foundation[f][foundation[f].length - 1]));
-  if (f === -1) return false;
-
-  // Move it
-  p.pop();
-  foundation[f].push(card);
-  score += 10;
-  moves++;
-  Sound.foundation();
-
-  // Flip next card if needed
-  if (p.length > 0 && !p[p.length - 1].faceUp) {
-    p[p.length - 1].faceUp = true;
-    score += 5;
-    Sound.flip();
+function findDropTarget(x, y) {
+  const { cw, ch } = L;
+  let best = null, bestArea = 0;
+  const refs = [...[0, 1, 2, 3].map(i => ({ t: 'found', i })), ...[0, 1, 2, 3, 4, 5, 6].map(i => ({ t: 'tab', i }))];
+  for (const ref of refs) {
+    if (sameRef(ref, drag.from)) continue;
+    if (!canDrop(drag.ids, ref)) continue;
+    const r = pileRect(ref);
+    // only the bottom-most card area of a tableau column counts heavily
+    const ox = Math.max(0, Math.min(x + cw, r.x + r.w) - Math.max(x, r.x));
+    const oy = Math.max(0, Math.min(y + ch, r.y + r.h) - Math.max(y, r.y));
+    const area = ox * oy;
+    if (area > bestArea) { bestArea = area; best = ref; }
   }
-
-  saveState();
-  renderBoard();
-  checkWin();
-  return true;
+  return bestArea > cw * ch * 0.08 ? best : null;
 }
 
-function moveRun(srcPile, fromIdx, destPile) {
-  const run = tableau[srcPile].splice(fromIdx);
-  tableau[destPile].push(...run);
-  moves++;
-  Sound.place();
-
-  // Flip card left in source pile
-  if (tableau[srcPile].length > 0 && !tableau[srcPile][tableau[srcPile].length - 1].faceUp) {
-    tableau[srcPile][tableau[srcPile].length - 1].faceUp = true;
-    score += 5;
-    Sound.flip();
-  }
-
-  selectedCell = null;
-  saveState();
-  renderBoard();
-
-  if (!checkWin()) updateAutoFinish();
+function targetEl(ref) {
+  if (!ref) return null;
+  const p = pileOf(ref);
+  if (p.length) return cards[top(p)].el;
+  return ref.t === 'found' ? slots.found[ref.i] : slots.tab[ref.i];
+}
+function setDropHighlight(ref, on) {
+  const el = targetEl(ref);
+  if (el) el.classList.toggle('drop-ok', on);
 }
 
-function moveWasteToFoundation() {
-  if (!gameActive || waste.length === 0) return false;
-  const card = waste[waste.length - 1];
-  const f = isFoundationMove(card);
-  if (f === null) return false;
-
-  waste.pop();
-  foundation[f].push(card);
-  score += 10;
-  moves++;
-  Sound.foundation();
-  saveState();
-  renderBoard();
-  checkWin();
-  return true;
+/* ================= Hints ================= */
+let hintTimer = null;
+function clearHints() {
+  clearTimeout(hintTimer);
+  document.querySelectorAll('.hint, .hint-target').forEach(el => el.classList.remove('hint', 'hint-target'));
 }
-
-function moveWasteToTableau(destPile) {
-  if (!gameActive || waste.length === 0) return false;
-  const card = waste[waste.length - 1];
-  const top = getTopCardInTableau(destPile);
-  if (!canPlaceOnTableau(card, top)) return false;
-
-  waste.pop();
-  tableau[destPile].push(card);
-  moves++;
-  Sound.place();
-  saveState();
-  renderBoard();
-  return true;
-}
-
-function isFoundationMove(card) {
-  for (let f = 0; f < 4; f++) {
-    if (canPlaceOnFoundation(card, foundation[f][foundation[f].length - 1])) return f;
-  }
-  return null;
-}
-
-function isTableauMove(card, exclude = -1) {
+function findHint() {
+  const cand = [];
+  const sources = [];
+  if (S.waste.length) sources.push({ ref: { t: 'waste' }, index: S.waste.length - 1 });
   for (let c = 0; c < 7; c++) {
-    if (c === exclude) continue;
-    const top = getTopCardInTableau(c);
-    if (canPlaceOnTableau(card, top)) return c;
+    const p = S.tab[c];
+    if (!p.length) continue;
+    const firstUp = p.findIndex(id => cards[id].faceUp);
+    for (let i = firstUp; i >= 0 && i < p.length; i++) sources.push({ ref: { t: 'tab', i: c }, index: i });
   }
+  for (const s of sources) {
+    const p = pileOf(s.ref);
+    const ids = p.slice(s.index);
+    const lead = cards[ids[0]];
+    // To foundation
+    if (ids.length === 1 && canFound(lead, lead.suit)) {
+      cand.push({ pr: 1, s, to: { t: 'found', i: lead.suit } });
+      continue;
+    }
+    for (let c = 0; c < 7; c++) {
+      if (s.ref.t === 'tab' && s.ref.i === c) continue;
+      if (!canTab(lead, c)) continue;
+      const emptyTarget = S.tab[c].length === 0;
+      if (s.ref.t === 'waste') { cand.push({ pr: 3, s, to: { t: 'tab', i: c } }); break; }
+      const below = s.index > 0 ? cards[p[s.index - 1]] : null;
+      if (below && !below.faceUp) cand.push({ pr: 2, s, to: { t: 'tab', i: c } });
+      else if (below && below.faceUp && canFound(below, below.suit)) cand.push({ pr: 3, s, to: { t: 'tab', i: c } });
+      else if (!below && !emptyTarget && hasKeyToPlace(s.ref.i)) cand.push({ pr: 4, s, to: { t: 'tab', i: c } });
+      if (cand.length && cand[cand.length - 1].s === s) break;
+    }
+  }
+  cand.sort((a, b) => a.pr - b.pr);
+  if (cand.length) return cand[0];
+  if (S.stock.length) return { stock: true };
+  if (S.waste.length) return { stock: true, recycle: true };
   return null;
 }
-
-// ---------------------------------------------------------------------------
-// Win logic
-// ---------------------------------------------------------------------------
-function checkWin() {
-  for (let f = 0; f < 4; f++) {
-    if (foundation[f].length !== 13) return false;
+function hasKeyToPlace(exceptCol) {
+  const w = S.waste.length && cards[top(S.waste)];
+  if (w && w.rank === 13) return true;
+  return S.tab.some((p, c) => c !== exceptCol && p.some((id, i) => i > 0 && cards[id].faceUp && cards[id].rank === 13 && !cards[p[i - 1]].faceUp));
+}
+function showHint() {
+  if (busy || won) return;
+  clearHints();
+  const h = findHint();
+  if (!h) { toast('No more moves available. Try undo or a new game.'); Sound.invalid(); return; }
+  if (h.stock) {
+    const el = S.stock.length ? cards[top(S.stock)].el : slots.stock;
+    el.classList.add(S.stock.length ? 'hint' : 'hint-target');
+    toast(h.recycle ? 'Recycle the waste pile back into the stock.' : 'Draw a card from the stock.');
+  } else {
+    pileOf(h.s.ref).slice(h.s.index).forEach(id => cards[id].el.classList.add('hint'));
+    const tEl = targetEl(h.to);
+    if (tEl) tEl.classList.add('hint-target');
   }
-  celebrate();
-  return true;
+  hintTimer = setTimeout(clearHints, 1800);
 }
 
-function calculateScore() {
-  const timeBonus = Math.max(100, 700 - seconds * 2);
-  return score + timeBonus;
+/* ================= Auto finish & win ================= */
+async function autoFinish() {
+  if (busy || !canAutoFinish()) return;
+  busy = true;
+  updateHud();
+  while (!won) {
+    let pick = null;
+    for (let c = 0; c < 7; c++) {
+      const p = S.tab[c];
+      if (!p.length) continue;
+      const card = cards[top(p)];
+      if (canFound(card, card.suit) && (!pick || card.rank < cards[top(S.tab[pick])].rank)) pick = c;
+    }
+    if (pick === null) break;
+    busy = false;
+    moveCards({ t: 'tab', i: pick }, S.tab[pick].length - 1, { t: 'found', i: cards[top(S.tab[pick])].suit });
+    if (won) return;
+    busy = true;
+    await wait(110);
+  }
+  busy = false;
+  updateHud();
+}
+
+function checkWin() {
+  if (S.found.every(p => p.length === 13)) {
+    won = true;
+    stopTimer();
+    updateHud();
+    setTimeout(celebrate, 450);
+  }
 }
 
 function celebrate() {
-  gameActive = false;
-  if (timerId) clearInterval(timerId);
-  if (animationId) cancelAnimationFrame(animationId);
-
   Sound.win();
+  const rect = board.getBoundingClientRect();
+  const items = [];
+  for (let r = 13; r >= 1; r--) {
+    for (let f = 0; f < 4; f++) {
+      const c = cards[S.found[f][r - 1]];
+      items.push({
+        suit: c.suit, rank: c.rank,
+        x: rect.left + c.x, y: rect.top + c.y,
+        onLaunch: () => { c.el.style.visibility = 'hidden'; },
+      });
+    }
+  }
+  startCascade(items, L.cw, L.ch);
+  $('winTime').textContent = fmtTime(seconds);
+  $('winMoves').textContent = moves;
+  $('winScore').textContent = score;
 
-  const finalScore = calculateScore();
-  score = finalScore;
-
-  winTimeEl.textContent = formatTime(seconds);
-  winMovesEl.textContent = moves;
-  winScoreEl.textContent = score;
-
+  // Gimboot: best-score tracking + report to the portal shell. Solitaire has
+  // no additive score bonus (unlike kicau-mania) — the final score is the
+  // running score at the moment all 52 cards reach the foundations.
   const isNewRecord = score > highScore;
   if (isNewRecord) {
     highScore = score;
     saveHighScore(highScore);
   }
-  winHighScoreEl.textContent = isNewRecord ? `${highScore} (new record!)` : highScore;
-
-  winModal.classList.remove('hidden');
-  canvas.style.display = 'block';
-
-  // Build cascade items from foundation piles
-  const cascadeItems = [];
-  for (let f = 0; f < 4; f++) {
-    for (const card of foundation[f]) {
-      cascadeItems.push({ suit: card.suit, rank: card.rank });
-    }
-  }
-  shuffle(cascadeItems);
-  cascadeItems.forEach((item, i) => {
-    item.x = 60 + (i % 8) * (CW * 0.6);
-    item.y = 40 + Math.floor(i / 8) * (CH * 0.55);
-    item.onLaunch = () => Sound.place();
-  });
-  startCascade(cascadeItems, CW * 0.45, CH * 0.45);
-
-  // Always report score to parent (matches kicau-mania pattern)
+  $('winHighScore').textContent = isNewRecord ? `${highScore} (new record!)` : highScore;
   reportScoreToParent(score);
 
-  // ViralShare only on new record
-  if (isNewRecord) {
-    startViralShare();
-  }
-}
-
-function startViralShare() {
-  if (typeof window.ViralShare === 'undefined') return;
-  try {
-    window.ViralShare.show('solitaire', score, () => {
-      winModal.classList.add('hidden');
-    });
-  } catch {}
-}
-
-function playAgain() {
-  stopCascade();
-  winModal.classList.add('hidden');
-  canvas.style.display = 'none';
-  clearSelection();
-  startGame();
-}
-
-// ---------------------------------------------------------------------------
-// Undo
-// ---------------------------------------------------------------------------
-// Bounded undo depth (500 steps) — caps memory growth during long games.
-const MAX_UNDO = 500;
-
-function saveState() {
-  history.push({
-    tableau: tableau.map(p => p.map(c => ({ ...c }))),
-    foundation: foundation.map(p => p.map(c => ({ ...c }))),
-    stock: stock.map(c => ({ ...c })),
-    waste: waste.map(c => ({ ...c })),
-    moves,
-    score,
-    seconds,
-  });
-  if (history.length > MAX_UNDO) history.shift();
-  canUndo = true;
-  updateUndoButton();
-}
-
-function undo() {
-  if (!canUndo || history.length === 0) {
-    Sound.invalid();
-    return;
-  }
-  const prev = history.pop();
-  tableau = prev.tableau.map(p => p.map(c => ({ ...c })));
-  foundation = prev.foundation.map(p => p.map(c => ({ ...c })));
-  stock = prev.stock.map(c => ({ ...c }));
-  waste = prev.waste.map(c => ({ ...c }));
-  moves = prev.moves;
-  score = prev.score;
-  seconds = prev.seconds;
-  canUndo = history.length > 0;
-  selectedCell = null;
-  Sound.undo();
-  renderBoard();
-  updateUndoButton();
-  updateDisplay();
-}
-
-// ---------------------------------------------------------------------------
-// Hints
-// ---------------------------------------------------------------------------
-function showHint() {
-  clearSelection();
-  const available = getAvailableMoves();
-  if (available.length === 0) {
-    showToast('No moves available');
-    Sound.invalid();
-    return;
-  }
-
-  // Pick a foundation move if available, otherwise a random suggestion
-  const foundationMove = available.find(m => m.destType === 'foundation');
-  const move = foundationMove || available[Math.floor(Math.random() * available.length)];
-
-  highlightHint(move);
-  Sound.hint();
-}
-
-function getAvailableMoves() {
-  const moves = [];
-
-  // Waste to foundation
-  if (waste.length > 0) {
-    const card = waste[waste.length - 1];
-    const f = isFoundationMove(card);
-    if (f !== null) moves.push({ type: 'waste-foundation', card, source: 'waste', dest: f, destType: 'foundation' });
-  }
-
-  // Waste to tableau
-  if (waste.length > 0) {
-    const card = waste[waste.length - 1];
-    const c = isTableauMove(card);
-    if (c !== null) moves.push({ type: 'waste-tableau', card, source: 'waste', dest: c, destType: 'tableau' });
-  }
-
-  // Tableau to foundation
-  for (let pile = 0; pile < 7; pile++) {
-    const p = tableau[pile];
-    if (p.length === 0) continue;
-    const top = p[p.length - 1];
-    if (!top.faceUp) continue;
-
-    const f = isFoundationMove(top);
-    if (f !== null) moves.push({ type: 'tableau-foundation', card: top, source: 'tableau', sourcePile: pile, dest: f, destType: 'foundation' });
-
-    const c = isTableauMove(top, pile);
-    if (c !== null) moves.push({ type: 'tableau-tableau', card: top, source: 'tableau', sourcePile: pile, dest: c, destType: 'tableau' });
-  }
-
-  return moves;
-}
-
-let hintTimer = null;
-
-function highlightHint(move) {
-  clearHintVisuals();
-
-  if (move.source === 'tableau') {
-    const cards = document.querySelectorAll(`.card[data-area="tableau"][data-pile="${move.sourcePile}"]`);
-    cards.forEach(c => c.classList.add('hint'));
-  } else if (move.source === 'waste') {
-    document.querySelector('.slot[data-area="waste"]').classList.add('hint-target');
-  }
-
-  if (move.destType === 'foundation') {
-    document.querySelector(`.slot[data-area="foundation"][data-pile="${move.dest}"]`).classList.add('hint-target');
-  } else if (move.destType === 'tableau') {
-    if (move.source === 'tableau') {
-      const pile = document.querySelector(`.slot[data-area="tableau"][data-pile="${move.dest}"]`);
-      if (pile) pile.classList.add('hint-target');
-      else {
-        const card = document.querySelector(`.card[data-area="tableau"][data-pile="${move.dest}"][data-index="0"]`);
-        if (card) card.classList.add('hint-target');
-      }
-    }
-  }
-
-  hintTimer = setTimeout(clearHintVisuals, 3000);
-}
-
-function clearHintVisuals() {
-  if (hintTimer) clearTimeout(hintTimer);
-  document.querySelectorAll('.card.hint').forEach(c => c.classList.remove('hint'));
-  document.querySelectorAll('.card.hint-target').forEach(c => c.classList.remove('hint-target'));
-  document.querySelectorAll('.slot.hint-target').forEach(s => s.classList.remove('hint-target'));
-  hintTimer = null;
-}
-
-// ---------------------------------------------------------------------------
-// Auto finish
-// ---------------------------------------------------------------------------
-function updateAutoFinish() {
-  if (!gameActive) return;
-  const available = getAvailableMoves();
-  if (available.length <= 1 && available.length > 0) {
-    autoBtn.classList.remove('hidden');
-  } else {
-    autoBtn.classList.add('hidden');
-  }
-}
-
-function autoFinish() {
-  clearSelection();
-  const available = getAvailableMoves();
-  if (available.length === 0) return;
-
-  // Prefer foundation moves
-  const move = available.find(m => m.destType === 'foundation') || available[0];
-  executeAutoMove(move);
-
   setTimeout(() => {
-    if (gameActive) {
-      updateAutoFinish();
-    }
-  }, 200);
-}
-
-function executeAutoMove(move) {
-  if (move.source === 'waste') {
-    moveWasteToFoundation();
-  } else if (move.source === 'tableau') {
-    // Move single top card to foundation
-    if (move.destType === 'foundation') {
-      const p = tableau[move.sourcePile];
-      const card = p.pop();
-      foundation[move.dest].push(card);
-      score += 10;
-      moves++;
-      Sound.foundation();
-      if (p.length > 0 && !p[p.length - 1].faceUp) {
-        p[p.length - 1].faceUp = true;
-        score += 5;
-        Sound.flip();
+    if (!won) return;
+    $('winModal').classList.remove('hidden');
+    if (isNewRecord) {
+      try {
+        if (window.ViralShare) {
+          ViralShare.show('solitaire', score, () => $('winModal').classList.add('hidden'));
+        }
+      } catch (err) {
+        console.error('[Solitaire] ViralShare failed:', err);
       }
-      saveState();
-      renderBoard();
-      checkWin();
     }
-  }
+  }, 3200);
 }
 
-// ---------------------------------------------------------------------------
-// Keyboard shortcuts
-// ---------------------------------------------------------------------------
-document.addEventListener('keydown', e => {
-  if (!gameActive && !winModal.classList.contains('hidden')) {
-    if (e.key === 'Enter' || e.key === ' ' || e.key.toLowerCase() === 'n') {
-      playAgain();
-    }
-    return;
+/* ================= New game & deal ================= */
+function shuffleIds() {
+  const a = cards.map(c => c.id);
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
   }
-  if (!gameActive) return;
-
-  switch (e.key.toLowerCase()) {
-    case 'z':
-      if (e.ctrlKey || e.metaKey) { e.preventDefault(); undo(); }
-      break;
-    case 'h':
-      showHint();
-      break;
-    case 'n':
-      if (e.ctrlKey || e.metaKey || e.shiftKey) {
-        e.preventDefault();
-        if (confirm('Start a new game?')) startGame();
-      }
-      break;
-    case ' ':
-      e.preventDefault();
-      break;
-  }
-});
-
-// ---------------------------------------------------------------------------
-// Event listeners
-// ---------------------------------------------------------------------------
-$('#newBtn').addEventListener('click', () => {
-  if (confirm('Start a new game?')) startGame();
-});
-$('#undoBtn').addEventListener('click', undo);
-$('#hintBtn').addEventListener('click', showHint);
-$('#soundBtn').addEventListener('click', () => {
-  Sound.setMuted(!Sound.muted);
-  saveSoundPreference(Sound.muted);
-  updateSoundIcon();
-});
-playAgainBtn.addEventListener('click', playAgain);
-autoBtn.addEventListener('click', autoFinish);
-
-// Draw-mode segmented control (Draw 1 / Draw 3).
-const segBtns = document.querySelectorAll('.seg-btn');
-function updateSegUI() {
-  segBtns.forEach((b) => b.classList.toggle('active', Number(b.dataset.draw) === drawCount));
+  return a;
 }
-segBtns.forEach((b) => {
-  b.addEventListener('click', () => {
-    drawCount = Number(b.dataset.draw);
-    updateSegUI();
-    startGame();
+
+let dealToken = 0;
+async function newGame() {
+  const token = ++dealToken;
+  busy = true; won = false;
+  stopCascade();
+  $('winModal').classList.add('hidden');
+  clearHints();
+  stopTimer();
+  timerStarted = false; seconds = 0; score = 0; moves = 0; history = [];
+  cards.forEach(c => { c.el.style.visibility = ''; });
+
+  const firstDeal = !S;
+  const wasSpread = S && (S.waste.length || S.tab.some(p => p.length) || S.found.some(p => p.length));
+  cards.forEach(c => c.faceUp = false);
+  S = { stock: shuffleIds(), waste: [], found: [[], [], [], []], tab: [[], [], [], [], [], [], []] };
+  if (firstDeal) renderInstant(); else render();
+  updateHud();
+  if (wasSpread) await wait(420);
+  if (token !== dealToken) return;
+
+  Sound.shuffle();
+  // small riffle wiggle on the stock
+  const stack = S.stock.slice(-14);
+  stack.forEach((id, k) => {
+    const c = cards[id];
+    c.el.style.transform = `translate(${c.x + (k % 2 ? 1 : -1) * L.cw * 0.18}px, ${c.y}px)`;
   });
-});
-updateSegUI();
+  await wait(330);
+  stack.forEach(id => { const c = cards[id]; c.el.style.transform = `translate(${c.x}px, ${c.y}px)`; });
+  await wait(450);
+  if (token !== dealToken) return;
 
-// ---------------------------------------------------------------------------
-// Init
-// ---------------------------------------------------------------------------
+  for (let r = 0; r < 7; r++) {
+    for (let c = r; c < 7; c++) {
+      if (token !== dealToken) return;
+      S.tab[c].push(S.stock.pop());
+      render();
+      Sound.deal();
+      await wait(55);
+    }
+  }
+  await wait(220);
+  for (let c = 0; c < 7; c++) {
+    if (token !== dealToken) return;
+    cards[top(S.tab[c])].faceUp = true;
+    render();
+    Sound.flip();
+    await wait(80);
+  }
+  busy = false;
+  updateHud();
+}
+
+/* ================= Controls ================= */
+function setDraw(n, restart) {
+  drawCount = n;
+  document.querySelectorAll('.seg-btn').forEach(b => b.classList.toggle('active', +b.dataset.draw === n));
+  if (restart) { toast(`New game · Draw ${n}`); newGame(); }
+}
+document.querySelectorAll('.seg-btn').forEach(b =>
+  b.addEventListener('click', () => { if (+b.dataset.draw !== drawCount) setDraw(+b.dataset.draw, true); }));
+
+$('newBtn').addEventListener('click', () => { Sound.unlock(); newGame(); });
+$('playAgainBtn').addEventListener('click', () => { Sound.unlock(); newGame(); });
+$('undoBtn').addEventListener('click', undo);
+$('hintBtn').addEventListener('click', () => { Sound.unlock(); showHint(); });
+$('autoBtn').addEventListener('click', autoFinish);
+$('soundBtn').addEventListener('click', () => {
+  Sound.setMuted(!Sound.muted);
+  $('soundBtn').classList.toggle('muted', Sound.muted);
+  toast(Sound.muted ? 'Sound off' : 'Sound on');
+});
+
+window.addEventListener('keydown', e => {
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') { e.preventDefault(); undo(); return; }
+  if (e.ctrlKey || e.metaKey || e.altKey) return;
+  const k = e.key.toLowerCase();
+  if (k === 'h') showHint();
+  else if (k === 'n') newGame();
+  else if (k === 'u') undo();
+  else if (k === ' ' || k === 'd') { e.preventDefault(); drawStock(); }
+});
+
+let resizeT;
+window.addEventListener('resize', () => {
+  clearTimeout(resizeT);
+  resizeT = setTimeout(() => { computeLayout(); renderInstant(); }, 60);
+});
+
+/* ================= Boot ================= */
 highScore = loadHighScore();
-Sound.setMuted(loadSoundPreference());
-updateSoundIcon();
-startGame();
+buildSlots();
+buildCards();
+computeLayout();
+setDraw(1, false);
+newGame();

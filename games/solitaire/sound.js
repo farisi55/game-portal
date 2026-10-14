@@ -105,21 +105,6 @@ export const Sound = {
     tone(t + 0.07, 140, 0.14, 0.07, 'triangle');
   },
 
-  hint() {
-    if (muted || !ac()) return;
-    const t = ctx.currentTime;
-    tone(t, 523.25, 0.16, 0.04, 'sine');
-    tone(t + 0.08, 659.25, 0.16, 0.04, 'sine');
-    tone(t + 0.16, 783.99, 0.18, 0.04, 'sine');
-  },
-
-  undo() {
-    if (muted || !ac()) return;
-    const t = ctx.currentTime;
-    tone(t, 440, 0.08, 0.05, 'sine');
-    tone(t + 0.05, 415.3, 0.08, 0.04, 'sine');
-  },
-
   recycle() {
     if (muted || !ac()) return;
     const t = ctx.currentTime;

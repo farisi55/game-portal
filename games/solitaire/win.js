@@ -37,7 +37,7 @@ function sprite(suit, rank, cw, ch, dpr) {
   c.height = Math.ceil(ch * dpr);
   const x = c.getContext('2d');
   x.scale(dpr, dpr);
-  x.fillStyle = '#fdfbfb';
+  x.fillStyle = '#fdfdfb';
   x.strokeStyle = 'rgba(0,0,0,0.3)';
   x.lineWidth = 1;
   rrect(x, 0.5, 0.5, cw - 1, ch - 1, cw * 0.08);
