@@ -74,6 +74,16 @@ export const CONFIG = {
       height: 640,
       source: 'Buatan Sendiri',
     },
+    {
+      id: 'local-solitaire',
+      title: 'Solitaire',
+      category: 'Cards',
+      url: '/games/solitaire/index.html',
+      thumb: '/games/solitaire/thumb.svg',
+      width: 1024,
+      height: 768,
+      source: 'Buatan Sendiri',
+    },
   ],
 
   // Aspect ratio used when a game doesn't report its own width/height.

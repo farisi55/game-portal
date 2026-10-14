@@ -6,7 +6,7 @@ The catalog is a live merge of three sources:
 
 - **GameMonetize** — fetched server-side from their game feed
 - **GamePix** — fetched server-side from their JSON feed
-- **First-party** — games built and hosted directly in this repo: Ayo Kopdes, Kejar Koruptor, Mobil MBG, and Kicau Mania, all confirmed active. `src/index.js` (the Worker) now recognizes all four in its `LOCAL_GAMES` — sync completed (`changelog.md` Task #002).
+- **First-party** — games built and hosted directly in this repo: Ayo Kopdes, Kejar Koruptor, Mobil MBG, Kicau Mania, and Solitaire, all confirmed active. `src/index.js` (the Worker) now recognizes all five in its `LOCAL_GAMES` — sync completed (`changelog.md` Task #002; Solitaire added in Task #027).
 
 > **Related docs:** this README covers setup and architecture for someone working in the repo. Product scope and open decisions live in [`prd.md`](./prd.md), the full technical reference is [`knowledge.md`](./knowledge.md), and current task status/backlog is [`changelog.md`](./changelog.md). All three were reconciled against this codebase on 2026-08-28.
 
@@ -130,6 +130,7 @@ gimboot/
 │   ├── ayo-kopdes/                First-party game, active — pending sync in src/index.js, see Known issues
 │   ├── kejar-koruptor/            First-party game, active — pending sync in src/index.js, see Known issues
 │   ├── mobil-mbg/                 First-party game, active — pending sync in src/index.js, see Known issues
+│   ├── solitaire/                 First-party game, active (Klondike; imported from farisi55/solitaire-puter)
 │   └── shared/                    ui-share.js/css — confetti + share-prompt module
 ├── src/
 │   └── index.js                  Worker: /api/games, /api/search, /share/:id, /play/{id}/{slug}, /game, /sitemap.xml

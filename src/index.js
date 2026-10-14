@@ -173,6 +173,16 @@ const LOCAL_GAMES = [
     height: 640,
     source: 'Original',
   },
+  {
+    id: 'local-solitaire',
+    title: 'Solitaire',
+    category: 'Cards',
+    url: '/games/solitaire/index.html',
+    thumb: '/games/solitaire/thumb.svg',
+    width: 1024,
+    height: 768,
+    source: 'Original',
+  },
 ];
 
 export default {

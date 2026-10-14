@@ -1,6 +1,6 @@
 ---
 doc_id: PRD-GIMBOOT-001
-version: 1.6.5
+version: 1.6.6
 status: ready
 created: 2026-08-28
 flow_compatibility: vibe-coding-v1.7
@@ -92,7 +92,7 @@ game-portal/
 │   ├── kejar-koruptor/           # [DIJAWAB 2026-08-30] dikonfirmasi masih aktif
 │   ├── kicau-mania/              # aktif; satu-satunya yang sudah dikenali src/index.js saat ini
 │   ├── mobil-mbg/                # [DIJAWAB 2026-08-30] dikonfirmasi masih aktif
-│   ├── solitaire/                # [NEXT — Task #027, BELUM DIIMPLEMENTASIKAN] game first-party ke-5, diport dari github.com/farisi55/solitaire-puter; struktur sama (game.js, index.html, style.css, thumb.svg) — lihat changelog [NEXT TASKS]
+│   ├── solitaire/                # [DIIMPLEMENTASIKAN Task #027 — 2026-10-13] game first-party ke-5 (Klondike), diport dari github.com/farisi55/solitaire-puter; struktur sama (game.js, index.html, style.css, thumb.svg) + sound.js (Web Audio API) & win.js (canvas cascade); tanpa dependensi CDN & tanpa atribut style inline (CSP ketat)
 │   └── shared/
 │       ├── ui-share.css
 │       └── ui-share.js           # modul share/confetti (TIDAK menyimpan skor — lihat catatan state.js di bawah)
@@ -169,7 +169,7 @@ Diomit sesuai aturan template: §4.1 Database = "none", sehingga Phase 2 (Domain
   - [ ] Halaman utama (`index.html`) menampilkan game first-party (Ayo Kopdes, Kejar Koruptor, Mobil MBG, Kicau Mania — [DIJAWAB 2026-08-30] keempatnya dikonfirmasi developer masih aktif) lengkap dengan thumbnail dan judul, DIGABUNG dengan hasil agregasi GameMonetize/GamePix.
   - [ ] Setiap game first-party dapat dimuat & dimainkan sepenuhnya via HTML5 Canvas murni tanpa dependency game-engine eksternal; game hasil agregasi dimuat via iframe embed tervalidasi (`isAllowedEmbedUrl`).
   - [ ] First Contentful Paint katalog < 1.5 detik pada koneksi 4G [ASSUMED — selaras hard constraint ukuran file minimal].
-- **Business rules:** Setiap game first-party mandiri dalam folder sendiri (`games/{slug}/`) berisi minimal `game.js`, `index.html`, `style.css`, `thumb.svg`. [DIJAWAB 2026-08-30] Status "lengkap & live" untuk keempatnya dikonfirmasi developer. Catatan implementasi: `src/index.js` (server) perlu disinkronkan agar `LOCAL_GAMES`-nya mencakup ketiga game selain Kicau Mania juga — lihat changelog Task #002. [NEXT — Task #027, 2026-10-13] Game kelima (Solitaire, dari `github.com/farisi55/solitaire-puter`) direncanakan mengikuti pola folder yang sama; belum diimplementasikan — lihat changelog [NEXT TASKS].
+- **Business rules:** Setiap game first-party mandiri dalam folder sendiri (`games/{slug}/`) berisi minimal `game.js`, `index.html`, `style.css`, `thumb.svg`. [DIJAWAB 2026-08-30] Status "lengkap & live" untuk keempatnya dikonfirmasi developer. Catatan implementasi: `src/index.js` (server) perlu disinkronkan agar `LOCAL_GAMES`-nya mencakup ketiga game selain Kicau Mania juga — lihat changelog Task #002. [DIIMPLEMENTASIKAN Task #027 — 2026-10-14] Game kelima (Solitaire Klondike, diport dari `github.com/farisi55/solitaire-puter`) terintegrasi mengikuti pola folder yang sama + `sound.js` (Web Audio API) & `win.js` (canvas cascade); tanpa dependensi CDN & tanpa atribut style inline (CSP ketat) — lihat changelog Task #027.
 - **UI notes:** Grid/list katalog responsif, mobile-first.
 - **Priority:** P0
 
@@ -387,3 +387,4 @@ Catatan tambahan (bukan pertanyaan bernomor, dari request awal developer sebelum
 | 1.6.3 | 2026-10-11 | Banu | Revisi ad-hoc Task #025: paragraf disclaimer emulator diterjemahkan ke bahasa Inggris (opsi revisi bahasa dari D7 Task #022 diaktifkan). Ditandai "[REVISI AD-HOC 2026-10-11]" di §5. `knowledge.md` ke v1.6.9; `changelog.md` ke v1.0.31. |
 | 1.6.4 | 2026-10-11 | Banu | Revisi ad-hoc Task #026: ROM size cap emulator menjadi per-sistem — PS1 (`psx`) 999 MB, PSP (`psp`) 2 GB, 35 sistem lain tetap 128 MB (sebelumnya 128 MB tunggal untuk semua sistem, menolak file PS1/PSP valid berukuran disc penuh). Divalidasi dua lapis (`emulator-ui.js` + `runtime.html`). Ditandai "[REVISI AD-HOC 2026-10-11 — Task #026]" di §5. `knowledge.md` ke v1.6.10; `changelog.md` ke v1.0.32. |
 | 1.6.5 | 2026-10-13 | Banu | Pencatatan Task #027 (NEXT — belum diimplementasikan): integrasi game Solitaire hasil porting repo pribadi `github.com/farisi55/solitaire-puter` sebagai game first-party ke-5 di `games/solitaire/`, mengikuti pola folder yang ada (§4.2) dengan adaptasi CSP Gimboot (hapus dependensi CDN sumber; Tailwind CDN/lucide/Google Fonts/Puter runtime diganti inline SVG + system fonts + Web Audio API lokal). Roster first-party akan jadi 5 game; pendaftaran di `js/config.js`, `src/index.js`, `games/shared/ui-share.js`, `eslint.config.js` + penyesuaian E2E. Ditandai "[NEXT — Task #027]" di §4.2. `knowledge.md` ke v1.6.11; `changelog.md` ke v1.0.33. |
+| 1.6.6 | 2026-10-13 | Banu | Task #027 DIEKSEKUSI: Solitaire (Klondike) terintegrasi penuh sebagai game first-party ke-5 di `games/solitaire/` — dimainkan via `/play/local-solitaire/solitaire`, tampil di grid katalog (kategori baru `Cards`), masuk `/sitemap.xml` + `/share/:id`. Seluruh dependensi CDN sumber dihapus sesuai rencana; temuan tambahan saat implementasi: Worker CSP non-emulator (`style-src-attr 'none'`) mewajibkan gaya kartu/stock berupa class CSS, bukan atribut `style` inline. Roster first-party kini 5 game (§4.2 diperbarui). `knowledge.md` ke v1.6.12; `changelog.md` ke v1.0.34. |

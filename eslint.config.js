@@ -29,6 +29,7 @@ export default [
       'games/kejar-koruptor/**',
       'games/kicau-mania/**',
       'games/mobil-mbg/**',
+      'games/solitaire/**',
     ],
   },
   // Linting rules for Worker + portal JS
