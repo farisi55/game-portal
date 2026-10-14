@@ -172,8 +172,8 @@ describe('Gimboot end-to-end smoke: catalog → play → record → share', () =
       await expect(kicauCard).toHaveCount(1, { timeout: 30_000 });
       await expect(kicauCard).toHaveAttribute('href', GAME_URL_PATTERN);
       await expect(page.locator('#game-grid .game-card')).toHaveCount(
-        // 4 LOCAL_GAMES (client config) + 3 stubbed remote games
-        7,
+        // 5 LOCAL_GAMES (client config) + 3 stubbed remote games
+        8,
       );
 
       // ---- Step 2: Player page (/play/{id}/{slug}) -------------------------

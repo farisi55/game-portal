@@ -1,7 +1,7 @@
 ---
 project: Gimboot
-knowledge_version: 1.6.10
-changelog_version: 1.0.32
+knowledge_version: 1.6.12
+changelog_version: 1.0.34
 created: 2026-08-28
 status: in_progress
 milestone: 1 of 1
@@ -45,8 +45,12 @@ simple_mode: false
 > `prd.md` diperbarui ke v1.6.0 (§3.1, §3.2, §4.1, §4.2, §5 baru, §8, §9, §10), lalu v1.6.1 setelah poin 9 dikonfirmasi final; `knowledge.md` ke v1.6.0 lalu v1.6.1 (§2, §3, §7, §9).
 
 ## [NEXT TASKS]
+(none — roadmap asli 26 task selesai; Task #027 (2026-10-13, permintaan developer) dieksekusi & pindah ke [COMPLETED])
 
-(none — 26 task selesai: 22 task P04 + Task #023 (ad-hoc, security scan remediation) + Task #024 (ad-hoc, emulator full-systems) + Task #025 (ad-hoc, disclaimer translation) + Task #026 (ad-hoc, per-system ROM size cap); seluruh roadmap terpenuhi)
+
+## [IN PROGRESS]
+(none — semua task dari [NEXT TASKS] sudah dieksekusi; loop P04 berhenti di sini sampai developer menambah task baru atau menjalankan kembali P04)
+
 
 ## [COMPLETED]
 > **Catatan format:** empat entri retroaktif di bawah ini BUKAN task yang dieksekusi lewat proses changelog/gate P04 ini — proses itu baru mulai berlaku sejak Task #001. Entri-entri ini disusun 2026-08-30 dari kondisi kode saat diaudit (2026-08-28) untuk mencatat bahwa produk sudah live sebelum changelog ini ada, sebagaimana disebut `knowledge.md` §1 ("Phase 1 & Phase 3 ... selesai"). Karena itu, tidak ada field "Files to create/modify", "Acceptance criteria" bercentang, atau "Dependencies" seperti task lain — tidak ada catatan asli semacam itu untuk pekerjaan ini, dan menuliskannya di sini akan memberi kesan presisi yang tidak benar-benar ada.
@@ -1928,3 +1932,102 @@ Satu Cloudflare Worker dengan static assets (`src/index.js`) menangani seluruh r
   - `formatBytes()` kini mendukung GB — unit sebelumnya berhenti di MB (akan menampilkan "2048.0 MB" untuk 2 GB; kini "2.0 GB")
   - Cap hanya berlaku ROM; BIOS file tetap tanpa cap signifikan (BIOS berukuran kecil, beberapa KB–beberapa MB)
 - **Knowledge drift:** UPDATE REQUIRED: @knowledge §3 (runtime size check "≤ 128 MB" → per-sistem); **diedit pada task ini**: §3 runtime.html size check = per-sistem (psx 999 MB, psp 2 GB, default 128 MB; divalidasi UI + runtime) — knowledge v1.6.9 → **v1.6.10**, `knowledge_version` changelog disinkronkan ke 1.6.10; prd.md → v1.6.4 (§5 catatan [REVISI AD-HOC — Task #026] + intro version note). Pemicu: revisi limit langsung atas permintaan developer, harus tercatat lintas dokumen
+
+### Task #027 — Integrate First-Party Game: Solitaire (import dari `farisi55/solitaire-puter`) ✅
+- **Completed:** 2026-10-14
+- **Phase:** Phase 3 — Core Features
+- **Status:** OK
+- **Branch:** feat/task-027-integrate-solitaire
+- **Files created / modified:**
+  - `games/solitaire/index.html` — baru; shell game Klondike (topbar stats, board, win modal); adaptasi penuh dari repo sumber: 4 dependensi eksternal DIHAPUS (Tailwind CDN, lucide via jsdelivr, Google Fonts, builder.puter.com/runtime.js) → ikon diganti SVG inline, font → system stack (`style.css`), runtime Puter dihapus; link `../shared/ui-share.css` + `<script src="../shared/ui-share.js">` mengikuti pola 4 game lain; `<script type="module" src="game.js">`
+  - `games/solitaire/game.js` — baru; modul ES: logika Klondike (deal, drag-drop + tap-to-move, hint, undo, auto-finish, skor standar); render SVG kartu dari konstanta internal (RANK_NAMES/SUIT_PATHS hardcode — tanpa input user → innerHTML aman); integrasi portal: `localStorage` key `solitaire_highScore` (try-catch mode privat), `ViralShare.show('solitaire', skor)` saat rekor baru, `postMessage {type:'arcade-score', score}` ke tracker global `js/pwa.js`
+  - `games/solitaire/sound.js` — baru; efek suara sintetis Web Audio API lokal (menggantikan runtime Puter)
+  - `games/solitaire/win.js` — baru; animasi kemenangan canvas (cascade kartu), export `SUIT_PATHS`/`startCascade`/`stopCascade`
+  - `games/solitaire/style.css` — baru; rename dari `styles.css` sumber; Tailwind utilities → CSS lokal; font Inter → `system-ui, sans-serif` stack
+  - `games/solitaire/thumb.svg` — baru; derived dari `icon.svg` sumber (suit heart on green bg) untuk grid katalog
+  - `js/config.js` — `LOCAL_GAMES` += entry `local-solitaire` (title "Solitaire", category "Cards", 1024×768, source "Buatan Sendiri")
+  - `src/index.js` — `LOCAL_GAMES` += entry `local-solitaire` (mirror; source "Original") → otomatis tersedia di `/share/:id`, `/play/:id/:slug`, `/sitemap.xml`
+  - `games/shared/ui-share.js` — `GAME_ID_BY_SLUG` += `'solitaire': 'local-solitaire'`; `COPY` += template share Indonesia (placeholder `{SKOR}`)
+  - `eslint.config.js` — `ignores` += `games/solitaire/**` (per-game files dikecualikan lint, konsisten 4 game lain)
+  - `e2e/full-flow.test.js` — assert jumlah kartu katalog 7 → **8** (5 LOCAL_GAMES + 3 stub remote) + komentar diperbarui
+  - `docs/manual-qa-checklist.md` — baris smoke-test Solitaire (PENDING manual run) + 7 langkah checklist repeatable + catatan Task #027; "four" → "five" first-party games
+  - `README.md` — roster first-party += Solitaire; folder tree += `games/solitaire/`
+  - `knowledge.md` — v1.6.10 → **v1.6.12** (dua langkah: v1.6.11 = catatan perencanaan NEXT, v1.6.12 = catatan eksekusi); §3 folder tree += `games/solitaire/` (roster → 5 game); §7 pola folder game kelima + temuan CSP style-src-attr
+  - `prd.md` — v1.6.4 → **v1.6.6** (v1.6.5 = catatan perencanaan, v1.6.6 = catatan eksekusi); revision history rows 1.6.5+1.6.6; §4.2 folder tree += `games/solitaire/`; §7 business rules catatan game kelima
+  - `changelog.md` — entry ini (bump 1.0.32 → **1.0.34**; 1.0.33 = versi saat task masih NEXT)
+  - DIHAPUS dari import (clean-code / CSP compliance, tanpa ikut ke repo): `manifest.json` sumber (PWA portal yang berlaku), `icons/` sumber (ikon lucide → inline SVG), `README.md` sumber (berisi instruksi Puter), seluruh referensi 4 CDN
+- **Acceptance criteria met:**
+  - [x] `/games/solitaire/index.html` load & playable (deal 52 kartu — 28 tableau ter-render, draw dari stock + hint teruji) tanpa console error; **0 CSP violation** — diverifikasi Chromium headless via wrangler dev: `CONSOLE ERRORS: []`, `CSP VIOLATIONS: []`
+  - [x] Game muncul di katalog (assert E2E: 8 kartu = 5 LOCAL_GAMES + 3 stub); `/play/local-solitaire/solitaire` → 200 + canonical + JSON-LD; `/share/local-solitaire` → 200 + og:title "Solitaire"; URL ada di `/sitemap.xml` (semua di-verify via fetch langsung ke Worker)
+  - [x] **0 request eksternal** saat game dibuka (`EXTERNAL REQUESTS: []` — network listener Chromium; grep repo: tanpa URL CDN/Google/jsdelivr/Puter)
+  - [x] High score di `localStorage` per-game (key `solitaire_highScore`, try-catch) + `ViralShare.show('solitaire', ...)` + postMessage `arcade-score` — terverifikasi di kode game.js (lines 28-82, 542-582)
+  - [x] `npm run lint` exit 0; `npm test` 169 pass 0 fail; `npm run build` pass, 0 vulnerabilities; `npm run test:e2e` 4 pass 0 fail (full-flow 3 + emulator-flow 1; count=8 ter-assert)
+  - [x] Tidak ada file tak ter-referensi: `games/solitaire/` berisi tepat 6 file (index.html, game.js, sound.js, win.js, style.css, thumb.svg); manifest.json/icons/README sumber tidak ikut
+- **Security gate:** STANDARD — all checks passed
+  - [x] No secrets hardcoded — ✓ (game offline, tanpa credential)
+  - [x] Sensitive config from env vars — N/A (client-side only)
+  - [x] No eval()/exec() with external input — ✓ (grep: tanpa eval/new Function di games/solitaire/)
+  - [x] Error messages don't expose stack traces — ✓ (try-catch menelan error storage silent)
+  - [x] Debug mode OFF — N/A
+  - [x] CORS whitelist — N/A (static assets, tanpa endpoint baru Worker — LOCAL_GAMES entry hanya data statis)
+  - [x] .gitignore .env/.pem/.key/.p12 — ✓ (Task #001, tak tersentuh)
+  - [x] No default admin credentials/backdoor — ✓
+  - [x] Pre-commit hook active — ✓ (Task #005; berjalan di commit task ini)
+  - [x] CI/CD secrets masked — ✓ (tak berubah)
+  - [x] Third-party CI actions pinned — N/A
+  - [x] Branch protection main — ✓ (loop P04 merge ke dev; promosi ke main manual developer)
+  - [x] Container orchestration/ARG secret — N/A
+  - [x] External input validated & sanitized — ✓ game TIDAK membaca input eksternal apa pun (grep: tanpa URLSearchParams/location/search — diverifikasi); innerHTML hanya dari konstanta hardcode (RANK_NAMES, SUIT_PATHS) — data kartu dari shuffle internal
+  - [x] Input-validation regexes ReDoS — ✓ (grep: tanpa regex di games/solitaire/ — 0 match new RegExp/match/replace)
+  - [x] Request body/file-size limits — N/A (game tanpa upload/network)
+  - [x] Auth on protected routes — N/A (semua public read-only, tak berubah)
+  - [x] Authorization service layer — N/A
+  - [x] Admin routes/audit log — N/A
+  - [x] DB parameterized queries — N/A (tanpa DB)
+  - [x] File paths from user input canonicalized — N/A
+  - [x] PII not in logs — ✓ (grep: tanpa console.log di games/solitaire/)
+  - [x] Log injection sanitized — N/A
+  - [x] HTML output escaped — ✓ (Worker-side: entry LOCAL_GAMES mengalir ke handleShareRoute/handlePlayRoute yang sudah pakai escapeHtmlAttr/escapeJsonLd — Task #010; nilai statis "Solitaire"/"Cards")
+  - [x] Sensitive UI fields masked — N/A
+  - [x] Redirects validated — ✓ (tak ada redirect baru)
+  - [x] Brute force protection — N/A
+  - [x] Password checks/reset tokens/session tokens — N/A (tanpa auth)
+  - [x] Set-Cookie HttpOnly/Secure/SameSite — N/A
+  - [x] Auth tokens secure storage — N/A
+  - [x] HTTP method override disabled — ✓ (tak berubah, GET-only)
+  - [x] Content-Type validated — ✓ (tak berubah)
+  - [x] Additive-only API change — ✓ (LOCAL_GAMES += 1 entry; response shape tak berubah — semua test existing pass)
+- **Scalability gate:** STANDARD — all checks passed
+  - [x] No sync blocking in async handlers — ✓ (tanpa perubahan Worker handler)
+  - [x] No hardcoded pool sizes/timeouts/batch limits — ✓
+  - [x] DB connection pool — N/A
+  - [x] External I/O explicit timeout — ✓ (tanpa I/O baru — 0 request eksternal terverifikasi)
+  - [x] No global mutable state across requests — ✓ (entry statis; state game per-instance di iframe)
+  - [x] Correlation ID at entry — ✓ (tak berubah)
+  - [x] Structured logger initialized — ✓ (tak berubah)
+  - [x] Cheap validation before expensive ops — N/A
+  - [x] Token-revocation sub-ms — N/A
+  - [x] Query plan check — N/A
+  - [x] No N+1 patterns — N/A
+  - [x] Authz reuses fetched data — N/A
+  - [x] List endpoints pagination — ✓ (tak berubah)
+  - [x] All I/O async — ✓ (tanpa I/O baru)
+  - [x] No unbounded memory accumulation — ✓ (game canvas/rAF dibersihkan via stopCascade; cardCache Map dibatasi 52 kartu)
+  - [x] Soft-delete — N/A
+  - [x] Multi-table writes in transaction — N/A
+  - [x] Migrations non-blocking — N/A
+  - [x] GraphQL limits — N/A
+- **Regression:** **169 unit tests passed, 0 failed** (`npm test`); **lint exit 0**; **build pass, 0 vulnerabilities**; **E2E: 2 files, 4 tests passed, 0 failed** (`npm run test:e2e` — full-flow journey termasuk assert 8 kartu + emulator-flow)
+- **Decisions made:**
+  - [CODE] **D1 — adaptasi bukan copy**: repo sumber berdiri sendiri sebagai PWA Puter dengan 4 dependensi CDN — semuanya diganti sesuai CSP Gimboot: Tailwind CDN → CSS lokal (~10 KB), lucide jsdelivr → SVG inline (0 request), Google Fonts Inter → system-ui stack, builder.puter.com/runtime.js → dihapus (hanya untuk builder.puter.com); manifest.json + icons/ sumber di-drop (PWA portal yang berlaku; ikon → thumb.svg)
+  - [CODE] **D2 — kategori baru "Cards"**: kategori pertama yang bukan genre game umum — didefinisikan langsung di kedua LOCAL_GAMES; konsisten dengan mekanisme kategori lain (tidak ada allowlist terpusat yang perlu diubah)
+  - [CODE] **D3 — integrasi skor mengikuti pola 4 game existing persis**: localStorage per-game `solitaire_highScore` dengan try-catch, ViralShare.show on-record, postMessage arcade-score — tanpa adapter/konvensi baru
+  - [CODE] **D4 — E2E count 7→8 satu-satunya regresi terdampak**: assert jumlah kartu katalog di full-flow.test.js; determinisme feed stub tidak berubah
+  - [TEST] **D5 — smoke-test manual Solitaire ditandai PENDING** di docs/manual-qa-checklist.md (Results table) — baris PENDING jujur mencerminkan bahwa manual run belum dilakukan; 7 langkah repeatable checklist ditambahkan agar bisa dijalankan developer; automated coverage (E2E + probe Chromium) lulus di integration time
+  - [ARCH] **D6 — file game dibiarkan sebagai ES modules** (`import` antar game.js/sound.js/win.js) tanpa bundler — konsisten dengan constraint "tanpa bundler wajib" (knowledge §3); di-iframe dari portal, module loading jalan natural via HTTP
+- **Notes:**
+  - Verifikasi keamanan/CSP dilakukan via Chromium headless sungguhan terhadap wrangler dev: 0 console error, 0 CSP violation, 0 request eksternal selama load + interaksi (draw stock, hint)
+  - Route server diverifikasi langsung: `/sitemap.xml` memuat URL Solitaire; `/share/local-solitaire` & `/play/local-solitaire/solitaire` keduanya 200 dengan meta benar
+  - E2E suite sempat flaky (semua test timeout di `chromium.launch`) saat mesin dibebani 40+ proses Chrome browser + repeated interrupted runs — bukan regresi kode (test identik lulus di run bersih berikutnya, 4/4)
+  - `docs/manual-qa-checklist.md` Results table sengaja memuat baris PENDING — menunggu manual smoke-run developer
+- **Knowledge drift:** UPDATE REQUIRED & **diedit pada task ini**: @knowledge §3 (folder tree `games/solitaire/`), §7 (pola folder game kelima + temuan CSP `style-src-attr 'none'` → gaya via class CSS, bukan atribut inline), history line — knowledge **v1.6.10 → v1.6.12**, `knowledge_version` changelog disinkronkan 1.6.12; @prd §4.2 (folder tree += games/solitaire), §7 (business rules += game kelima), revision history rows — prd **v1.6.4 → v1.6.6**

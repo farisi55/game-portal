@@ -20,6 +20,9 @@ Audio preferences were set to muted and high scores were seeded in the temporary
 | Kejar Koruptor | `/games/kejar-koruptor/index.html` | PASS | PASS | PASS | PASS | 139 | 0 |
 | Kicau Mania | `/games/kicau-mania/index.html` | PASS | PASS | PASS | PASS | 1 | 0 |
 | Mobil MBG | `/games/mobil-mbg/index.html` | PASS | PASS | PASS | PASS | 230 | 0 |
+| Solitaire | `/games/solitaire/index.html` | PENDING | PENDING | PENDING | PENDING | — | — |
+
+> **Note (Task #027, 2026-10-13):** Solitaire was added to the first-party roster after the 2026-09-23 run above. Its row is PENDING until the next manual smoke run; the repeatable checklist below now includes its steps. Automated coverage (E2E catalog count, unit tests, lint) passed at integration time.
 
 ### Resource log observation
 
@@ -49,10 +52,17 @@ Use a fresh browser profile for each game when repeating this checklist.
 - [x] Confirm the score increases from zero.
 - [x] Let the runner play until the game-over screen is visible and confirm the final score is displayed.
 - [x] Confirm no JavaScript exception or console error is emitted.
+- [ ] Open `/games/solitaire/index.html` and wait for the board to render (7 tableau piles, stock + waste, 4 foundations).
+- [ ] Confirm the game deals 52 cards with no JavaScript exception or console error.
+- [ ] Draw from the stock, move a card to a tableau/foundation pile, and confirm the score and move counters update.
+- [ ] Trigger a hint (H) and undo (Ctrl+Z) and confirm both work without errors.
+- [ ] Confirm the Content Security Policy console shows zero violations (no inline style/script/font/connect requests).
+- [ ] Play through to a win (or use Auto finish) and confirm the win modal, high-score persistence, and share prompt appear.
+- [ ] Confirm no requests to cdn.tailwindcss.com, cdn.jsdelivr.net, fonts.googleapis.com, or builder.puter.com in the Network tab.
 
 ## Boundary
 
-This checklist covers the four first-party Canvas games only. Catalog-to-player navigation, iframe integration, high-score sharing, and social-preview metadata are covered by Task #015 and were not exercised here.
+This checklist covers the five first-party Canvas games only. Catalog-to-player navigation, iframe integration, high-score sharing, and social-preview metadata are covered by Task #015 and were not exercised here.
 
 ## Infrastructure fixes applied alongside this task
 
@@ -88,7 +98,7 @@ The following gate-required fixes were applied to `src/index.js`, `eslint.config
 
 ### Determinism strategy
 
-- The external games feed is stubbed at the network layer (Playwright `context.route`), so the suite never depends on GameMonetize/GamePix availability. The stub IDs use the `gm-` prefix so `fetchGameCatalog`'s balanced split keeps them in the catalog (4 LOCAL_GAMES + 1 stubbed remote = 5 cards).
+- The external games feed is stubbed at the network layer (Playwright `context.route`), so the suite never depends on GameMonetize/GamePix availability. The stub IDs use the `gm-` prefix so `fetchGameCatalog`'s balanced split keeps them in the catalog (5 LOCAL_GAMES + 3 stubbed remote = 8 cards since Task #027; previously 4 + 3 = 7).
 - The server is booted with `localProtocol: 'http'`, not HTTPS. wrangler dev serves a self-signed cert over HTTPS and every script fetch from the game iframe then trips a hard `console.error` ("An SSL certificate error occurred when fetching the script"). Over plain HTTP the journey is completely clean. The Worker's http→https 301 is gated on `isLoopbackHost()` so it still fires for real production traffic — the suite just doesn't exercise it here.
 - The game is driven through its classic-script globals (`startPlaying()` / `state.score = 5` / `gameOver()`) rather than physics flapping, so the "new record" path is deterministic.
 

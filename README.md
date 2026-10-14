@@ -6,17 +6,17 @@ The game catalog is a live server-side merge of three sources:
 
 - **GameMonetize** — fetched from their game feed (parsed server-side)
 - **GamePix** — fetched from their JSON feed
-- **First-party** — four HTML5 Canvas games hosted directly in this repo: Ayo ke Kopdes, Kejar Koruptor, Mobil MBG, and Kicau Mania — all confirmed active and registered in `LOCAL_GAMES` in **both** `js/config.js` (client) and `src/index.js` (Worker), so `/play/`, `/share/`, and sitemap entries work for all four
+- **First-party** — five HTML5 Canvas games hosted directly in this repo: Ayo ke Kopdes, Kejar Koruptor, Mobil MBG, Kicau Mania, and Solitaire — all confirmed active and registered in `LOCAL_GAMES` in **both** `js/config.js` (client) and `src/index.js` (Worker), so `/play/`, `/share/`, and sitemap entries work for all five
 
-> **Related docs:** this README is the getting-started/architecture guide for contributors. Product scope lives in [`prd.md`](./prd.md), the full technical reference in [`knowledge.md`](./knowledge.md), and task history in [`changelog.md`](./changelog.md) (26 tasks, all complete). Operational procedures are in [`docs/deployment-runbook.md`](./docs/deployment-runbook.md); the public API is specced in [`docs/api.yaml`](./docs/api.yaml) (OpenAPI 3.1).
+> **Related docs:** this README is the getting-started/architecture guide for contributors. Product scope lives in [`prd.md`](./prd.md), the full technical reference in [`knowledge.md`](./knowledge.md), and task history in [`changelog.md`](./changelog.md) (27 tasks, all complete). Operational procedures are in [`docs/deployment-runbook.md`](./docs/deployment-runbook.md); the public API is specced in [`docs/api.yaml`](./docs/api.yaml) (OpenAPI 3.1).
 
 ## Status
 
-Live in production at **https://gimboot.com** (Cloudflare Worker `games`, custom domain). All 26 tracked tasks are complete — including foundation hardening (tests, linting, security headers, rate limiting, health endpoint, load testing), SEO fixes from Google Search Console feedback, and the Emulator Browser feature. Remaining ideas (e.g. a provider filter on the catalog grid) are listed under [Roadmap](#roadmap).
+Live in production at **https://gimboot.com** (Cloudflare Worker `games`, custom domain). All 27 tracked tasks are complete — including foundation hardening (tests, linting, security headers, rate limiting, health endpoint, load testing), SEO fixes from Google Search Console feedback, and the Emulator Browser feature. Remaining ideas (e.g. a provider filter on the catalog grid) are listed under [Roadmap](#roadmap).
 
 ## Features
 
-- **Aggregated catalog** — hundreds of games from GameMonetize + GamePix, merged server-side with the four first-party titles and cached at the edge (~30 min); `/api/games` supports `page`/`limit` pagination, `/api/search` does hybrid server-side search
+- **Aggregated catalog** — hundreds of games from GameMonetize + GamePix, merged server-side with the five first-party titles and cached at the edge (~30 min); `/api/games` supports `page`/`limit` pagination, `/api/search` does hybrid server-side search
 - **Programmatic SEO** — every game gets a real, crawlable `/play/{id}/{slug}` URL with a server-injected title, meta description, Open Graph/Twitter tags, and canonical link (stream-transformed via Cloudflare's HTMLRewriter — no hand-written pages)
 - **Canonical URL hygiene** — legacy `/game.html?id=X` and `/game?id=X` 301 straight to `/play/{id}/{slug}` in a single hop; HTTP→HTTPS and `/index.html` normalization are also single-hop; `/sitemap.xml` emits only canonical HTTPS URLs (fixed per Google Search Console)
 - **Dynamic sitemap** — `/sitemap.xml` lists every game's `/play/` URL, generated live from the merged catalog and pointed to by `robots.txt`
@@ -153,6 +153,7 @@ gimboot/
 │   ├── ayo-kopdes/                First-party game
 │   ├── kejar-koruptor/            First-party game
 │   ├── mobil-mbg/                 First-party game
+│   ├── solitaire/                 First-party game (Klondike; imported from farisi55/solitaire-puter)
 │   └── shared/                    ui-share.js/css — confetti + share-prompt module
 ├── emulator/
 │   ├── index.html                 Shell — 35-system dropdown (7 optgroups), ROM/BIOS pickers, how-to + legal disclaimer
@@ -202,7 +203,7 @@ No secrets are currently required; `.gitignore` already excludes `.env`, `*.pem`
 
 ## Roadmap
 
-All 26 tracked tasks are complete (see `changelog.md`); the items previously listed as known issues have been resolved. Open ideas:
+All 27 tracked tasks are complete (see `changelog.md`); the items previously listed as known issues have been resolved. Open ideas:
 
 - Ping Google/Bing with the sitemap URL after a deploy so indexing starts sooner.
 - A provider filter (All / GameMonetize / GamePix / Original) — the `source` field used for the "Original" badge already exists to build on.
