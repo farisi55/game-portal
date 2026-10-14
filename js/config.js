@@ -42,7 +42,7 @@ export const CONFIG = {
       thumb: '/games/kicau-mania/thumb.svg',
       width: 360,
       height: 640,
-      source: 'Buatan Sendiri',
+      source: 'No Ads',
     },
     {
       id: 'local-ayo-kopdes',
@@ -52,7 +52,7 @@ export const CONFIG = {
       thumb: '/games/ayo-kopdes/thumb.svg',
       width: 960,
       height: 540,
-      source: 'Buatan Sendiri',
+      source: 'No Ads',
     },
     {
       id: 'local-mobil-mbg',
@@ -62,7 +62,7 @@ export const CONFIG = {
       thumb: '/games/mobil-mbg/thumb.svg',
       width: 360,
       height: 640,
-      source: 'Buatan Sendiri',
+      source: 'No Ads',
     },
     {
       id: 'local-kejar-koruptor',
@@ -72,7 +72,7 @@ export const CONFIG = {
       thumb: '/games/kejar-koruptor/thumb.svg',
       width: 360,
       height: 640,
-      source: 'Buatan Sendiri',
+      source: 'No Ads',
     },
     {
       id: 'local-solitaire',
@@ -82,7 +82,7 @@ export const CONFIG = {
       thumb: '/games/solitaire/thumb.svg',
       width: 1024,
       height: 768,
-      source: 'Buatan Sendiri',
+      source: 'No Ads',
     },
   ],
 

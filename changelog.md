@@ -1,7 +1,7 @@
 ---
 project: Gimboot
-knowledge_version: 1.6.13
-changelog_version: 1.0.35
+knowledge_version: 1.6.14
+changelog_version: 1.0.36
 created: 2026-08-28
 status: in_progress
 milestone: 1 of 1
@@ -45,7 +45,7 @@ simple_mode: false
 > `prd.md` diperbarui ke v1.6.0 (§3.1, §3.2, §4.1, §4.2, §5 baru, §8, §9, §10), lalu v1.6.1 setelah poin 9 dikonfirmasi final; `knowledge.md` ke v1.6.0 lalu v1.6.1 (§2, §3, §7, §9).
 
 ## [NEXT TASKS]
-(none — roadmap asli 26 task selesai; Task #027 (2026-10-13, permintaan developer) & Task #028 (2026-10-14, rework Solitaire + `npm run dev`, permintaan developer) dieksekusi & pindah ke [COMPLETED])
+(none — roadmap asli 26 task selesai; Task #027 (2026-10-13, permintaan developer), Task #028 (2026-10-14, rework Solitaire + `npm run dev`, permintaan developer) & Task #029 (2026-10-14, badge "No Ads" + tab "No Ads Game", permintaan developer) dieksekusi & pindah ke [COMPLETED])
 
 
 ## [IN PROGRESS]
@@ -2081,3 +2081,47 @@ Satu Cloudflare Worker dengan static assets (`src/index.js`) menangani seluruh r
   - Commit `725953e` (fix `<rect>` putih `getCardSvg` + script dev) adalah langkah perbaikan sementara sebelum keputusan salinan-setia; fix itu **lengkap tergantikan** oleh rework `efb2c7a` (file lama di-replace total) — hanya script `package.json` yang bertahan
   - File sumber memakai line-ending LF; git menormalkan ke CRLF (warning kosmetik, tidak memengaruhi fungsi)
 - **Knowledge drift:** UPDATE REQUIRED & **diedit pada task ini**: @knowledge history line (v1.6.13 = rework salinan setia + koreksi temuan CSP), §3 catatan folder `games/solitaire/`, §7 pola game kelima — knowledge **v1.6.12 → v1.6.13**, `knowledge_version` changelog disinkronkan 1.6.13; @prd revision history row 1.6.7 + §4.2/§5 catatan rework — prd **v1.6.6 → v1.6.7**
+
+### Task #029 — Ad-hoc: Badge "BUATAN SENDIRI" → "NO ADS" + Tab Katalog "No Ads Game" ✅
+- **Completed:** 2026-10-14
+- **Phase:** Ad-hoc (permintaan langsung developer via screenshot UI; di luar urutan task P04 — mengikuti pola ad-hoc Task #023/#025/#026/#027/#028)
+- **Status:** OK
+- **Branch:** `dev` (tanpa branch fitur; perubahan kode & docs belum di-commit saat entri ini ditulis — menunggu konfirmasi developer)
+- **Context:** permintaan developer atas kartu game first-party di katalog: *"saya mau ganti dari 'buatan sendiri' menjadi 'No Ads' artinya game yang tanpa iklan ... dan semua game yang ada di folder games/ itu dibuat kategori terpisah, menjadi 'No Ads Game' bisa ditaruh menu sebelum 'Emulator'"*. Dua perubahan: (1) teks badge gold di kartu game first-party diganti; (2) tab/filter grouping baru khusus game first-party, ditempatkan tepat sebelum tab "Emulator" di `tab-bar`.
+- **Files created / modified:**
+  - `js/config.js` — LOCAL_GAMES 5 entri: `source: 'Buatan Sendiri'` → `source: 'No Ads'` (field `source` dirender `createCardElement` sebagai `.game-card__source`; CSS `text-transform: uppercase` → tampil **"NO ADS"**)
+  - `src/index.js` — mirror LOCAL_GAMES 5 entri: `source: 'Original'` → `source: 'No Ads'` (komentar deklarasi mewajibkan kedua array sinkron; field ini tidak dirender di route mana pun — konsistensi data saja)
+  - `js/catalog.js` — 4 poin:
+    - `TABS` array: sisip `{ id: 'no-ads', label: 'No Ads Game' }` antara `trending` dan `emulator` (urutan final: All, Recent, Favorite, Popular, New, Trending, **No Ads Game**, Emulator, More)
+    - `getTabGames()`: case `no-ads` → `state.games.filter(g => isNoAdsGame(g) && …)` — filter pencarian tetap berlaku di tab ini
+    - helper baru `isNoAdsGame(game)`: `id` diawali `local-` (konvensi LOCAL_GAMES; feed remote memakai prefix `gm-`/`gp-`, jadi tidak mungkin tabrakan; dipilih di atas kecocokan string `source` agar identifikasi tidak bergantung pada teks label badge yang bisa berubah)
+    - `canLoadMore()`: tab `no-ads` ikut di-exclude (seperti favorite/recent) — isi tab tetap 5 game, Load More tidak relevan
+  - `changelog.md` — entri ini (bump 1.0.35 → **1.0.36**, `knowledge_version` sinkron 1.6.14)
+  - `knowledge.md` — v1.6.13 → **v1.6.14**: history line baru; §3 catatan `catalog.js` (tab-bar & tab `no-ads`); §7 domain rule baru (badge "NO ADS" + aturan tab No Ads Game)
+  - `prd.md` — v1.6.7 → **v1.6.8**: revision history row 1.6.8; §5 Fitur Katalog (acceptance criteria + UI notes badge/tab)
+- **Acceptance criteria met:**
+  - [x] **Badge "NO ADS"** — Chromium headless: seluruh kartu first-party (5 game) memuat `.game-card__source` = "No Ads" (tampil uppercase "NO ADS"); kartu feed remote TANPA badge (feed GameMonetize/GamePix memang tidak menghasilkan field `source` — diverifikasi dari parser `parseGameMonetizeFeed`/`fetchGamePixPage`, jadi badge tidak salah sasaran)
+  - [x] **Tab "No Ads Game" sebelum "Emulator"** — urutan tab terverifikasi: `All, Recent, Favorite, Popular, New, Trending, No Ads Game, Emulator, More`
+  - [x] **Isi tab benar** — klik tab: tepat 5 kartu, seluruhnya `local-*` (solitaire, kejar-koruptor, mobil-mbg, kicau-mania, ayo-kopdes), `#game-count` = 5, Load More tersembunyi, tab aktif ter-highlight
+  - [x] **Tab All tidak berubah** — 8 kartu sesuai asersi E2E (5 lokal + 3 stub); game first-party tetap tampil di All (permintaan hanya MENAMBAH grouping terpisah, tidak memindahkan dari All)
+  - [x] Konsistensi mirror — `js/config.js` dan `src/index.js` keduanya `source: 'No Ads'` (5+5 entri)
+  - [x] `npm run lint` exit 0; `npm test` 169 pass 0 fail; `npm run test:e2e` 4 pass 0 fail (assert 8 kartu tak terpengaruh)
+  - [x] 0 console error selama load + navigasi tab (Chromium headless via wrangler dev)
+- **Security gate:** STANDARD (perubahan murni presentasi/klien — 3 file JS frontend; tanpa perubahan Worker/CSP/route/endpoint)
+  - [x] No secrets hardcoded — ✓
+  - [x] Tanpa eval()/exec() dengan input eksternal — ✓ (filter hanya `String.startsWith`/`includes`)
+  - [x] Output HTML aman — ✓ badge dirender via `createTextElement` (textContent, bukan innerHTML); id lokal dari konstanta hardcode
+  - [x] CSP tak dilonggarkan — ✓ `src/index.js` hanya mengubah nilai data LOCAL_GAMES, `withSecurityHeaders` tak tersentuh
+  - [x] `.gitignore`/pre-commit hook/branch protection — ✓ tak berubah
+- **Regression:** **169 unit tests passed, 0 failed** (`npm test`); **lint exit 0**; **E2E: 2 files, 4 tests passed, 0 failed** (`npm run test:e2e`)
+- **Decisions made:**
+  - [CODE] **D1 — identifikasi game No Ads via prefix id `local-`** (bukan kecocokan string `source === 'No Ads'`): stabil terhadap perubahan teks label badge di masa depan; feed remote ber-prefix `gm-`/`gp-` tidak mungkin cocok
+  - [CODE] **D2 — game first-party TETAP tampil di tab All** — permintaan developer hanya menambah kategori terpisah "No Ads Game", tidak memindahkannya dari All; asersi E2E 8 kartu tetap berlaku tanpa perubahan test
+  - [CODE] **D3 — mirror `src/index.js` ikut diubah** meski field `source` tidak pernah dirender server-side — komentar deklarasi mewajibkan "Mirrors js/config.js's LOCAL_GAMES exactly", dan grep membuktikan tidak ada test/route yang meng-assert nilai lama ('Original'/'Buatan Sendiri')
+  - [CODE] **D4 — Load More dikecualikan di tab `no-ads`** — isi tab adalah himpunan tetap (5 game lokal); memuat lebih banyak feed tidak menambah hasil tab ini
+- **Notes:**
+  - Badge memakai styling `.game-card__source` yang sudah ada (background `var(--gold)`, mono font, uppercase) — tanpa perubahan CSS
+  - Kategori genre (Arcade/Cards) di menu "More" tidak diubah — game first-party tetap tercari via genre & search; tab `no-ads` adalah view tambahan
+  - Verifikasi visual: screenshot `noads-tab.png` (tab aktif + 5 kartu "NO ADS")
+  - Saat verifikasi, wrangler dev pertama crash (ENOENT) karena script verifikasi sementara dibuat/dihapus di direktori yang di-watch; run ulang dengan `--persist-to <path luar repo>` (workaround terdokumentasi Task #028/D4) sukses — reload-storm tidak terulang
+- **Knowledge drift:** UPDATE REQUIRED & **diedit pada task ini**: @knowledge history line (v1.6.14 = badge No Ads + tab No Ads Game), §3 `catalog.js`, §7 aturan badge/tab — knowledge **v1.6.13 → v1.6.14**, `knowledge_version` changelog disinkronkan 1.6.14; @prd §5 (acceptance + UI notes) + revision history row 1.6.8 — prd **v1.6.7 → v1.6.8**
