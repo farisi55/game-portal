@@ -9,6 +9,7 @@ const TABS = [
   { id: 'popular', label: 'Popular' },
   { id: 'new', label: 'New' },
   { id: 'trending', label: 'Trending' },
+  { id: 'no-ads', label: 'No Ads Game' },
   { id: 'emulator', label: 'Emulator' },
   { id: 'more', label: 'More' },
 ];
@@ -213,6 +214,12 @@ function getTabGames() {
       return [...state.games]
         .filter((g) => !q || (g.title || '').toLowerCase().includes(q))
         .sort((a, b) => trendingScore(b) - trendingScore(a));
+    case 'no-ads':
+      // No Ads Game = first-party games hosted under games/ (id prefix
+      // "local-"; remote feeds use gm-/gp- ids), so no feed ads apply.
+      return state.games.filter(
+        (g) => isNoAdsGame(g) && (!q || (g.title || '').toLowerCase().includes(q))
+      );
     default:
       return state.games.filter((g) => {
         const matchesCategory = state.activeCategory === 'All' || g.category === state.activeCategory;
@@ -220,6 +227,12 @@ function getTabGames() {
         return matchesCategory && matchesQuery;
       });
   }
+}
+
+// First-party games we host ourselves (the games/ folder) — identified by
+// their "local-" id prefix, which feed games (gm-/gp-) never use.
+function isNoAdsGame(game) {
+  return String(game.id ?? '').startsWith('local-');
 }
 
 // Deterministic pseudo-random popularity score (0–1) from the game id.
@@ -279,7 +292,8 @@ function canLoadMore() {
     !state.loadingMore &&
     state.requestedCount < CONFIG.MAX_GAME_COUNT &&
     state.activeTab !== 'favorite' &&
-    state.activeTab !== 'recent'
+    state.activeTab !== 'recent' &&
+    state.activeTab !== 'no-ads'
   );
 }
 

@@ -141,7 +141,7 @@ const LOCAL_GAMES = [
     thumb: '/games/kicau-mania/thumb.svg',
     width: 360,
     height: 640,
-    source: 'Original',
+    source: 'No Ads',
   },
   {
     id: 'local-ayo-kopdes',
@@ -151,7 +151,7 @@ const LOCAL_GAMES = [
     thumb: '/games/ayo-kopdes/thumb.svg',
     width: 960,
     height: 540,
-    source: 'Original',
+    source: 'No Ads',
   },
   {
     id: 'local-mobil-mbg',
@@ -161,7 +161,7 @@ const LOCAL_GAMES = [
     thumb: '/games/mobil-mbg/thumb.svg',
     width: 360,
     height: 640,
-    source: 'Original',
+    source: 'No Ads',
   },
   {
     id: 'local-kejar-koruptor',
@@ -171,7 +171,7 @@ const LOCAL_GAMES = [
     thumb: '/games/kejar-koruptor/thumb.svg',
     width: 360,
     height: 640,
-    source: 'Original',
+    source: 'No Ads',
   },
   {
     id: 'local-solitaire',
@@ -181,7 +181,7 @@ const LOCAL_GAMES = [
     thumb: '/games/solitaire/thumb.svg',
     width: 1024,
     height: 768,
-    source: 'Original',
+    source: 'No Ads',
   },
 ];
 

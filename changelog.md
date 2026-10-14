@@ -1,7 +1,7 @@
 ---
 project: Gimboot
-knowledge_version: 1.6.12
-changelog_version: 1.0.34
+knowledge_version: 1.6.14
+changelog_version: 1.0.36
 created: 2026-08-28
 status: in_progress
 milestone: 1 of 1
@@ -45,7 +45,7 @@ simple_mode: false
 > `prd.md` diperbarui ke v1.6.0 (§3.1, §3.2, §4.1, §4.2, §5 baru, §8, §9, §10), lalu v1.6.1 setelah poin 9 dikonfirmasi final; `knowledge.md` ke v1.6.0 lalu v1.6.1 (§2, §3, §7, §9).
 
 ## [NEXT TASKS]
-(none — roadmap asli 26 task selesai; Task #027 (2026-10-13, permintaan developer) dieksekusi & pindah ke [COMPLETED])
+(none — roadmap asli 26 task selesai; Task #027 (2026-10-13, permintaan developer), Task #028 (2026-10-14, rework Solitaire + `npm run dev`, permintaan developer) & Task #029 (2026-10-14, badge "No Ads" + tab "No Ads Game", permintaan developer) dieksekusi & pindah ke [COMPLETED])
 
 
 ## [IN PROGRESS]
@@ -1934,6 +1934,7 @@ Satu Cloudflare Worker dengan static assets (`src/index.js`) menangani seluruh r
 - **Knowledge drift:** UPDATE REQUIRED: @knowledge §3 (runtime size check "≤ 128 MB" → per-sistem); **diedit pada task ini**: §3 runtime.html size check = per-sistem (psx 999 MB, psp 2 GB, default 128 MB; divalidasi UI + runtime) — knowledge v1.6.9 → **v1.6.10**, `knowledge_version` changelog disinkronkan ke 1.6.10; prd.md → v1.6.4 (§5 catatan [REVISI AD-HOC — Task #026] + intro version note). Pemicu: revisi limit langsung atas permintaan developer, harus tercatat lintas dokumen
 
 ### Task #027 — Integrate First-Party Game: Solitaire (import dari `farisi55/solitaire-puter`) ✅
+> **[SUPERSEDED 2026-10-14 — lihat Task #028]** Detail implementasi di bawah adalah kondisi asli saat task ini selesai. Hasil smoke-test developer menunjukkan kartu tidak playable & beda dari repo sumber (akar masalah: `game.js`/`style.css`/`index.html` ditulis ulang, bukan disalin) — seluruh engine game diganti salinan setia repo sumber pada Task #028 (hanya registrasi/katalog/E2E/manual-QA dari entri ini yang tetap berlaku; temuan CSP "gaya via class CSS" di-revisi oleh #028).
 - **Completed:** 2026-10-14
 - **Phase:** Phase 3 — Core Features
 - **Status:** OK
@@ -2031,3 +2032,96 @@ Satu Cloudflare Worker dengan static assets (`src/index.js`) menangani seluruh r
   - E2E suite sempat flaky (semua test timeout di `chromium.launch`) saat mesin dibebani 40+ proses Chrome browser + repeated interrupted runs — bukan regresi kode (test identik lulus di run bersih berikutnya, 4/4)
   - `docs/manual-qa-checklist.md` Results table sengaja memuat baris PENDING — menunggu manual smoke-run developer
 - **Knowledge drift:** UPDATE REQUIRED & **diedit pada task ini**: @knowledge §3 (folder tree `games/solitaire/`), §7 (pola folder game kelima + temuan CSP `style-src-attr 'none'` → gaya via class CSS, bukan atribut inline), history line — knowledge **v1.6.10 → v1.6.12**, `knowledge_version` changelog disinkronkan 1.6.12; @prd §4.2 (folder tree += games/solitaire), §7 (business rules += game kelima), revision history rows — prd **v1.6.4 → v1.6.6**
+
+### Task #028 — Ad-hoc: Rework Solitaire Jadi Salinan Setia Repo Sumber + Script `npm run dev` ✅
+- **Completed:** 2026-10-14
+- **Phase:** Ad-hoc (permintaan langsung developer; di luar urutan task P04 — mengikuti pola ad-hoc Task #023/#025/#026/#027)
+- **Status:** OK
+- **Branch:** `dev` (commits `725953e` "edit solitaire" + `efb2c7a` "solitarre copy repo"; tanpa branch fitur — perbaikan atas hasil Task #027)
+- **Context / akar masalah:** smoke-test developer atas hasil Task #027: kartu **tidak playable** dan tampil beda jauh dari repo sumber `github.com/farisi55/solitaire-puter` (dibandingkan side-by-side). Akar penyebab: implementasi Task #027 bukan salinan — `game.js`/`style.css`/`index.html` **ditulis ulang total** dengan arsitektur berbeda dari sumber (render SVG datar per kartu + click-to-select + koordinat hardcoded, pengganti DOM kartu 3D-flip + drag-and-drop + layout dinamis sumber). Perintah developer: *"copy saja codenya, dan pastikan sudah sama baru setelah itu disesuaikan agar bisa masuk kedalam list game gimboot.com"* — salin setia dulu, adaptasi belakangan.
+- **Files created / modified:**
+  - `games/solitaire/game.js` — **ditulis ulang total** = salinan setia `game.js` sumber (`buildSlots`/`buildCards` sekali di boot → 52 elemen DOM `.card > .card-inner > .face.front/back`, render = pindah elemen via `transform` CSSOM, drag-and-drop pointer events, `computeLayout()` dinamis, deal animation async, Draw 1/3, undo/hint/auto-finish/cascade menang) + adaptasi minimal: import lucide CDN dihapus → ikon `rotate-ccw` di-inline (`ROTATE_CCW_SVG`); `createIcons({icons})` boot call dihapus; blok **Gimboot integration** ditambah (`solitaire_highScore` localStorage try-catch, `reportScoreToParent` postMessage `arcade-score`, `ViralShare.show('solitaire', …)` saat rekor baru, stat "Best" di win modal, inisialisasi `highScore` saat boot)
+  - `games/solitaire/index.html` — **ditulis ulang** = struktur sumber (topbar/seg-draw/stats/win modal) dengan adaptasi: 4 dependensi CDN sumber tetap dihapus (Tailwind CDN, Google Fonts, lucide jsdelivr, builder.puter.com runtime + error-reporter inline sumber); semua `<i data-lucide>` → SVG inline (spade/undo-2/lightbulb/volume/shuffle/wand-sparkles/trophy); tambah `../shared/ui-share.css` + `<script src="../shared/ui-share.js">` (pola 4 game lain); win-stats += elemen `#winHighScore` (Best)
+  - `games/solitaire/style.css` — **disalin ulang dari `styles.css` sumber** (menghapus modifikasi versi Task #027); adaptasi: font `'Inter', system-ui` → `system-ui` stack (Google Fonts dihapus); `.win-stats` grid `repeat(3,1fr)` → `repeat(4,1fr)` (stat Best baru). Class era render SVG (`.pip-face*`, `.pip-label*`) **ikut terhapus** — sudah tidak dipakai
+  - `games/solitaire/sound.js` — **disalin ulang verbatim** dari sumber (100% identik; metode tambahan versi lama `hint()`/`undo()` dihapus — tidak dipanggil versi ini)
+  - `games/solitaire/win.js` — **disalin ulang** dari sumber; adaptasi: 2 referensi font canvas `Inter, system-ui` → `system-ui` saja
+  - `package.json` — scripts += `"dev": "wrangler dev"` (permintaan developer: *langsung tambahkan saja agar support npm run dev*)
+  - `changelog.md` — entry ini (bump 1.0.34 → **1.0.35**, `knowledge_version` sinkron 1.6.13)
+  - `knowledge.md` — v1.6.12 → **v1.6.13**: history line baru; §3 catatan `games/solitaire/` = salinan setia sumber; §7 koreksi temuan CSP (`style-src-attr 'none'` memblokir atribut `style="..."` di markup, TETAPI **tidak** memblokir manipulasi CSSOM `element.style.*` — dibuktikan render penuh via `transform`/`left`/`top` dengan 0 CSP violation); catatan koreksi bahwa port tulis-ulang Task #027 diganti salinan setia
+  - `prd.md` — v1.6.6 → **v1.6.7**: revision history row 1.6.7; §4.2 & §5 catatan rework salinan setia
+  - DIHAPUS dari versi Task #027 yang diganti: class `.pip-face*`/`.pip-label*` (dead code setelah render kembali ke DOM flip-3D), metode `Sound.hint()`/`Sound.undo()`, seluruh engine render SVG + click-to-select
+- **Acceptance criteria met:**
+  - [x] **Visual identik repo sumber** — dibandingkan side-by-side via screenshot Chromium headless: stock belakang crosshatch biru, 4 foundation ber-glyph suit, 7 kolom tableau dengan kartu tertutup menumpuk + teratas face-up (pip besar untuk nomor, desain kotak untuk J/Q/K), corner rank+suit — identik `solitaire-puter`
+  - [x] **Playable penuh** — deal animation selesai (7 kartu face-up terflip), klik stock Draw 3 berfungsi (moves 1→n), **drag-and-drop jalan** (class `.dragging` terpasang saat pointer-down & terlepas saat drop), hint (1 kartu + 1 target), undo enable/disable benar
+  - [x] Identik sumber diverifikasi via `diff`: `sound.js` 100% byte-identik; `win.js`/`style.css`/`game.js` hanya berbeda pada daftar adaptasi tercantum di atas (font, ikon inline, integrasi gimboot) — daftar adaptasi eksplisit & minimal
+  - [x] CSP & keamanan bersih — **0 console error, 0 CSP violation, 0 request eksternal** selama load + interaksi (Chromium headless via wrangler dev); grep: tanpa URL CDN/http, `data-lucide`, `createIcons`, `tailwind`, `puter`, `googleapis` di `games/solitaire/`
+  - [x] Integrasi portal utuh — `ui-share.js` dimuat; high score `solitaire_highScore`; postMessage `arcade-score`; `ViralShare.show('solitaire', …)` (pola identik kicau-mania)
+  - [x] `npm run dev` valid (script `wrangler dev` terdaftar di `package.json`)
+  - [x] `npm run lint` exit 0; `npm test` 169 pass 0 fail; `npm run build` pass, **0 vulnerabilities**; `npm run test:e2e` 4 pass 0 fail (assert 8 kartu tak terpengaruh)
+- **Security gate:** STANDARD — same checks as Task #027 (perubahan hanya di dalam `games/solitaire/` + 1 baris `package.json`; tanpa perubahan Worker/CSP/route); seluruh item Task #027 tetap berlaku & diverifikasi ulang:
+  - [x] No secrets hardcoded — ✓ (file game offline, tanpa credential)
+  - [x] Tanpa eval()/exec() dengan input eksternal — ✓ (grep: 0 match `eval(`/`new Function` di `games/solitaire/`)
+  - [x] Input eksternal tidak dibaca — ✓ (grep: 0 match `URLSearchParams`/`location.search`; data kartu dari shuffle internal)
+  - [x] Output HTML aman — ✓ `innerHTML` di `buildCards`/`buildSlots` hanya dari konstanta hardcode (`RANKS`, `SUIT_PATHS`, `ROTATE_CCW_SVG`) — tanpa input pengguna
+  - [x] Regex bebas ReDoS — ✓ (grep: 0 match `new RegExp`/`.replace(` di game)
+  - [x] Error message tanpa stack trace — ✓ (1 `console.error` hanya untuk ViralShare fail, di-try-catch)
+  - [x] PII tidak di log / tanpa logging debug — ✓
+  - [x] CSP tak dilonggarkan — ✓ `src/index.js` tak tersentuh; manipulasi `element.style.*` (CSSOM) memang tidak dijangkar `style-src-attr 'none'` — diverifikasi empiris 0 violation, TANPA perubahan CSP
+  - [x] `.gitignore` .env/.pem/.key/.p12 — ✓ (Task #001, tak tersentuh); pre-commit hook aktif — ✓ (lint+test+build jalan pada commit); branch protection/CI secrets/CORS/route auth — ✓/N/A tak berubah
+- **Regression:** **169 unit tests passed, 0 failed** (`npm test`); **lint exit 0**; **build pass, 0 vulnerabilities** (`npm run build`); **E2E: 2 files, 4 tests passed, 0 failed** (`npm run test:e2e`)
+- **Decisions made:**
+  - [CODE] **D1 — salinan setia dulu, adaptasi belakangan** (perintah eksplisit developer): 3 file inti (`game.js`/`style.css`/`index.html`) di-replace dari repo sumber apa adanya; adaptasi dibatasi hanya: hapus CDN (CSP), inline ikon lucide, font `Inter`→`system-ui`, tambah blok integrasi gimboot + `ui-share` + stat Best — engine, arsitektur DOM, drag-drop, dan layout TIDAK diubah
+  - [CODE] **D2 — koreksi temuan CSP Task #027**: `style-src-attr 'none'` hanya memblokir atribut `style="..."` yang di-parse dari markup; manipulasi CSSOM (`el.style.transform = …`) tidak diblokir — terbukti seluruh 52 kartu ter-posisi via `transform` dengan 0 violation. Konsekuensi: klausul "game wajib class CSS, bukan style inline" di knowledge/prd direvisi; class `.pip-face*` era tulis-ulang dibuang sebagai dead code
+  - [CODE] **D3 — sound.js kembali verbatim** (metode `hint()`/`undo()` versi lama dihapus; versi sumber memakai `Sound.invalid()` untuk hint kosong)
+  - [CODE] **D4 — `npm run dev` = `wrangler dev` polos** (perintah developer: stop mendalami, langsung tambahkan). Catatan: dengan `[assets] directory = "."`, `wrangler dev` me-watch `.wrangler/state` (SQLite miniflare yang terus ditulis) → reload-storm; bila menggantung, workaround terdokumentasi `wrangler dev --persist-to <path di luar repo>` (belum diverifikasi penuh — developer menghentikan investigasi)
+  - [TEST] **D5 — smoke-test manual Solitaire tetap PENDING** di `docs/manual-qa-checklist.md` (tak diubah task ini); verifikasi otomatis via Chromium headless lulus di integration time
+- **Notes:**
+  - Verifikasi visual kunci: screenshot `sol-1-dealt.png` (deal awal) dibandingkan langsung dengan screenshot repo asli — layout, warna, pola kartu, dan gaya face-card cocok
+  - Deal animation sumber berlangsung ~3,5 detik (loop async `await wait()`); `busy=true` saat deal — klik stock/drag diabaikan sampai selesai (perilaku asli, direplikasi persis)
+  - Commit `725953e` (fix `<rect>` putih `getCardSvg` + script dev) adalah langkah perbaikan sementara sebelum keputusan salinan-setia; fix itu **lengkap tergantikan** oleh rework `efb2c7a` (file lama di-replace total) — hanya script `package.json` yang bertahan
+  - File sumber memakai line-ending LF; git menormalkan ke CRLF (warning kosmetik, tidak memengaruhi fungsi)
+- **Knowledge drift:** UPDATE REQUIRED & **diedit pada task ini**: @knowledge history line (v1.6.13 = rework salinan setia + koreksi temuan CSP), §3 catatan folder `games/solitaire/`, §7 pola game kelima — knowledge **v1.6.12 → v1.6.13**, `knowledge_version` changelog disinkronkan 1.6.13; @prd revision history row 1.6.7 + §4.2/§5 catatan rework — prd **v1.6.6 → v1.6.7**
+
+### Task #029 — Ad-hoc: Badge "BUATAN SENDIRI" → "NO ADS" + Tab Katalog "No Ads Game" ✅
+- **Completed:** 2026-10-14
+- **Phase:** Ad-hoc (permintaan langsung developer via screenshot UI; di luar urutan task P04 — mengikuti pola ad-hoc Task #023/#025/#026/#027/#028)
+- **Status:** OK
+- **Branch:** `dev` (tanpa branch fitur; perubahan kode & docs belum di-commit saat entri ini ditulis — menunggu konfirmasi developer)
+- **Context:** permintaan developer atas kartu game first-party di katalog: *"saya mau ganti dari 'buatan sendiri' menjadi 'No Ads' artinya game yang tanpa iklan ... dan semua game yang ada di folder games/ itu dibuat kategori terpisah, menjadi 'No Ads Game' bisa ditaruh menu sebelum 'Emulator'"*. Dua perubahan: (1) teks badge gold di kartu game first-party diganti; (2) tab/filter grouping baru khusus game first-party, ditempatkan tepat sebelum tab "Emulator" di `tab-bar`.
+- **Files created / modified:**
+  - `js/config.js` — LOCAL_GAMES 5 entri: `source: 'Buatan Sendiri'` → `source: 'No Ads'` (field `source` dirender `createCardElement` sebagai `.game-card__source`; CSS `text-transform: uppercase` → tampil **"NO ADS"**)
+  - `src/index.js` — mirror LOCAL_GAMES 5 entri: `source: 'Original'` → `source: 'No Ads'` (komentar deklarasi mewajibkan kedua array sinkron; field ini tidak dirender di route mana pun — konsistensi data saja)
+  - `js/catalog.js` — 4 poin:
+    - `TABS` array: sisip `{ id: 'no-ads', label: 'No Ads Game' }` antara `trending` dan `emulator` (urutan final: All, Recent, Favorite, Popular, New, Trending, **No Ads Game**, Emulator, More)
+    - `getTabGames()`: case `no-ads` → `state.games.filter(g => isNoAdsGame(g) && …)` — filter pencarian tetap berlaku di tab ini
+    - helper baru `isNoAdsGame(game)`: `id` diawali `local-` (konvensi LOCAL_GAMES; feed remote memakai prefix `gm-`/`gp-`, jadi tidak mungkin tabrakan; dipilih di atas kecocokan string `source` agar identifikasi tidak bergantung pada teks label badge yang bisa berubah)
+    - `canLoadMore()`: tab `no-ads` ikut di-exclude (seperti favorite/recent) — isi tab tetap 5 game, Load More tidak relevan
+  - `changelog.md` — entri ini (bump 1.0.35 → **1.0.36**, `knowledge_version` sinkron 1.6.14)
+  - `knowledge.md` — v1.6.13 → **v1.6.14**: history line baru; §3 catatan `catalog.js` (tab-bar & tab `no-ads`); §7 domain rule baru (badge "NO ADS" + aturan tab No Ads Game)
+  - `prd.md` — v1.6.7 → **v1.6.8**: revision history row 1.6.8; §5 Fitur Katalog (acceptance criteria + UI notes badge/tab)
+- **Acceptance criteria met:**
+  - [x] **Badge "NO ADS"** — Chromium headless: seluruh kartu first-party (5 game) memuat `.game-card__source` = "No Ads" (tampil uppercase "NO ADS"); kartu feed remote TANPA badge (feed GameMonetize/GamePix memang tidak menghasilkan field `source` — diverifikasi dari parser `parseGameMonetizeFeed`/`fetchGamePixPage`, jadi badge tidak salah sasaran)
+  - [x] **Tab "No Ads Game" sebelum "Emulator"** — urutan tab terverifikasi: `All, Recent, Favorite, Popular, New, Trending, No Ads Game, Emulator, More`
+  - [x] **Isi tab benar** — klik tab: tepat 5 kartu, seluruhnya `local-*` (solitaire, kejar-koruptor, mobil-mbg, kicau-mania, ayo-kopdes), `#game-count` = 5, Load More tersembunyi, tab aktif ter-highlight
+  - [x] **Tab All tidak berubah** — 8 kartu sesuai asersi E2E (5 lokal + 3 stub); game first-party tetap tampil di All (permintaan hanya MENAMBAH grouping terpisah, tidak memindahkan dari All)
+  - [x] Konsistensi mirror — `js/config.js` dan `src/index.js` keduanya `source: 'No Ads'` (5+5 entri)
+  - [x] `npm run lint` exit 0; `npm test` 169 pass 0 fail; `npm run test:e2e` 4 pass 0 fail (assert 8 kartu tak terpengaruh)
+  - [x] 0 console error selama load + navigasi tab (Chromium headless via wrangler dev)
+- **Security gate:** STANDARD (perubahan murni presentasi/klien — 3 file JS frontend; tanpa perubahan Worker/CSP/route/endpoint)
+  - [x] No secrets hardcoded — ✓
+  - [x] Tanpa eval()/exec() dengan input eksternal — ✓ (filter hanya `String.startsWith`/`includes`)
+  - [x] Output HTML aman — ✓ badge dirender via `createTextElement` (textContent, bukan innerHTML); id lokal dari konstanta hardcode
+  - [x] CSP tak dilonggarkan — ✓ `src/index.js` hanya mengubah nilai data LOCAL_GAMES, `withSecurityHeaders` tak tersentuh
+  - [x] `.gitignore`/pre-commit hook/branch protection — ✓ tak berubah
+- **Regression:** **169 unit tests passed, 0 failed** (`npm test`); **lint exit 0**; **E2E: 2 files, 4 tests passed, 0 failed** (`npm run test:e2e`)
+- **Decisions made:**
+  - [CODE] **D1 — identifikasi game No Ads via prefix id `local-`** (bukan kecocokan string `source === 'No Ads'`): stabil terhadap perubahan teks label badge di masa depan; feed remote ber-prefix `gm-`/`gp-` tidak mungkin cocok
+  - [CODE] **D2 — game first-party TETAP tampil di tab All** — permintaan developer hanya menambah kategori terpisah "No Ads Game", tidak memindahkannya dari All; asersi E2E 8 kartu tetap berlaku tanpa perubahan test
+  - [CODE] **D3 — mirror `src/index.js` ikut diubah** meski field `source` tidak pernah dirender server-side — komentar deklarasi mewajibkan "Mirrors js/config.js's LOCAL_GAMES exactly", dan grep membuktikan tidak ada test/route yang meng-assert nilai lama ('Original'/'Buatan Sendiri')
+  - [CODE] **D4 — Load More dikecualikan di tab `no-ads`** — isi tab adalah himpunan tetap (5 game lokal); memuat lebih banyak feed tidak menambah hasil tab ini
+- **Notes:**
+  - Badge memakai styling `.game-card__source` yang sudah ada (background `var(--gold)`, mono font, uppercase) — tanpa perubahan CSS
+  - Kategori genre (Arcade/Cards) di menu "More" tidak diubah — game first-party tetap tercari via genre & search; tab `no-ads` adalah view tambahan
+  - Verifikasi visual: screenshot `noads-tab.png` (tab aktif + 5 kartu "NO ADS")
+  - Saat verifikasi, wrangler dev pertama crash (ENOENT) karena script verifikasi sementara dibuat/dihapus di direktori yang di-watch; run ulang dengan `--persist-to <path luar repo>` (workaround terdokumentasi Task #028/D4) sukses — reload-storm tidak terulang
+- **Knowledge drift:** UPDATE REQUIRED & **diedit pada task ini**: @knowledge history line (v1.6.14 = badge No Ads + tab No Ads Game), §3 `catalog.js`, §7 aturan badge/tab — knowledge **v1.6.13 → v1.6.14**, `knowledge_version` changelog disinkronkan 1.6.14; @prd §5 (acceptance + UI notes) + revision history row 1.6.8 — prd **v1.6.7 → v1.6.8**
