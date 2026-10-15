@@ -1,7 +1,7 @@
 ---
 project: Gimboot
-knowledge_version: 1.6.14
-changelog_version: 1.0.36
+knowledge_version: 1.6.15
+changelog_version: 1.0.37
 created: 2026-08-28
 status: in_progress
 milestone: 1 of 1
@@ -2073,7 +2073,7 @@ Satu Cloudflare Worker dengan static assets (`src/index.js`) menangani seluruh r
   - [CODE] **D1 — salinan setia dulu, adaptasi belakangan** (perintah eksplisit developer): 3 file inti (`game.js`/`style.css`/`index.html`) di-replace dari repo sumber apa adanya; adaptasi dibatasi hanya: hapus CDN (CSP), inline ikon lucide, font `Inter`→`system-ui`, tambah blok integrasi gimboot + `ui-share` + stat Best — engine, arsitektur DOM, drag-drop, dan layout TIDAK diubah
   - [CODE] **D2 — koreksi temuan CSP Task #027**: `style-src-attr 'none'` hanya memblokir atribut `style="..."` yang di-parse dari markup; manipulasi CSSOM (`el.style.transform = …`) tidak diblokir — terbukti seluruh 52 kartu ter-posisi via `transform` dengan 0 violation. Konsekuensi: klausul "game wajib class CSS, bukan style inline" di knowledge/prd direvisi; class `.pip-face*` era tulis-ulang dibuang sebagai dead code
   - [CODE] **D3 — sound.js kembali verbatim** (metode `hint()`/`undo()` versi lama dihapus; versi sumber memakai `Sound.invalid()` untuk hint kosong)
-  - [CODE] **D4 — `npm run dev` = `wrangler dev` polos** (perintah developer: stop mendalami, langsung tambahkan). Catatan: dengan `[assets] directory = "."`, `wrangler dev` me-watch `.wrangler/state` (SQLite miniflare yang terus ditulis) → reload-storm; bila menggantung, workaround terdokumentasi `wrangler dev --persist-to <path di luar repo>` (belum diverifikasi penuh — developer menghentikan investigasi)
+  - [CODE] **D4 — `npm run dev` = `wrangler dev` polos** (perintah developer: stop mendalami, langsung tambahkan). Catatan: dengan `[assets] directory = "."`, `wrangler dev` me-watch `.wrangler/state` (SQLite miniflare yang terus ditulis) → reload-storm; bila menggantung, workaround terdokumentasi `wrangler dev --persist-to <path di luar repo>` (belum diverifikasi penuh — developer menghentikan investigasi). **[DISELESAIKAN 2026-10-15 — Task #030]** reload-storm ternyata bug upstream wrangler yang sudah diperbaiki di 4.150.0 (PR #16156); devDependency di-upgrade ke `^4.151.0` → `npm run dev` kini jalan polos tanpa `--persist-to`
   - [TEST] **D5 — smoke-test manual Solitaire tetap PENDING** di `docs/manual-qa-checklist.md` (tak diubah task ini); verifikasi otomatis via Chromium headless lulus di integration time
 - **Notes:**
   - Verifikasi visual kunci: screenshot `sol-1-dealt.png` (deal awal) dibandingkan langsung dengan screenshot repo asli — layout, warna, pola kartu, dan gaya face-card cocok
@@ -2125,3 +2125,42 @@ Satu Cloudflare Worker dengan static assets (`src/index.js`) menangani seluruh r
   - Verifikasi visual: screenshot `noads-tab.png` (tab aktif + 5 kartu "NO ADS")
   - Saat verifikasi, wrangler dev pertama crash (ENOENT) karena script verifikasi sementara dibuat/dihapus di direktori yang di-watch; run ulang dengan `--persist-to <path luar repo>` (workaround terdokumentasi Task #028/D4) sukses — reload-storm tidak terulang
 - **Knowledge drift:** UPDATE REQUIRED & **diedit pada task ini**: @knowledge history line (v1.6.14 = badge No Ads + tab No Ads Game), §3 `catalog.js`, §7 aturan badge/tab — knowledge **v1.6.13 → v1.6.14**, `knowledge_version` changelog disinkronkan 1.6.14; @prd §5 (acceptance + UI notes) + revision history row 1.6.8 — prd **v1.6.7 → v1.6.8**
+
+### Task #030 — Ad-hoc: Fix `npm run dev` Loading Terus di Browser — Upgrade wrangler 4.148.0 → 4.151.0 ✅
+- **Completed:** 2026-10-15
+- **Phase:** Ad-hoc (bugfix permintaan developer: *"`npm run dev` loading terus di browser"* — di luar urutan task P04, mengikuti pola ad-hoc Task #023–#029)
+- **Status:** OK
+- **Branch:** `dev` (perubahan `package.json` + `package-lock.json` belum di-commit saat entri ini ditulis — menunggu konfirmasi developer)
+- **Context / akar masalah (ROOT CAUSE):** `npm run dev` jalan normal di terminal (`Ready on http://127.0.0.1:8787`), tapi halaman di browser menggantung/terus loading dan tidak pernah selesai. **Ini bug upstream wrangler, bukan bug kode Gimboot.** Pemicunya: `wrangler.toml` memakai `[assets] directory = "."` (seluruh root repo = direktori aset statis), sehingga `wrangler dev` me-watch seluruh root — **termasuk `.wrangler/state`** (SQLite milik miniflare yang DITULIS wrangler sendiri setiap request). Assets watcher versi lama (≤ 4.149.0) tidak mengabaikan tulisan wrangler itu sendiri, menganggapnya sebagai "perubahan aset" → memicu reload; reload membatalkan request yang masih berjalan (in-flight); request berikutnya menulis state lagi → loop tak berujung. Makin banyak request, makin sering reload → browser tidak pernah menerima response (loading terus).
+  **Konfirmasi dari changelog resmi wrangler:** versi **4.150.0**, PR **#16156** — *"Ignore `.wrangler` writes in the dev assets watcher"*: *"`wrangler dev` reloaded in a loop when `assets.directory` was the project root, because the assets watcher treated wrangler's own writes under `.wrangler` as asset changes and dropped in-flight requests."* Versi wrangler yang terkunci di lockfile saat gejala muncul: **4.148.0** (dari range `^4.129.1`) — masih mengandung bug; fix baru masuk di 4.150.0.
+- **Root cause chain:** `[assets] directory = "."` → file watcher membawahi `.wrangler/state` → tiap request menulis SQLite → event file-change → `⎔ Reloading local server...` → in-flight request dibatalkan → browser menunggu response yang tak pernah datang → repeat.
+- **Bukti gejala ini sudah dua kali tercatat sebelumnya:** (1) Task #016/loadtest — *"`wrangler dev` CLI enters an infinite rebuild/reload loop in this environment and every request hangs"* (alasan k6 memakai `unstable_dev`, bukan CLI `wrangler dev`); (2) Task #028/D4 — disebut "reload-storm" dengan workaround `wrangler dev --persist-to <path luar repo>` (belum diverifikasi penuh); dan muncul lagi saat verifikasi Task #029. Ketiganya kini terjelaskan oleh satu bug upstream yang sama.
+- **Files created / modified:**
+  - `package.json` — devDependencies `wrangler`: `^4.129.1` → **`^4.151.0`**
+  - `package-lock.json` — resolved wrangler 4.148.0 → **4.151.0** (transitif ikut ter-update: workerd 1.20261006.1 → 1.20261012.1, miniflare 5.20261006.0-alpha → 5.20261012.0-beta, esbuild 0.28.1 → 0.28.2). Catatan: `@cloudflare/vitest-plugin` menyimpan wrangler 4.148.0 miliknya sendiri (nested copy) — hanya dipakai saat `npm test`, tidak memengaruhi `wrangler dev`
+  - `changelog.md` — entri ini (bump 1.0.36 → **1.0.37**, `knowledge_version` sinkron 1.6.15); marker [DISELESAIKAN 2026-10-15] ditambahkan ke catatan Task #028/D4
+  - `knowledge.md` — v1.6.14 → **v1.6.15**: history line baru; §2 dev tooling — catatan reload-storm Task #028 ditandai FIXED + bullet dev tooling Task #030 (versi & alasan)
+- **Acceptance criteria met:**
+  - [x] `npm run dev` berjalan polos (tanpa flag `--persist-to`) dan halaman direspons — smoke-test: 5 siklus GET `/`, `/api/games`, `/games/solitaire/index.html` + `/api/health` → semua **200/307 dalam 53–126 ms**, tidak ada yang menggantung
+  - [x] **Tidak ada reload loop selama traffic normal** — log wrangler selama pengujian hanya berisi baris request GET; **nol** baris `Reloading local server...` yang dipicu request (baris reload/restart yang muncul di akir log berasal dari `taskkill` cleanup proses dev server sesudah pengujian, bukan dari request)
+  - [x] Fix berasal dari versi yang memuat perbaikan upstream — lockfile kini resolve wrangler **4.151.0** (≥ 4.150.0, PR #16156), bukan lagi 4.148.0
+  - [x] Gejala lama terdokumentasi & terselesaikan — workaround `--persist-to` (Task #028/D4) tidak lagi diperlukan
+  - [x] `npm test` 169 pass 0 fail; `npm run lint` exit 0 (perubahan hanya pin versi devDependency)
+- **Security gate:** BASIC — tooling-only (pin versi devDependency); tanpa perubahan kode Worker, CSP, route, atau aset produksi
+  - [x] Tidak ada secret/credential di perubahan — ✓ (hanya versi package)
+  - [x] Lockfile ter-pin dengan integrity hash — ✓ (wrangler 4.151.0 resolved eksak)
+  - [x] CVE scan `npm audit --audit-level=high` — ✓ 0 vulnerabilities
+  - [x] `.gitignore` / pre-commit hook tidak berubah — ✓
+  - [x] Item lain (auth/CORS/CSP/input validation/encoding) — N/A tak tersentuh
+- **Scalability gate:** BASIC — semua item N/A (perubahan pin versi tooling dev; tidak menyentuh runtime produksi maupun jalur request)
+- **Regression:** `npm test` **169 passed, 0 failed**; `npm run lint` exit 0; `npm audit` 0 vulnerabilities; smoke-test `wrangler dev` lokal: 18 request sukses, 0 hang, 0 request-triggered reload
+- **Decisions made:**
+  - [INFRA] **D1 — upgrade wrangler, bukan menjadikan workaround `--persist-to` sebagai default**: fix resmi sudah tersedia upstream sejak 4.150.0; upgrade menghapus kebutuhan flag tambahan dan menyerahkan pemeliharaan watcher ke Cloudflare
+  - [INFRA] **D2 — range `^4.151.0` (bukan pin eksak `4.151.0`)**: mengikuti gaya semver range yang sudah ada (`^4.129.1`); reproducibility tetap dijamin `package-lock.json`
+  - [ARCH] **D3 — `[assets] directory = "."` TIDAK diubah**: konfigurasi itu disengaja (seluruh repo = aset statis yang diserve Worker; lihat wrangler.toml & knowledge §2) — pihak yang salah adalah file watcher wrangler-nya, bukan konfigurasi proyek. Pindah direktori aset atau menambah flag justru mengubah perilaku deploy demi menghindari bug dev
+  - [INFRA] **D4 — `.assetsignore` bukan obatnya**: `.wrangler/` memang sudah terdaftar di `.assetsignore`, tapi file itu mengatur aset yang DI-SERVE/di-upload ke Cloudflare — bukan isi file watcher `wrangler dev` lokal; jadi kehadirannya tidak (dan tidak pernah) menangkal bug ini
+- **Notes:**
+  - Gejala khas bila terulang di versi wrangler < 4.150.0: terminal terlihat "Ready", tapi ada `⎔ Reloading local server...` berulang tanpa henti diikuti request yang dibatalkan → browser loading terus. Diagnosis cepat: bandingkan jumlah baris `Reloading` vs jumlah request di log
+  - E2E (`npm run test:e2e`) mem-boot dev server via API `unstable_dev`, bukan CLI `wrangler dev` — sudah kebal dari bug ini sejak awal (alasan yang sama dengan pemilihan k6 di Task #016), jadi tidak perlu diubah
+  - `@cloudflare/vitest-plugin` masih membawa wrangler 4.148.0 nested (terlihat di `package-lock.json`); itu hanya untuk pool test `npm test` dan tidak dipakai `npm run dev`
+- **Knowledge drift:** UPDATE REQUIRED & **diedit pada task ini**: @knowledge history line (v1.6.15 = fix reload-storm via upgrade wrangler), §2 dev tooling (catatan Task #028 ditandai FIXED + bullet Task #030) — knowledge **v1.6.14 → v1.6.15**, `knowledge_version` changelog disinkronkan 1.6.15; @prd tidak diubah (murni perbaikan tooling dev, di luar scope produk)
