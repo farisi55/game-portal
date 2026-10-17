@@ -1,7 +1,7 @@
 ---
 project: Gimboot
-knowledge_version: 1.6.14
-changelog_version: 1.0.36
+knowledge_version: 1.6.16
+changelog_version: 1.0.38
 created: 2026-08-28
 status: in_progress
 milestone: 1 of 1
@@ -45,7 +45,7 @@ simple_mode: false
 > `prd.md` diperbarui ke v1.6.0 (§3.1, §3.2, §4.1, §4.2, §5 baru, §8, §9, §10), lalu v1.6.1 setelah poin 9 dikonfirmasi final; `knowledge.md` ke v1.6.0 lalu v1.6.1 (§2, §3, §7, §9).
 
 ## [NEXT TASKS]
-(none — roadmap asli 26 task selesai; Task #027 (2026-10-13, permintaan developer), Task #028 (2026-10-14, rework Solitaire + `npm run dev`, permintaan developer) & Task #029 (2026-10-14, badge "No Ads" + tab "No Ads Game", permintaan developer) dieksekusi & pindah ke [COMPLETED])
+(none — roadmap asli 26 task selesai; Task #027 (2026-10-13, permintaan developer), Task #028 (2026-10-14, rework Solitaire + `npm run dev`), Task #029 (2026-10-14, badge "No Ads" + tab "No Ads Game"), Task #030 (2026-10-15, fix wrangler dev), dan Task #031 (2026-10-17, integrasi + rename Moba DOTA) dieksekusi & pindah ke [COMPLETED])
 
 
 ## [IN PROGRESS]
@@ -56,7 +56,7 @@ simple_mode: false
 > **Catatan format:** empat entri retroaktif di bawah ini BUKAN task yang dieksekusi lewat proses changelog/gate P04 ini — proses itu baru mulai berlaku sejak Task #001. Entri-entri ini disusun 2026-08-30 dari kondisi kode saat diaudit (2026-08-28) untuk mencatat bahwa produk sudah live sebelum changelog ini ada, sebagaimana disebut `knowledge.md` §1 ("Phase 1 & Phase 3 ... selesai"). Karena itu, tidak ada field "Files to create/modify", "Acceptance criteria" bercentang, atau "Dependencies" seperti task lain — tidak ada catatan asli semacam itu untuk pekerjaan ini, dan menuliskannya di sini akan memberi kesan presisi yang tidak benar-benar ada.
 
 ### [Retroaktif] Katalog Game First-Party
-Empat game HTML5 Canvas mandiri, masing-masing di folder sendiri (`games/{slug}/`) berisi `game.js`, `index.html`, `style.css`, `thumb.svg`: Ayo Kopdes, Kejar Koruptor, Mobil MBG, Kicau Mania. Dikonfirmasi live lewat audit kode 2026-08-28 dan dikonfirmasi aktif oleh developer 2026-08-30. Rekor tertinggi disimpan mandiri per game di `localStorage` (dengan try-catch untuk mode privat), begitu juga preferensi mute suara.
+Roster first-party saat ini berisi enam game mandiri di `games/{slug}/`: Ayo Kopdes, Kejar Koruptor, Mobil MBG, Kicau Mania, Solitaire, dan Moba DOTA (ditambahkan sebagai game ke-6 melalui Task #031). Empat game pertama dikonfirmasi live lewat audit kode 2026-08-28 dan aktif oleh developer 2026-08-30. Rekor tertinggi disimpan mandiri per game di `localStorage` (dengan try-catch untuk mode privat), begitu juga preferensi mute suara bila didukung game.
 
 ### [Retroaktif] Backend Edge & Agregasi Katalog
 Satu Cloudflare Worker dengan static assets (`src/index.js`) menangani seluruh rute dinamis: `/api/games` & `/api/search` (gabungan game first-party + feed live GameMonetize & GamePix, di-cache 30 menit di edge), `/share/:id` & `/play/:id/:slug` (meta OG/Twitter/canonical dinamis dengan output sudah di-escape), `/game` (redirect pengganti `game.html` lama), `/sitemap.xml` (dirujuk `robots.txt`), plus security headers (CSP nonce-based) untuk semua response.
@@ -67,6 +67,25 @@ Satu Cloudflare Worker dengan static assets (`src/index.js`) menangani seluruh r
 ### [Retroaktif] Sistem Viral Sharing
 `games/shared/ui-share.js`/`.css`: confetti + Web Share API saat rekor pecah, dengan fallback clipboard-copy, terhubung ke halaman share ber-OG-tag di `src/index.js`. Catatan cakupan audit: isi `ui-share.js` belum dibaca baris-per-baris — deskripsi ini berdasarkan nama file, penggunaannya di `js/player.js`, dan `README.md`, bukan verifikasi kode penuh (lihat "Catatan Metodologi Audit" di `knowledge.md`).
 
+### Task #031 — Ad-hoc: Integrasi & Rename Moba DOTA ✅
+- **Completed:** 2026-10-17
+- **Request:** Tambahkan game dari `C:\Users\banu.farisi\repo\realm-siege-3d` ke portal dalam `games/moba/`, integrasikan seperti game lokal lain, lalu ubah nama tampilannya dari "Realm Siege 3D" menjadi "Moba DOTA".
+- **Files created / modified (portal `game-portal`):**
+  - `games/moba/` — hasil build produksi Vite (HTML, JavaScript, CSS, Draco decoder) dengan asset base `/games/moba/`; ditambah `thumb.svg` kustom bergaya fantasy MOBA dan metadata halaman untuk "Moba DOTA".
+  - `js/config.js`, `src/index.js` — registrasi `local-moba`, judul "Moba DOTA", kategori MOBA, URL `/games/moba/index.html`, thumbnail, ukuran 1280×720, sumber `No Ads`; kedua `LOCAL_GAMES` disinkronkan.
+  - `src/index.test.js` — tes pengenalan game lokal dan canonical slug `moba-dota`.
+  - `README.md`, `knowledge.md`, `prd.md`, `changelog.md` — roster, arsitektur, build, scope, dan riwayat ad-hoc diperbarui.
+- **Files modified (source repo `realm-siege-3d`):**
+  - `src/ui/screens/MainMenu.tsx`, `src/ui/screens/Overlays.tsx`, `index.html`, `README.md` — judul game di menu, loading, metadata dokumen, dan dokumentasi diubah menjadi "Moba DOTA".
+- **Acceptance criteria met:**
+  - [x] Game ter-serve sebagai first-party dari `/games/moba/index.html`, dengan bundle produksi dan file Draco runtime lokal.
+  - [x] Entri katalog client dan Worker mencerminkan data identik; kategori MOBA dan badge No Ads tampil sesuai konvensi portal.
+  - [x] Nama Moba DOTA tampil pada kartu, artwork thumbnail, metadata halaman, menu utama, dan layar loading game.
+  - [x] Worker mengenali id `local-moba` untuk route `/play/`, share, dan sitemap; tes canonical game baru ditambahkan.
+- **Verification:** source `npm run build` (TypeScript check + Vite production build) berhasil; portal ESLint bersih; `npm test` — 170 tes lulus; `git diff --check` bersih; asset bundle/CSS/thumbnail/Draco diverifikasi tersedia.
+- **Notes:** Build produksi menggunakan Vite dengan `base=/games/moba/`; bundle Three.js sekitar 1.13 MB ter-minify (Vite memberi peringatan ukuran chunk >500 kB). Build dihasilkan dari repo sumber terpisah `realm-siege-3d`.
+- **Knowledge drift:** diperbarui di `knowledge.md` §1–§3; kebutuhan/roster di `prd.md` §1, §3–§5; panduan build di `README.md`.
+
 > Changelog v1.0.0 initialized from @knowledge v1.0.0. Shape: fullstack. simple_mode: false — Stage 2 load test dan dokumentasi canary tetap wajib, bukan di-skip.
 > v1.1.0 (2026-08-28): pre-audit langsung terhadap source code (`game-portal-main.zip`) dilakukan atas permintaan developer, dibandingkan terhadap PRD/knowledge.md/changelog.md v1.0.0. Hasil audit disisipkan ke task-task terkait di atas dan ke `knowledge.md` v1.1.0; lihat bagian [AUDIT FINDINGS — 2026-08-28] untuk ringkasan lintas-task. Tidak ada task yang dipindah ke [COMPLETED] dari hasil pre-audit ini — eksekusi/perbaikan kode & keputusan developer (roster game, nasib `functions/*`, CORS, favicon) masih tertunda.
 > v1.2.0 (2026-08-30): developer menjawab keenam [DECISION NEEDED] dari `prd.md` §10 v1.3.0. Jawaban dipropagasi ke `knowledge.md` v1.2.0, `prd.md` v1.4.0, dan task-task terkait di atas (Task #002, #006, #011, #013, #017), ditandai "[DIJAWAB 2026-08-30]". Lihat [DEVELOPER DECISIONS — 2026-08-30] di atas untuk ringkasan. Tidak ada task yang dipindah ke [COMPLETED] — keputusan sudah diambil, tapi eksekusi kode (sinkronisasi `LOCAL_GAMES`, penghapusan `functions/*`, verifikasi & pemasangan `favicon.svg`, pembuatan ad-script GameMonetize/GamePix) masih tertunda.
@@ -76,6 +95,7 @@ Satu Cloudflare Worker dengan static assets (`src/index.js`) menangani seluruh r
 > v1.0.5 (2026-08-31): Task #004 completed — `package.json` + `package-lock.json` introduced with ESLint 10.9.1 (flat config), Prettier 3.9.6, Vitest 4.1.11, jsdom 26.1.0. `eslint.config.js`, `.prettierrc`, `.prettierignore`, `vitest.config.js` created. Minor lint fixes in `js/state.js`, `js/catalog.js`, `js/player.js`, `src/index.js`. `npm run lint` and `npm test` both exit 0; `npm ci` exits 0 (0 vulnerabilities). @knowledge v1.3.0: §2 dev tooling stack added; §4 Formatter/Linter/Testing updated with actual versions. Task #005 promoted to [IN PROGRESS].
 > v1.0.6 (2026-09-01): Task #005 completed — husky 9.1.7 installed as git hooks manager. Pre-commit hook blocks `.env` files (clear error message) and runs lint. `.husky/` removed from `.gitignore` so hooks are committed. `prepare` script in `package.json` ensures hooks auto-install on `npm install`/`npm ci`. Task #006 promoted to [IN PROGRESS].
 > v1.0.7 (2026-09-01): Task #006 completed — `package.json` build script added (`npm run lint && npm audit --audit-level=high`). Cloudflare Workers Builds dashboard build command to be set to `npm run build`. Lint error causes non-zero exit blocking deploy; clean build passes.
+> v1.0.38 (2026-10-17): Task #031 completed — Realm Siege 3D diintegrasikan sebagai Moba DOTA dari repo sumber terpisah ke `games/moba/` sebagai build Vite/React/Three.js siap produksi, beserta Draco decoder lokal dan thumbnail khusus; registrasi `local-moba` kategori MOBA disinkronkan di `js/config.js` dan `src/index.js`, tes canonical `moba-dota` ditambahkan. Nama game diperbarui pada katalog, metadata/artwork portal, menu utama, dan layar loading di repo sumber. Verifikasi: TypeScript/Vite build berhasil, ESLint bersih, 170 unit tests lulus, `git diff --check` bersih.
 
 ### Task #001 — Environment Audit & Security Baseline ✅
 - **Completed:** 2026-08-31
@@ -2073,7 +2093,7 @@ Satu Cloudflare Worker dengan static assets (`src/index.js`) menangani seluruh r
   - [CODE] **D1 — salinan setia dulu, adaptasi belakangan** (perintah eksplisit developer): 3 file inti (`game.js`/`style.css`/`index.html`) di-replace dari repo sumber apa adanya; adaptasi dibatasi hanya: hapus CDN (CSP), inline ikon lucide, font `Inter`→`system-ui`, tambah blok integrasi gimboot + `ui-share` + stat Best — engine, arsitektur DOM, drag-drop, dan layout TIDAK diubah
   - [CODE] **D2 — koreksi temuan CSP Task #027**: `style-src-attr 'none'` hanya memblokir atribut `style="..."` yang di-parse dari markup; manipulasi CSSOM (`el.style.transform = …`) tidak diblokir — terbukti seluruh 52 kartu ter-posisi via `transform` dengan 0 violation. Konsekuensi: klausul "game wajib class CSS, bukan style inline" di knowledge/prd direvisi; class `.pip-face*` era tulis-ulang dibuang sebagai dead code
   - [CODE] **D3 — sound.js kembali verbatim** (metode `hint()`/`undo()` versi lama dihapus; versi sumber memakai `Sound.invalid()` untuk hint kosong)
-  - [CODE] **D4 — `npm run dev` = `wrangler dev` polos** (perintah developer: stop mendalami, langsung tambahkan). Catatan: dengan `[assets] directory = "."`, `wrangler dev` me-watch `.wrangler/state` (SQLite miniflare yang terus ditulis) → reload-storm; bila menggantung, workaround terdokumentasi `wrangler dev --persist-to <path di luar repo>` (belum diverifikasi penuh — developer menghentikan investigasi)
+  - [CODE] **D4 — `npm run dev` = `wrangler dev` polos** (perintah developer: stop mendalami, langsung tambahkan). Catatan: dengan `[assets] directory = "."`, `wrangler dev` me-watch `.wrangler/state` (SQLite miniflare yang terus ditulis) → reload-storm; bila menggantung, workaround terdokumentasi `wrangler dev --persist-to <path di luar repo>` (belum diverifikasi penuh — developer menghentikan investigasi). **[DISELESAIKAN 2026-10-15 — Task #030]** reload-storm ternyata bug upstream wrangler yang sudah diperbaiki di 4.150.0 (PR #16156); devDependency di-upgrade ke `^4.151.0` → `npm run dev` kini jalan polos tanpa `--persist-to`
   - [TEST] **D5 — smoke-test manual Solitaire tetap PENDING** di `docs/manual-qa-checklist.md` (tak diubah task ini); verifikasi otomatis via Chromium headless lulus di integration time
 - **Notes:**
   - Verifikasi visual kunci: screenshot `sol-1-dealt.png` (deal awal) dibandingkan langsung dengan screenshot repo asli — layout, warna, pola kartu, dan gaya face-card cocok
@@ -2125,3 +2145,42 @@ Satu Cloudflare Worker dengan static assets (`src/index.js`) menangani seluruh r
   - Verifikasi visual: screenshot `noads-tab.png` (tab aktif + 5 kartu "NO ADS")
   - Saat verifikasi, wrangler dev pertama crash (ENOENT) karena script verifikasi sementara dibuat/dihapus di direktori yang di-watch; run ulang dengan `--persist-to <path luar repo>` (workaround terdokumentasi Task #028/D4) sukses — reload-storm tidak terulang
 - **Knowledge drift:** UPDATE REQUIRED & **diedit pada task ini**: @knowledge history line (v1.6.14 = badge No Ads + tab No Ads Game), §3 `catalog.js`, §7 aturan badge/tab — knowledge **v1.6.13 → v1.6.14**, `knowledge_version` changelog disinkronkan 1.6.14; @prd §5 (acceptance + UI notes) + revision history row 1.6.8 — prd **v1.6.7 → v1.6.8**
+
+### Task #030 — Ad-hoc: Fix `npm run dev` Loading Terus di Browser — Upgrade wrangler 4.148.0 → 4.151.0 ✅
+- **Completed:** 2026-10-15
+- **Phase:** Ad-hoc (bugfix permintaan developer: *"`npm run dev` loading terus di browser"* — di luar urutan task P04, mengikuti pola ad-hoc Task #023–#029)
+- **Status:** OK
+- **Branch:** `dev` (perubahan `package.json` + `package-lock.json` belum di-commit saat entri ini ditulis — menunggu konfirmasi developer)
+- **Context / akar masalah (ROOT CAUSE):** `npm run dev` jalan normal di terminal (`Ready on http://127.0.0.1:8787`), tapi halaman di browser menggantung/terus loading dan tidak pernah selesai. **Ini bug upstream wrangler, bukan bug kode Gimboot.** Pemicunya: `wrangler.toml` memakai `[assets] directory = "."` (seluruh root repo = direktori aset statis), sehingga `wrangler dev` me-watch seluruh root — **termasuk `.wrangler/state`** (SQLite milik miniflare yang DITULIS wrangler sendiri setiap request). Assets watcher versi lama (≤ 4.149.0) tidak mengabaikan tulisan wrangler itu sendiri, menganggapnya sebagai "perubahan aset" → memicu reload; reload membatalkan request yang masih berjalan (in-flight); request berikutnya menulis state lagi → loop tak berujung. Makin banyak request, makin sering reload → browser tidak pernah menerima response (loading terus).
+  **Konfirmasi dari changelog resmi wrangler:** versi **4.150.0**, PR **#16156** — *"Ignore `.wrangler` writes in the dev assets watcher"*: *"`wrangler dev` reloaded in a loop when `assets.directory` was the project root, because the assets watcher treated wrangler's own writes under `.wrangler` as asset changes and dropped in-flight requests."* Versi wrangler yang terkunci di lockfile saat gejala muncul: **4.148.0** (dari range `^4.129.1`) — masih mengandung bug; fix baru masuk di 4.150.0.
+- **Root cause chain:** `[assets] directory = "."` → file watcher membawahi `.wrangler/state` → tiap request menulis SQLite → event file-change → `⎔ Reloading local server...` → in-flight request dibatalkan → browser menunggu response yang tak pernah datang → repeat.
+- **Bukti gejala ini sudah dua kali tercatat sebelumnya:** (1) Task #016/loadtest — *"`wrangler dev` CLI enters an infinite rebuild/reload loop in this environment and every request hangs"* (alasan k6 memakai `unstable_dev`, bukan CLI `wrangler dev`); (2) Task #028/D4 — disebut "reload-storm" dengan workaround `wrangler dev --persist-to <path luar repo>` (belum diverifikasi penuh); dan muncul lagi saat verifikasi Task #029. Ketiganya kini terjelaskan oleh satu bug upstream yang sama.
+- **Files created / modified:**
+  - `package.json` — devDependencies `wrangler`: `^4.129.1` → **`^4.151.0`**
+  - `package-lock.json` — resolved wrangler 4.148.0 → **4.151.0** (transitif ikut ter-update: workerd 1.20261006.1 → 1.20261012.1, miniflare 5.20261006.0-alpha → 5.20261012.0-beta, esbuild 0.28.1 → 0.28.2). Catatan: `@cloudflare/vitest-plugin` menyimpan wrangler 4.148.0 miliknya sendiri (nested copy) — hanya dipakai saat `npm test`, tidak memengaruhi `wrangler dev`
+  - `changelog.md` — entri ini (bump 1.0.36 → **1.0.37**, `knowledge_version` sinkron 1.6.15); marker [DISELESAIKAN 2026-10-15] ditambahkan ke catatan Task #028/D4
+  - `knowledge.md` — v1.6.14 → **v1.6.15**: history line baru; §2 dev tooling — catatan reload-storm Task #028 ditandai FIXED + bullet dev tooling Task #030 (versi & alasan)
+- **Acceptance criteria met:**
+  - [x] `npm run dev` berjalan polos (tanpa flag `--persist-to`) dan halaman direspons — smoke-test: 5 siklus GET `/`, `/api/games`, `/games/solitaire/index.html` + `/api/health` → semua **200/307 dalam 53–126 ms**, tidak ada yang menggantung
+  - [x] **Tidak ada reload loop selama traffic normal** — log wrangler selama pengujian hanya berisi baris request GET; **nol** baris `Reloading local server...` yang dipicu request (baris reload/restart yang muncul di akir log berasal dari `taskkill` cleanup proses dev server sesudah pengujian, bukan dari request)
+  - [x] Fix berasal dari versi yang memuat perbaikan upstream — lockfile kini resolve wrangler **4.151.0** (≥ 4.150.0, PR #16156), bukan lagi 4.148.0
+  - [x] Gejala lama terdokumentasi & terselesaikan — workaround `--persist-to` (Task #028/D4) tidak lagi diperlukan
+  - [x] `npm test` 169 pass 0 fail; `npm run lint` exit 0 (perubahan hanya pin versi devDependency)
+- **Security gate:** BASIC — tooling-only (pin versi devDependency); tanpa perubahan kode Worker, CSP, route, atau aset produksi
+  - [x] Tidak ada secret/credential di perubahan — ✓ (hanya versi package)
+  - [x] Lockfile ter-pin dengan integrity hash — ✓ (wrangler 4.151.0 resolved eksak)
+  - [x] CVE scan `npm audit --audit-level=high` — ✓ 0 vulnerabilities
+  - [x] `.gitignore` / pre-commit hook tidak berubah — ✓
+  - [x] Item lain (auth/CORS/CSP/input validation/encoding) — N/A tak tersentuh
+- **Scalability gate:** BASIC — semua item N/A (perubahan pin versi tooling dev; tidak menyentuh runtime produksi maupun jalur request)
+- **Regression:** `npm test` **169 passed, 0 failed**; `npm run lint` exit 0; `npm audit` 0 vulnerabilities; smoke-test `wrangler dev` lokal: 18 request sukses, 0 hang, 0 request-triggered reload
+- **Decisions made:**
+  - [INFRA] **D1 — upgrade wrangler, bukan menjadikan workaround `--persist-to` sebagai default**: fix resmi sudah tersedia upstream sejak 4.150.0; upgrade menghapus kebutuhan flag tambahan dan menyerahkan pemeliharaan watcher ke Cloudflare
+  - [INFRA] **D2 — range `^4.151.0` (bukan pin eksak `4.151.0`)**: mengikuti gaya semver range yang sudah ada (`^4.129.1`); reproducibility tetap dijamin `package-lock.json`
+  - [ARCH] **D3 — `[assets] directory = "."` TIDAK diubah**: konfigurasi itu disengaja (seluruh repo = aset statis yang diserve Worker; lihat wrangler.toml & knowledge §2) — pihak yang salah adalah file watcher wrangler-nya, bukan konfigurasi proyek. Pindah direktori aset atau menambah flag justru mengubah perilaku deploy demi menghindari bug dev
+  - [INFRA] **D4 — `.assetsignore` bukan obatnya**: `.wrangler/` memang sudah terdaftar di `.assetsignore`, tapi file itu mengatur aset yang DI-SERVE/di-upload ke Cloudflare — bukan isi file watcher `wrangler dev` lokal; jadi kehadirannya tidak (dan tidak pernah) menangkal bug ini
+- **Notes:**
+  - Gejala khas bila terulang di versi wrangler < 4.150.0: terminal terlihat "Ready", tapi ada `⎔ Reloading local server...` berulang tanpa henti diikuti request yang dibatalkan → browser loading terus. Diagnosis cepat: bandingkan jumlah baris `Reloading` vs jumlah request di log
+  - E2E (`npm run test:e2e`) mem-boot dev server via API `unstable_dev`, bukan CLI `wrangler dev` — sudah kebal dari bug ini sejak awal (alasan yang sama dengan pemilihan k6 di Task #016), jadi tidak perlu diubah
+  - `@cloudflare/vitest-plugin` masih membawa wrangler 4.148.0 nested (terlihat di `package-lock.json`); itu hanya untuk pool test `npm test` dan tidak dipakai `npm run dev`
+- **Knowledge drift:** UPDATE REQUIRED & **diedit pada task ini**: @knowledge history line (v1.6.15 = fix reload-storm via upgrade wrangler), §2 dev tooling (catatan Task #028 ditandai FIXED + bullet Task #030) — knowledge **v1.6.14 → v1.6.15**, `knowledge_version` changelog disinkronkan 1.6.15; @prd tidak diubah (murni perbaikan tooling dev, di luar scope produk)

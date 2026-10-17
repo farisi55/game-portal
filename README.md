@@ -4,19 +4,19 @@
 
 The game catalog is a live server-side merge of three sources:
 
-- **GameMonetize** — fetched from their game feed (parsed server-side)
-- **GamePix** — fetched from their JSON feed
-- **First-party** — five HTML5 Canvas games hosted directly in this repo: Ayo ke Kopdes, Kejar Koruptor, Mobil MBG, Kicau Mania, and Solitaire — all confirmed active and registered in `LOCAL_GAMES` in **both** `js/config.js` (client) and `src/index.js` (Worker), so `/play/`, `/share/`, and sitemap entries work for all five
+- **GameMonetize** — fetched server-side from their game feed
+- **GamePix** — fetched server-side from their JSON feed
+- **First-party** — six games hosted directly in this repo: Ayo ke Kopdes, Kejar Koruptor, Mobil MBG, Kicau Mania, Solitaire, and Moba DOTA. They are registered in both `js/config.js` and the Worker’s `src/index.js` `LOCAL_GAMES`.
 
-> **Related docs:** this README is the getting-started/architecture guide for contributors. Product scope lives in [`prd.md`](./prd.md), the full technical reference in [`knowledge.md`](./knowledge.md), and task history in [`changelog.md`](./changelog.md) (27 tasks, all complete). Operational procedures are in [`docs/deployment-runbook.md`](./docs/deployment-runbook.md); the public API is specced in [`docs/api.yaml`](./docs/api.yaml) (OpenAPI 3.1).
+> **Related docs:** this README is the getting-started/architecture guide for contributors. Product scope lives in [`prd.md`](./prd.md), the full technical reference in [`knowledge.md`](./knowledge.md), and task history in [`changelog.md`](./changelog.md). Operational procedures are in [`docs/deployment-runbook.md`](./docs/deployment-runbook.md); the public API is specced in [`docs/api.yaml`](./docs/api.yaml) (OpenAPI 3.1).
 
 ## Status
 
-Live in production at **https://gimboot.com** (Cloudflare Worker `games`, custom domain). All 27 tracked tasks are complete — including foundation hardening (tests, linting, security headers, rate limiting, health endpoint, load testing), SEO fixes from Google Search Console feedback, and the Emulator Browser feature. Remaining ideas (e.g. a provider filter on the catalog grid) are listed under [Roadmap](#roadmap).
+Live in production at **https://gimboot.com** (Cloudflare Worker `games`, custom domain). The planned roadmap is complete, including foundation hardening (tests, linting, security headers, rate limiting, health endpoint, load testing), SEO fixes from Google Search Console feedback, and the Emulator Browser feature. Subsequent ad-hoc changes are recorded in `changelog.md`; remaining ideas are listed under [Roadmap](#roadmap).
 
 ## Features
 
-- **Aggregated catalog** — hundreds of games from GameMonetize + GamePix, merged server-side with the five first-party titles and cached at the edge (~30 min); `/api/games` supports `page`/`limit` pagination, `/api/search` does hybrid server-side search
+- **Aggregated catalog** — hundreds of games from GameMonetize + GamePix, merged server-side with the six first-party titles and cached at the edge (~30 min); `/api/games` supports `page`/`limit` pagination, `/api/search` does hybrid server-side search
 - **Programmatic SEO** — every game gets a real, crawlable `/play/{id}/{slug}` URL with a server-injected title, meta description, Open Graph/Twitter tags, and canonical link (stream-transformed via Cloudflare's HTMLRewriter — no hand-written pages)
 - **Canonical URL hygiene** — legacy `/game.html?id=X` and `/game?id=X` 301 straight to `/play/{id}/{slug}` in a single hop; HTTP→HTTPS and `/index.html` normalization are also single-hop; `/sitemap.xml` emits only canonical HTTPS URLs (fixed per Google Search Console)
 - **Dynamic sitemap** — `/sitemap.xml` lists every game's `/play/` URL, generated live from the merged catalog and pointed to by `robots.txt`
@@ -88,7 +88,7 @@ Requires Node ≥ 20 and npm ≥ 10.
 ```bash
 npm install                      # dev tooling only (wrangler, vitest, eslint, playwright)
 
-npm run dev*                     # local dev — npx wrangler dev runs the Worker + serves assets
+npm run dev                       # local dev — runs the Worker + serves assets
 npm test                         # unit tests (Vitest + @cloudflare/vitest-plugin)
 npm run test:e2e                 # Playwright E2E (run `npx playwright install` once)
 npm run lint                     # ESLint, zero warnings allowed
@@ -96,7 +96,7 @@ npm run build                    # quality gate: lint + unit tests + npm audit -
 npx wrangler deploy              # deploy to production
 ```
 
-\* there's no `dev` script in `package.json` — use `npx wrangler dev` directly (the frontend is plain ES modules and Tailwind loads from a CDN, so there is **no bundler and no production build step**; `npm run build` is a gate, not a compile step).
+The portal shell is served as plain ES modules and does not require a frontend bundling step; `package.json` provides lint, test, and Wrangler scripts. Moba DOTA is the exception: it is built separately from the `realm-siege-3d` source repository and its production output is hosted under `games/moba/` (see [Moba DOTA build](#moba-dota-build)).
 
 **Rolling back a bad deploy:**
 
@@ -153,7 +153,8 @@ gimboot/
 │   ├── ayo-kopdes/                First-party game
 │   ├── kejar-koruptor/            First-party game
 │   ├── mobil-mbg/                 First-party game
-│   ├── solitaire/                 First-party game (Klondike; imported from farisi55/solitaire-puter)
+│   ├── solitaire/                 First-party Klondike game
+│   ├── moba/                      First-party Moba DOTA (React/Three.js build)
 │   └── shared/                    ui-share.js/css — confetti + share-prompt module
 ├── emulator/
 │   ├── index.html                 Shell — 35-system dropdown (7 optgroups), ROM/BIOS pickers, how-to + legal disclaimer
@@ -184,6 +185,18 @@ No secrets are currently required; `.gitignore` already excludes `.env`, `*.pem`
 - **Emulator ROM size caps** — per-system map in `emulator/emulator-ui.js` + `emulator/runtime.html` (default 128 MB; PS1 999 MB; PSP 2 GB).
 - **Colors & typography** — CSS custom properties at the top of `css/style.css`.
 
+### Moba DOTA build
+
+Moba DOTA is the production build of the separate `realm-siege-3d` source project, hosted in `games/moba/`. Its source uses React, Three.js/WebGL, and Vite; the portal serves the built HTML, JavaScript, CSS, and Draco decoder as static same-origin assets. The game is registered as `local-moba` in both portal `LOCAL_GAMES` lists.
+
+To refresh the hosted build from the source repository, run there:
+
+```bash
+npm run build -- --base=/games/moba/ --outDir <path-to-game-portal>/games/moba --emptyOutDir false
+```
+
+Keep `thumb.svg` in the target folder (the `--emptyOutDir false` option preserves it), and keep the matching `local-moba` records in `js/config.js` and `src/index.js` if the game's URL, title, category, or dimensions change.
+
 ## Security notes
 
 - **Embed allowlist** — `isAllowedEmbedUrl()` in `js/utils.js` only allows (a) absolute `https://` URLs on the GameMonetize/GamePix allowlist, or (b) a same-origin path under `/games/`.
@@ -200,12 +213,20 @@ No secrets are currently required; `.gitignore` already excludes `.env`, `*.pem`
 - **E2E** — Playwright (`npm run test:e2e`): catalog→play flow (`e2e/full-flow.test.js`) and the emulator upload flow (`e2e/emulator-flow.test.js`).
 - **Load** — k6 suites under `loadtest/` (smoke, 1,000-VU capacity, cache-cold herd); latest results in `loadtest/RESULTS.md`.
 - **Gates** — `npm run build` = lint + unit tests + high/critical CVE scan; a Husky pre-commit hook enforces checks locally. Manual QA for the Canvas games uses `docs/manual-qa-checklist.md`.
+  At the time of the Moba DOTA integration (Task #031), 170 unit tests passed, including the Worker canonical URL for `local-moba`. The source repository separately uses `npm run build` for TypeScript checking and its Vite production build.
 
 ## Roadmap
 
-All 27 tracked tasks are complete (see `changelog.md`); the items previously listed as known issues have been resolved. Open ideas:
+The planned roadmap is complete; implementation follow-ups are tracked in `changelog.md`. Previously listed implementation issues have been resolved:
 
+- **`src/index.js` `LOCAL_GAMES` sync** — resolved for all six first-party games, including Moba DOTA (`local-moba`); keep it in sync with `js/config.js` when adding or changing a local title (see `changelog.md` Tasks #002 and #031).
+- **Delete `functions/api/*`, `functions/share/[id].js`** — confirmed not invoked under the current deploy model; decided to remove them for clean code. **Files deleted** as part of `changelog.md` Task #002.
+- **Verify and wire up `favicon.svg`** — confirmed as the official favicon, wired into `index.html`/`game.html` via `<link rel="icon">`, and referenced in `manifest.json`. **`.avicon.svg` removed** after verification (`changelog.md` Task #002).
+- **`manifest.json` screenshots** — `screenshot-desktop.png` and `screenshot-mobile.png` were identical images. The "narrow" entry removed from `manifest.json`, keeping only "wide" (`changelog.md` Task #002).
+
+Open ideas:
+- **Ad-script for GameMonetize/GamePix monetization** — a separate client-side ad unit (with load-timeout fallback so it never blocks game rendering) hasn't been built yet; this is distinct from the catalog-feed integration, which already has its own resilience (`changelog.md` Task #011).
 - Ping Google/Bing with the sitemap URL after a deploy so indexing starts sooner.
-- A provider filter (All / GameMonetize / GamePix / Original) — the `source` field used for the "Original" badge already exists to build on.
+- A provider filter (All / GameMonetize / GamePix / No Ads) for the catalog.
 - Per-system SEO landing pages for the emulator (currently a single `/emulator` page by developer decision).
 - Formal canary/staged rollout once concurrent traffic approaches ~7,000–8,000 users; procedure is already documented in `docs/deployment-runbook.md` §4–§5.

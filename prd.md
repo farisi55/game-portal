@@ -1,6 +1,6 @@
 ---
 doc_id: PRD-GIMBOOT-001
-version: 1.6.8
+version: 1.6.9
 status: ready
 created: 2026-08-28
 flow_compatibility: vibe-coding-v1.7
@@ -9,14 +9,14 @@ project_shape: fullstack
 
 # Gimboot (Game Portal) — Product Requirements Document
 
-*Catatan: dokumen ini mendokumentasikan Gimboot yang sudah berjalan/dalam pengembangan aktif — bukan proyek baru dari nol. Detail struktur teknis mengacu pada kondisi repository saat ini (lihat §4.2). Versi 1.3.0 mengintegrasikan hasil audit langsung terhadap source code (`game-portal-main.zip`, 2026-08-28). Versi 1.4.0 mengintegrasikan jawaban developer atas keenam [DECISION NEEDED] di §10 Open Questions v1.3.0 (dijawab 2026-08-30). Versi 1.6.0 menambahkan spesifikasi fitur baru **Emulator Browser (EmulatorJS)**, hasil sesi planning 2026-09-12 — 9 pertanyaan diajukan ke developer sebelum penyusunan, dijawab langsung di chat (bukan di §10 file ini seperti ronde sebelumnya); jawaban ditandai "[DIJAWAB 2026-09-12]" di seluruh dokumen. Satu catatan dari sesi planning ini: request awal developer meminta link download ke situs ROM pihak ketiga (romsgames.net, romsfun.com, retrostic.com) — DITOLAK karena ketiganya mendistribusikan ROM komersial berhak cipta tanpa lisensi; scope fitur diarahkan ke "emulator-only, ROM/BIOS 100% diunggah sendiri oleh pengguna", dengan rujukan homebrew legal sebagai gantinya (lihat §5, Feature: Emulator Browser). Versi ini (1.6.1) menyelesaikan satu-satunya item [DECISION NEEDED] yang tersisa dari ronde 1.6.0 (§10 poin 9, sequencing Emulator vs hardening) — developer mengonfirmasi 2026-09-12: Emulator dikerjakan TERAKHIR, setelah seluruh hardening (Task #013–#019) selesai, tanpa paralel. Versi 1.6.2–1.6.4 (2026-10-10/11): scope-change Task #024 (launch = seluruh 35 sistem EmulatorJS), revisi ad-hoc Task #025 (disclaimer emulator ke bahasa Inggris), dan revisi ad-hoc Task #026 (ROM size cap per-sistem: PS1 999 MB, PSP 2 GB — ditandai di §5).* 
+*Catatan: dokumen ini mendokumentasikan Gimboot yang sudah berjalan/dalam pengembangan aktif — bukan proyek baru dari nol. Detail struktur teknis mengacu pada kondisi repository saat ini (lihat §4.2). Versi 1.3.0 mengintegrasikan hasil audit langsung terhadap source code (`game-portal-main.zip`, 2026-08-28). Versi 1.4.0 mengintegrasikan jawaban developer atas keenam [DECISION NEEDED] di §10 Open Questions v1.3.0 (dijawab 2026-08-30). Versi 1.6.0 menambahkan spesifikasi fitur baru **Emulator Browser (EmulatorJS)**, hasil sesi planning 2026-09-12 — 9 pertanyaan diajukan ke developer sebelum penyusunan, dijawab langsung di chat (bukan di §10 file ini seperti ronde sebelumnya); jawaban ditandai "[DIJAWAB 2026-09-12]" di seluruh dokumen. Satu catatan dari sesi planning ini: request awal developer meminta link download ke situs ROM pihak ketiga (romsgames.net, romsfun.com, retrostic.com) — DITOLAK karena ketiganya mendistribusikan ROM komersial berhak cipta tanpa lisensi; scope fitur diarahkan ke "emulator-only, ROM/BIOS 100% diunggah sendiri oleh pengguna", dengan rujukan homebrew legal sebagai gantinya (lihat §5, Feature: Emulator Browser). Versi ini (1.6.1) menyelesaikan satu-satunya item [DECISION NEEDED] yang tersisa dari ronde 1.6.0 (§10 poin 9, sequencing Emulator vs hardening) — developer mengonfirmasi 2026-09-12: Emulator dikerjakan TERAKHIR, setelah seluruh hardening (Task #013–#019) selesai, tanpa paralel. Versi 1.6.2–1.6.4 (2026-10-10/11): scope-change Task #024 (launch = seluruh 35 sistem EmulatorJS), revisi ad-hoc Task #025 (disclaimer emulator ke bahasa Inggris), dan revisi ad-hoc Task #026 (ROM size cap per-sistem: PS1 999 MB, PSP 2 GB). Versi 1.6.9 (2026-10-17, Task #031) mencatat integrasi game first-party ke-6 Moba DOTA dari repo `realm-siege-3d`, termasuk build React/Three.js ke `games/moba/` dan rename game pada game serta katalog portal.*
 
 ## 1. Executive Summary
 - **Project Shape:** Fullstack (varian edge/serverless — tidak ada server persisten). [AUDIT KODE — KOREKSI] Backend BUKAN Cloudflare Pages Functions — dikonfirmasi via `wrangler.toml`, backend aktual adalah satu Cloudflare Worker (`src/index.js`) dengan static assets, di-deploy dengan `wrangler deploy`. Lihat §4.1/§4.2.
 - **Problem:** Gamer kasual mobile kesulitan menemukan portal mini-game yang ringan, cepat diakses via browser, teroptimasi untuk pencarian Google, dan punya mekanisme berbagi skor yang bisa viral ke media sosial.
-- **Solution:** Gimboot menyajikan katalog game HTML5 dalam bentuk PWA, teroptimasi SEO lewat clean URL & meta tag dinamis, dilengkapi modul viral sharing terpusat (`ui-share.js`). Katalog live BUKAN murni "mini-game bertema lokal buatan sendiri" — pembacaan kode `src/index.js` mengonfirmasi katalog adalah gabungan dari game first-party DAN feed live dari GameMonetize + GamePix (digabung & di-cache 30 menit di edge), sejalan dengan tagline `manifest.json` sendiri ("Hundreds of free browser games"). [DIJAWAB 2026-08-30] Keempat game first-party (Ayo Kopdes, Kejar Koruptor, Mobil MBG, Kicau Mania) dikonfirmasi developer masih aktif — lihat §10.
+- **Solution:** Gimboot menyajikan katalog game HTML5 dalam bentuk PWA, teroptimasi SEO lewat clean URL & meta tag dinamis, dilengkapi modul viral sharing terpusat (`ui-share.js`). Katalog live BUKAN murni "mini-game bertema lokal buatan sendiri" — pembacaan kode `src/index.js` mengonfirmasi katalog adalah gabungan dari enam game first-party dan feed live GameMonetize + GamePix (digabung & di-cache 30 menit di edge), sejalan dengan tagline `manifest.json` ("Hundreds of free browser games"). Enam game lokal tersebut: Ayo Kopdes, Kejar Koruptor, Mobil MBG, Kicau Mania, Solitaire, dan Moba DOTA.
 - **Success metric:** Dikonfirmasi developer — kombinasi install PWA + share action (Web Share API). Baseline angka diusulkan: ≥1.000 install/bulan & ≥300 share dalam 3 bulan pertama [ASSUMED — angka spesifik belum dikonfirmasi, bisa disesuaikan].
-- **MVP deadline:** Tidak disebutkan secara formal. [DIJAWAB 2026-08-30] Keempat game first-party (Ayo Kopdes, Kejar Koruptor, Mobil MBG, Kicau Mania) dikonfirmasi developer masih aktif — MVP untuk sisi katalog first-party sudah tercapai. Catatan implementasi: `src/index.js` (server) saat ini baru mengenali Kicau Mania di `LOCAL_GAMES`-nya, sedangkan `js/config.js` (client) sudah mencakup keempatnya — `src/index.js` perlu disinkronkan agar link share, halaman `/play/`, dan `sitemap.xml` juga berfungsi untuk Ayo Kopdes/Kejar Koruptor/Mobil MBG (lihat changelog Task #002). Katalog yang tampil ke pengguna sudah jauh lebih besar dari 4 judul berkat agregasi GameMonetize/GamePix. Sisa pekerjaan diprioritaskan pada hardening: audit clean-code (Phase 1, wajib selesai lebih dulu — dikonfirmasi developer), testing, dan observability, sebelum fitur baru dilanjutkan.
+- **MVP deadline:** Tidak disebutkan secara formal. Roster first-party saat ini terdiri dari Ayo Kopdes, Kejar Koruptor, Mobil MBG, Kicau Mania, Solitaire, dan Moba DOTA. Sinkronisasi `LOCAL_GAMES` client/server untuk game ini telah dilakukan; rujuk catatan historis Task #002 dan Task #031 di `changelog.md`. Katalog yang tampil ke pengguna juga menggabungkan feed GameMonetize/GamePix.
 
 ## 2. Users & Context
 - **Primary users:** Gamer kasual (khususnya pengguna mobile) yang mencari hiburan cepat via browser, serta pengguna media sosial yang menyukai tantangan skor tinggi dari teman.
@@ -30,7 +30,7 @@ project_shape: fullstack
 ### 3.1 In-Scope Features
 | Feature | Priority | Description |
 |---|---|---|
-| Katalog Game (first-party + agregasi) | P0 — MVP | [AUDIT KODE] Menyajikan game first-party (Ayo Kopdes, Kejar Koruptor, Mobil MBG, Kicau Mania — status roster perlu konfirmasi, lihat §10) DIGABUNG dengan katalog live dari feed GameMonetize + GamePix |
+| Katalog Game (first-party + agregasi) | P0 — MVP | Menyajikan enam game first-party (Ayo Kopdes, Kejar Koruptor, Mobil MBG, Kicau Mania, Solitaire, Moba DOTA) DIGABUNG dengan katalog live dari feed GameMonetize + GamePix |
 | Clean URL & Dynamic SEO | P0 — MVP | Routing game via URL bersih (`/play/:id/:slug`, [AUDIT KODE] bukan lagi pola `/main/{slug}` di draf sebelumnya); injeksi meta tag & canonical link dinamis, ditambah sitemap dinamis (`/sitemap.xml`) |
 | Viral Sharing & High Score System | P0 — MVP | Modul `ui-share.js`: animasi confetti saat rekor pecah + Web Share API dengan copywriting dinamis |
 | PWA (Progressive Web App) | P0 — MVP | Instalasi ke home screen + offline caching via `manifest.json` & `sw.js` |
@@ -42,20 +42,20 @@ Catatan prioritas: [AUDIT KODE — KOREKSI] premis "katalog baru berisi 4 judul"
 ### 3.2 Out of Scope (explicit)
 - Fitur multiplayer online real-time.
 - Penyimpanan cloud untuk progres profil pengguna atau sistem login/otentikasi.
-- Pembuatan aset atau rendering 3D kompleks (hanya 2D dan pseudo-3D).
+- Pembuatan aset 3D baru sebagai tanggung jawab Gimboot/portal; game first-party Moba DOTA (Task #031) adalah pengecualian yang di-host sebagai build Three.js/WebGL dari repo sumber terpisah.
 - [DIJAWAB 2026-09-12 — HARD RULE] Gimboot TIDAK PERNAH meng-hosting, mendistribusikan, atau menautkan (link) ke file ROM/BIOS konsol berhak cipta, maupun ke situs pihak ketiga yang melakukannya (mis. romsgames.net, romsfun.com, retrostic.com, atau situs sejenis). Fitur Emulator (§5) hanya menyediakan tool emulator; ROM/BIOS 100% tanggung jawab & unggahan pengguna sendiri. Lihat §8 Constraints untuk alasan (risiko takedown, kebijakan ad network) dan §5 untuk rujukan sumber ROM legal (homebrew) sebagai pengganti.
 
 ### 3.3 Future Considerations
 *(usulan — belum divalidasi developer, kecuali item audit clean-code yang diminta langsung oleh developer)*
 - Leaderboard global read-only berbasis snapshot statis ter-generate berkala via edge function, tanpa perlu akun/login.
-- Penambahan game bertema lokal baru di luar 4 judul saat ini.
+- Penambahan game first-party baru di luar enam judul saat ini.
 - Dark mode / theming portal.
 
 ## 4. Technical Specification
 
 ### 4.1 Tech Stack
-- **Language & Runtime:** Vanilla JavaScript (ES2022+), HTML5 Canvas API (untuk game first-party), CSS3; runtime edge Cloudflare Workers.
-- **Framework:** Tanpa framework reaktif untuk game (Vanilla JS murni); Tailwind CSS (via CDN) untuk styling shell portal (dikonfirmasi via `js/tailwind-config.js`).
+- **Language & Runtime:** Vanilla JavaScript (ES2022+), HTML5 Canvas API untuk game Canvas lama, dan Moba DOTA sebagai build browser React/Three.js (WebGL) terpisah; CSS3; runtime edge Cloudflare Workers.
+- **Framework:** Shell portal tetap Vanilla JS dengan Tailwind CSS (via CDN). Pengecualian pada game lokal: Moba DOTA dibangun di repo `realm-siege-3d` dengan React 19, Three.js 0.128, dan Vite 8 lalu hasil produksi di-host pada `games/moba/`.
 - **Database:** none — skor & state pemain disimpan lokal via `localStorage`. [AUDIT KODE] BUKAN satu wrapper tunggal via `js/state.js` — `state.js` hanya menangani favorit & recently-played; skor per-game disimpan mandiri oleh tiap `games/{slug}/game.js`, dan ada pula skor global lintas game di `js/pwa.js`. Detail lengkap di §4.2.
 - **ORM / Query builder:** omit (tidak ada database).
 - **Cache:** Tidak ada layer cache terpisah (mis. Redis); caching terjadi implisit lewat Cloudflare CDN edge cache untuk aset statis + Service Worker (`sw.js`) untuk offline asset caching. [AUDIT KODE] Tambahan: `src/index.js` juga mengimplementasikan cache edge 30 menit (Cache API) khusus untuk hasil gabungan feed GameMonetize/GamePix.
@@ -64,10 +64,10 @@ Catatan prioritas: [AUDIT KODE — KOREKSI] premis "katalog baru berisi 4 judul"
 - **Key third-party services:** GameMonetize/GamePix — [AUDIT KODE] perannya ganda, sebelumnya hanya tercatat sebagian: (1) jaringan iklan, diverifikasi via `ads.txt`; DAN (2) sumber katalog game LIVE yang di-fetch server-side oleh `src/index.js` (GameMonetize via `feed.php`, GamePix via `feeds.gamepix.com/v2/json`), digabung dengan game first-party, lalu di-cache di edge. Peran (2) sebelumnya tidak tercatat di PRD versi manapun.
 - **Key third-party library (baru, [DIJAWAB 2026-09-12]):** [EmulatorJS](https://github.com/emulatorjs/emulatorjs) — lisensi GPL-3.0, self-hosted (bukan CDN resmi `cdn.emulatorjs.org`) di bawah `/vendor/emulatorjs/`, konsisten dengan prinsip zero-external-dependency proyek ini. Aman dipakai apa adanya (include tanpa modifikasi source); modifikasi source core-nya sendiri di masa depan akan kena kewajiban copyleft GPLv3 — dicatat sebagai batasan, bukan blocker untuk scope saat ini.
 - **Webhook providers:** none — `ads.txt` adalah file verifikasi statis, bukan penerima webhook.
-- **Frontend framework (if applicable):** none (Vanilla JS + utility class Tailwind; tanpa React/Vue/Svelte).
+- **Frontend framework (if applicable):** Shell portal: none (Vanilla JS + utility class Tailwind). Build game MOBA terpisah: React 19 + Three.js, tidak mengubah stack shell.
 
 ### 4.2 Architecture
-- **Pattern:** Serverless/edge, static-first — seluruh logika game berjalan di klien (Canvas); backend edge hanya untuk SEO meta-injection dan query katalog ringan.
+- **Pattern:** Serverless/edge, static-first — logika game berjalan di klien; mayoritas game lokal adalah Canvas, Solitaire adalah DOM/CSS, dan Moba DOTA adalah React/Three.js WebGL. Backend edge hanya untuk SEO meta-injection dan query katalog ringan.
 - **Module structure** *(direkonstruksi dari struktur repo existing, diperbarui dengan konfirmasi developer)*:
 
 ```
@@ -84,28 +84,22 @@ game-portal/
 │   └── share/
 │       └── [id].js               # akan dihapus — logika yang jalan ada di src/index.js (handleShareRoute)
 ├── games/
-│   ├── ayo-kopdes/
-│   │   ├── game.js
-│   │   ├── index.html
-│   │   ├── style.css
-│   │   └── thumb.svg
-│   ├── kejar-koruptor/           # [DIJAWAB 2026-08-30] dikonfirmasi masih aktif
-│   ├── kicau-mania/              # aktif; satu-satunya yang sudah dikenali src/index.js saat ini
-│   ├── mobil-mbg/                # [DIJAWAB 2026-08-30] dikonfirmasi masih aktif
-│   ├── solitaire/                # [DIIMPLEMENTASIKAN Task #027 — 2026-10-13; DI-REWORK Task #028 — 2026-10-14] game first-party ke-5 (Klondike), kini SALINAN SETIA dari github.com/farisi55/solitaire-puter (DOM flip-3D + drag-and-drop + layout dinamis — port awal yang ditulis ulang terbukti tidak playable & diganti); struktur sama (game.js, index.html, style.css, thumb.svg) + sound.js (Web Audio API) & win.js (canvas cascade); tanpa dependensi CDN (adaptasi CSP); manipulasi CSSOM `el.style.*` kompatibel dengan `style-src-attr 'none'` (lihat changelog Task #028)
+│   ├── ayo-kopdes/, kejar-koruptor/, kicau-mania/, mobil-mbg/  # empat game Canvas lokal
+│   ├── solitaire/                # game lokal ke-5; Klondike, salinan setia repo sumber + adaptasi Gimboot (Task #027/#028)
+│   ├── moba/                     # game lokal ke-6; hasil build React/Three.js, Vite hashed JS/CSS, Draco runtime & thumb.svg (Task #031)
 │   └── shared/
 │       ├── ui-share.css
 │       └── ui-share.js           # modul share/confetti (TIDAK menyimpan skor — lihat catatan state.js di bawah)
 ├── js/
 │   ├── catalog.js                # render & manajemen katalog game
-│   ├── config.js                 # konfigurasi/konstanta aplikasi, termasuk LOCAL_GAMES sisi klien (5 game, `source: 'No Ads'` [Task #029] — lihat §10)
+│   ├── config.js                 # konfigurasi/konstanta aplikasi, termasuk LOCAL_GAMES sisi klien (6 game, `source: 'No Ads'` — lihat Task #029/#031)
 │   ├── player.js                 # [AUDIT KODE] controller halaman player lengkap: resolve game, favorit, recently-played, fullscreen, native share/clipboard, related-games, lazy iframe load — BUKAN sekadar "loader game & kontrol audio"; tidak ada logika audio di file ini
 │   ├── pwa.js                    # [AUDIT KODE] registrasi service worker + tracker skor tertinggi GLOBAL lintas game via window.postMessage (termasuk dari game GamePix ter-embed) — TIDAK ada kode install-prompt (beforeinstallprompt dsb.) di file ini maupun di seluruh repo
 │   ├── state.js                  # [AUDIT KODE] wrapper localStorage untuk FAVORIT & RECENTLY-PLAYED saja — TIDAK berisi logika skor sama sekali
 │   ├── tailwind-config.js        # konfigurasi Tailwind tanpa build step penuh
 │   └── utils.js                  # escapeHtml, debounce, slugify, buildPlayUrl, buildGamePageUrl, isAllowedEmbedUrl, readSessionGames/writeSessionGames, fetchGameCatalog
 ├── src/
-│   └── index.js                  # satu-satunya Worker entry point yang aktif. Menangani static-asset fallback, /api/games, /api/search, /share/:id, /play/:id/:slug, /game (redirect), /sitemap.xml, plus security headers (CSP nonce-based) untuk semua response. [DIJAWAB 2026-08-30 — TINDAK LANJUT] `LOCAL_GAMES` di file ini baru berisi Kicau Mania — perlu ditambah Ayo Kopdes/Kejar Koruptor/Mobil MBG menyusul keputusan roster (lihat changelog Task #002).
+│   └── index.js                  # Worker entry point untuk static assets, API, SEO/share routes, sitemap, dan security headers; LOCAL_GAMES mencakup keenam game first-party termasuk local-moba.
 ├── _headers                      # fallback saja — src/index.js menegakkan CSP nonce-based-nya sendiri di level Worker untuk semua response
 ├── .assetsignore
 ├── .avicon.svg                   # [DIJAWAB 2026-08-30] developer memutuskan `favicon.svg` yang dipakai sebagai favicon resmi — file ini jadi kandidat dihapus, lihat changelog Task #002
@@ -166,12 +160,12 @@ Diomit sesuai aturan template: §4.1 Database = "none", sehingga Phase 2 (Domain
 ### Feature: Katalog Game (First-Party + Agregasi Live)
 - **User story:** Sebagai gamer kasual, saya ingin melihat daftar game yang bisa langsung dimainkan, sehingga saya bisa memilih & memainkan game yang saya minati tanpa instalasi aplikasi.
 - **Acceptance criteria:**
-  - [ ] Halaman utama (`index.html`) menampilkan game first-party (Ayo Kopdes, Kejar Koruptor, Mobil MBG, Kicau Mania — [DIJAWAB 2026-08-30] keempatnya dikonfirmasi developer masih aktif) lengkap dengan thumbnail dan judul, DIGABUNG dengan hasil agregasi GameMonetize/GamePix.
-  - [ ] Setiap game first-party dapat dimuat & dimainkan sepenuhnya via HTML5 Canvas murni tanpa dependency game-engine eksternal; game hasil agregasi dimuat via iframe embed tervalidasi (`isAllowedEmbedUrl`).
+  - [ ] Halaman utama (`index.html`) menampilkan keenam game first-party (Ayo Kopdes, Kejar Koruptor, Mobil MBG, Kicau Mania, Solitaire, Moba DOTA) lengkap dengan thumbnail dan judul, DIGABUNG dengan hasil agregasi GameMonetize/GamePix.
+  - [ ] Game Canvas lokal berjalan mandiri; Solitaire memakai implementasi DOM/CSS; Moba DOTA dijalankan dari build React/Three.js statis mandiri di `games/moba/`; game hasil agregasi dimuat via iframe embed tervalidasi (`isAllowedEmbedUrl`).
   - [ ] First Contentful Paint katalog < 1.5 detik pada koneksi 4G [ASSUMED — selaras hard constraint ukuran file minimal].
   - [ ] [DIIMPLEMENTASIKAN Task #029 — 2026-10-14] Kartu setiap game first-party memuat badge **"NO ADS"** (dari field `source: 'No Ads'` di LOCAL_GAMES, dirender uppercase) yang menandainya sebagai game tanpa iklan; kartu game feed remote tidak memuat badge ini (feed tidak punya field `source`).
-  - [ ] [DIIMPLEMENTASIKAN Task #029 — 2026-10-14] Tab **"No Ads Game"** muncul di `tab-bar` tepat SEBELUM tab "Emulator" dan menampilkan hanya 5 game yang di-host di folder `games/` (filter prefix id `local-`); search tetap berlaku di tab ini, Load More tidak ditampilkan, dan game first-party tetap juga tampil di tab "All".
-- **Business rules:** Setiap game first-party mandiri dalam folder sendiri (`games/{slug}/`) berisi minimal `game.js`, `index.html`, `style.css`, `thumb.svg`. [DIJAWAB 2026-08-30] Status "lengkap & live" untuk keempatnya dikonfirmasi developer. Catatan implementasi: `src/index.js` (server) perlu disinkronkan agar `LOCAL_GAMES`-nya mencakup ketiga game selain Kicau Mania juga — lihat changelog Task #002. [DIIMPLEMENTASIKAN Task #027 — 2026-10-14; **DI-REWORK Task #028 — 2026-10-14**] Game kelima (Solitaire Klondike, diport dari `github.com/farisi55/solitaire-puter`) terintegrasi mengikuti pola folder yang sama + `sound.js` (Web Audio API) & `win.js` (canvas cascade); tanpa dependensi CDN (CSP ketat). Rework Task #028: port awal yang ditulis ulang (render SVG + click-to-select) terbukti tidak playable sesuai smoke-test developer — diganti salinan setia repo sumber (drag-and-drop, DOM flip-3D, layout dinamis) dengan adaptasi minimal; temuan CSP direvisi — `style-src-attr 'none'` memblokir atribut `style="..."` markup tetapi TIDAK memblokir manipulasi CSSOM `el.style.*` (0 CSP violation terverifikasi). — lihat changelog Task #027 & #028.
+  - [ ] [DIIMPLEMENTASIKAN Task #029 — 2026-10-14; roster diperbarui Task #031] Tab **"No Ads Game"** muncul di `tab-bar` tepat SEBELUM tab "Emulator" dan menampilkan semua 6 game yang di-host di folder `games/` (filter prefix id `local-`); search tetap berlaku di tab ini, Load More tidak ditampilkan, dan game first-party tetap juga tampil di tab "All".
+- **Business rules:** Setiap game first-party mandiri di `games/{slug}/`; pola file menyesuaikan teknologinya. Empat game awal memakai `game.js`, `index.html`, `style.css`, `thumb.svg`. [DIIMPLEMENTASIKAN Task #027/#028] Solitaire adalah game ke-5 dengan `game.js`, `index.html`, `style.css`, `thumb.svg`, `sound.js`, dan `win.js`; port Klondike disalin setia dari repo sumber dengan adaptasi minimal. [DIIMPLEMENTASIKAN Task #031] Moba DOTA adalah game first-party ke-6 di `games/moba/`, diambil dari repo sibling `realm-siege-3d` sebagai build produksi Vite dengan React 19 + Three.js 0.128; asset base `/games/moba/`, aset bundle dan Draco decoder lokal serta `thumb.svg` kustom. Identitas `local-moba` dengan metadata MOBA 1280×720 dan No Ads ditambahkan pada dua `LOCAL_GAMES` (client/server) dan dijaga identik. Tes Worker memastikan canonical slug `moba-dota`. Build ulang dari repo sumber memakai `npm run build -- --base=/games/moba/ --outDir <path-ke-game-portal>/games/moba --emptyOutDir false`; folder target berisi artefak produksi, bukan source TypeScript.
 - **UI notes:** Grid/list katalog responsif, mobile-first. [Task #029] Badge gold "NO ADS" di pojok kiri-atas thumbnail kartu first-party (styling `.game-card__source` yang sudah ada, tanpa CSS baru); tab "No Ads Game" mengikuti styling `tab-btn` standar & ditempatkan antara "Trending" dan "Emulator".
 - **Priority:** P0
 
@@ -353,7 +347,7 @@ Tidak ada open question yang tersisa. Keenam item [DECISION NEEDED] dari v1.3.0 
 
 Tidak ada pertanyaan baru yang muncul dari proses menjawab keenam poin di atas. Bila developer menemukan pertanyaan baru pada revisi berikutnya, tuliskan di bagian ini mengikuti format [DECISION NEEDED] seperti sebelumnya.
 
-**Status:** Seluruh keputusan produk/teknis yang tersisa dari audit kode 2026-08-28 sudah dijawab. `knowledge.md` dan `changelog.md` diperbarui paralel (ke v1.2.0) mengikuti jawaban yang sama di dokumen ini, sehingga ketiganya tetap sinkron. Sejumlah tindak lanjut masih berupa PEKERJAAN KODE yang belum dieksekusi (sinkronisasi `LOCAL_GAMES`, penghapusan `functions/*`, verifikasi & pemasangan `favicon.svg`, pembuatan ad-script) — status pekerjaan ini dilacak di `changelog.md`, bukan di sini.
+**Status:** Dokumen ini mencerminkan roster enam game first-party saat ini, termasuk Moba DOTA (Task #031). Beberapa tindak lanjut historis lain tetap dilacak di `changelog.md`; entri Task #031 memperbarui knowledge dan dokumentasi developer untuk integrasi game.
 
 ### Ronde 2026-09-12 — Fitur Emulator Browser (EmulatorJS)
 
@@ -392,3 +386,4 @@ Catatan tambahan (bukan pertanyaan bernomor, dari request awal developer sebelum
 | 1.6.6 | 2026-10-13 | Banu | Task #027 DIEKSEKUSI: Solitaire (Klondike) terintegrasi penuh sebagai game first-party ke-5 di `games/solitaire/` — dimainkan via `/play/local-solitaire/solitaire`, tampil di grid katalog (kategori baru `Cards`), masuk `/sitemap.xml` + `/share/:id`. Seluruh dependensi CDN sumber dihapus sesuai rencana; temuan tambahan saat implementasi: Worker CSP non-emulator (`style-src-attr 'none'`) mewajibkan gaya kartu/stock berupa class CSS, bukan atribut `style` inline. Roster first-party kini 5 game (§4.2 diperbarui). `knowledge.md` ke v1.6.12; `changelog.md` ke v1.0.34. |
 | 1.6.7 | 2026-10-14 | Banu | Task #028 (ad-hoc, permintaan developer): Rework Solitaire menjadi salinan setia repo sumber `github.com/farisi55/solitaire-puter` — smoke-test Task #027 menunjukkan kartu tidak playable & beda dari sumber; akar masalah: port awal ditulis ulang total (render SVG datar + click-to-select + layout hardcoded) menggantikan arsitektur asli (DOM flip-3D + drag-and-drop + layout dinamis). Instruksi: salin kode dulu, pastikan sama, baru adaptasi. `sound.js` kembali byte-identik sumber; adaptasi tetap: hapus 4 CDN, ikon lucide inline, font system stack, blok integrasi gimboot + stat Best di win modal. **Koreksi temuan CSP Task #027: `style-src-attr 'none'` hanya memblokir atribut `style="..."` markup — manipulasi CSSOM `el.style.*` TIDAK diblokir (0 violation terverifikasi); klausul "tanpa atribut style inline = wajib class CSS" di-revisi (§4.2 & §5 diperbarui).** `package.json` += script `"dev": "wrangler dev"`. `knowledge.md` ke v1.6.13; `changelog.md` ke v1.0.35. |
 | 1.6.8 | 2026-10-14 | Banu | Task #029 (ad-hoc, permintaan developer via screenshot UI): (1) Badge kartu game first-party **"BUATAN SENDIRI" → "NO ADS"** — field `source` di LOCAL_GAMES (`js/config.js` + mirror `src/index.js`) diubah ke `'No Ads'`, ditandai `[DIIMPLEMENTASIKAN Task #029]` di §5 acceptance + UI notes Katalog (feed remote tanpa field `source` → badge hanya di game lokal); (2) Tab katalog baru **"No Ads Game"** di `tab-bar`, ditempatkan tepat sebelum tab "Emulator" (§5 acceptance + UI notes) — isinya hanya 5 game folder `games/` (filter prefix id `local-` di `js/catalog.js`, `canLoadMore` dikecualikan, search tetap berlaku), game first-party tetap tampil di tab All. `knowledge.md` ke v1.6.14; `changelog.md` ke v1.0.36. |
+| 1.6.9 | 2026-10-17 | Banu | Task #031 (ad-hoc): game keenam Moba DOTA diintegrasikan dari repo `realm-siege-3d` sebagai build Vite/React/Three.js di `games/moba/` dengan Draco decoder dan thumbnail lokal; `local-moba` kategori MOBA (1280×720, No Ads) didaftarkan di kedua `LOCAL_GAMES`, tes canonical `/play/local-moba/moba-dota` ditambahkan. Nama berubah dari Realm Siege 3D ke Moba DOTA pada katalog, metadata/build, thumbnail, menu dan loading game. §1, §3–§5 diperbarui untuk roster enam game, arsitektur Three.js sebagai pengecualian Canvas, serta instruksi build; `knowledge.md` v1.6.16, `changelog.md` v1.0.38. |

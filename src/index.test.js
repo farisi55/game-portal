@@ -655,6 +655,14 @@ describe('Output Encoding — Share/Play/Game Routes', () => {
       );
     });
 
+    it('recognizes Moba DOTA as a local game', async () => {
+      const url = makeUrl('/game?id=local-moba&title=Moba%20DOTA&category=MOBA');
+      const res = await handleGameRoute(new Request(url.toString()), url, createMockEnv());
+      const body = await res.text();
+
+      expect(body).toContain('canonical" href="https://gimboot.com/play/local-moba/moba-dota"');
+    });
+
     it('falls back to /game canonical for unknown game id', async () => {
       const url = makeUrl('/game?id=unknown-game&title=Test');
       const res = await handleGameRoute(new Request(url.toString()), url, createMockEnv());

@@ -84,6 +84,16 @@ export const CONFIG = {
       height: 768,
       source: 'No Ads',
     },
+    {
+      id: 'local-moba',
+      title: 'Moba DOTA',
+      category: 'MOBA',
+      url: '/games/moba/index.html',
+      thumb: '/games/moba/thumb.svg',
+      width: 1280,
+      height: 720,
+      source: 'No Ads',
+    },
   ],
 
   // Aspect ratio used when a game doesn't report its own width/height.
