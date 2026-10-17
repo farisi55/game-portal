@@ -183,6 +183,16 @@ const LOCAL_GAMES = [
     height: 768,
     source: 'No Ads',
   },
+  {
+    id: 'local-moba',
+    title: 'Moba DOTA',
+    category: 'MOBA',
+    url: '/games/moba/index.html',
+    thumb: '/games/moba/thumb.svg',
+    width: 1280,
+    height: 720,
+    source: 'No Ads',
+  },
 ];
 
 export default {

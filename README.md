@@ -6,7 +6,7 @@ The catalog is a live merge of three sources:
 
 - **GameMonetize** — fetched server-side from their game feed
 - **GamePix** — fetched server-side from their JSON feed
-- **First-party** — games built and hosted directly in this repo: Ayo Kopdes, Kejar Koruptor, Mobil MBG, Kicau Mania, and Solitaire, all confirmed active. `src/index.js` (the Worker) now recognizes all five in its `LOCAL_GAMES` — sync completed (`changelog.md` Task #002; Solitaire added in Task #027).
+- **First-party** — games built and hosted directly in this repo: Ayo Kopdes, Kejar Koruptor, Mobil MBG, Kicau Mania, Solitaire, and Moba DOTA (a fantasy MOBA). `src/index.js` (the Worker) recognizes all six in its `LOCAL_GAMES`.
 
 > **Related docs:** this README covers setup and architecture for someone working in the repo. Product scope and open decisions live in [`prd.md`](./prd.md), the full technical reference is [`knowledge.md`](./knowledge.md), and current task status/backlog is [`changelog.md`](./changelog.md). All three were reconciled against this codebase on 2026-08-28.
 
@@ -72,7 +72,7 @@ npx wrangler dev                 # local dev — runs src/index.js AND serves st
 npx wrangler deploy              # deploy to production
 ```
 
-There's no build step and no `package.json` yet (tracked in `changelog.md` Task #004) — the frontend is plain ES modules and Tailwind loads from a CDN, so `wrangler dev` is the only tool needed to run the whole thing locally.
+The portal shell is served as plain ES modules and does not require a frontend bundling step; `package.json` provides lint, test, and Wrangler scripts. Moba DOTA is the exception: it is built separately from the `realm-siege-3d` source repository and its production output is hosted under `games/moba/` (see [Moba DOTA build](#moba-dota-build)).
 
 **Rolling back a bad deploy:**
 
@@ -131,6 +131,7 @@ gimboot/
 │   ├── kejar-koruptor/            First-party game, active — pending sync in src/index.js, see Known issues
 │   ├── mobil-mbg/                 First-party game, active — pending sync in src/index.js, see Known issues
 │   ├── solitaire/                 First-party game, active (Klondike; imported from farisi55/solitaire-puter)
+│   ├── moba/                      First-party game, active (Moba DOTA fantasy MOBA)
 │   └── shared/                    ui-share.js/css — confetti + share-prompt module
 ├── src/
 │   └── index.js                  Worker: /api/games, /api/search, /share/:id, /play/{id}/{slug}, /game, /sitemap.xml
@@ -149,6 +150,18 @@ No secrets are currently required. When one is needed (e.g. a GameMonetize site 
 - **Adding another first-party game** — drop it under `games/<name>/`, then add an entry to **both** `LOCAL_GAMES` in `js/config.js` (client) and `LOCAL_GAMES` in `src/index.js` (server — needed for its `/play/`, `/share/`, and sitemap entries to work). The two lists are intentionally duplicated rather than shared, since the Worker and the browser's ES modules don't go through a build step together — keep them in sync by hand.
 - **Colors & typography** — CSS custom properties at the top of `css/style.css`.
 
+### Moba DOTA build
+
+Moba DOTA is the production build of the separate `realm-siege-3d` source project, hosted in `games/moba/`. Its source uses React, Three.js/WebGL, and Vite; the portal serves the built HTML, JavaScript, CSS, and Draco decoder as static same-origin assets. The game is registered as `local-moba` in both portal `LOCAL_GAMES` lists.
+
+To refresh the hosted build from the source repository, run there:
+
+```bash
+npm run build -- --base=/games/moba/ --outDir <path-to-game-portal>/games/moba --emptyOutDir false
+```
+
+Keep `thumb.svg` in the target folder (the `--emptyOutDir false` option preserves it), and keep the matching `local-moba` records in `js/config.js` and `src/index.js` if the game's URL, title, category, or dimensions change.
+
 ## Security notes
 
 - `isAllowedEmbedUrl()` in `js/utils.js` only allows (a) absolute `https://` URLs on the GameMonetize/GamePix allowlist, or (b) a same-origin path under `/games/`.
@@ -158,11 +171,11 @@ No secrets are currently required. When one is needed (e.g. a GameMonetize site 
 
 ## Testing
 
-No automated tests exist yet, and there's no `package.json`, linter, or test runner in the repo (`changelog.md` Task #004). Manual smoke-testing is the only current QA step for the Canvas games. See `changelog.md` for the planned first test targets — `js/state.js`, `js/utils.js`, and `src/index.js`'s route handlers.
+Run `npm test` for the portal's automated unit tests and `npm run lint` for ESLint. At the time of the Moba DOTA integration (Task #031), the full suite passed with 170 tests; `src/index.test.js` includes coverage for the `local-moba` canonical play URL. The game source repository separately uses `npm run build` for TypeScript checking and its Vite production build. Manual browser QA is still recommended for gameplay and rendering.
 
 ## Known issues & roadmap
 
-- **`src/index.js` `LOCAL_GAMES` needs syncing** — all four first-party games are confirmed active, but `src/index.js` (server) currently only recognizes Kicau Mania. Add Ayo Kopdes, Kejar Koruptor, and Mobil MBG so their `/share/` links and sitemap entries work correctly too (`changelog.md` Task #002).
+- **`src/index.js` `LOCAL_GAMES` sync** — resolved for all six first-party games, including Moba DOTA (`local-moba`); keep it in sync with `js/config.js` when adding or changing a local title (see `changelog.md` Tasks #002 and #031).
 - **Delete `functions/api/*`, `functions/share/[id].js`** — confirmed not invoked under the current deploy model; decided to remove them for clean code. **Files deleted** as part of `changelog.md` Task #002.
 - **Verify and wire up `favicon.svg`** — confirmed as the official favicon, wired into `index.html`/`game.html` via `<link rel="icon">`, and referenced in `manifest.json`. **`.avicon.svg` removed** after verification (`changelog.md` Task #002).
 - **`manifest.json` screenshots** — `screenshot-desktop.png` and `screenshot-mobile.png` were identical images. The "narrow" entry removed from `manifest.json`, keeping only "wide" (`changelog.md` Task #002).
