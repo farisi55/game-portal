@@ -2,6 +2,66 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<script data-gimboot-canonical>
+(function () {
+  var d = document;
+  if (d.querySelector('link[rel="canonical"]')) return;
+  var h = location.hostname.toLowerCase();
+  if (h === "localhost" || h === "127.0.0.1" || h === "0.0.0.0" || h === "[::1]") return;
+
+  var ORIGIN = "https://gimboot.com";
+  var path = location.pathname || "/";
+  var search = location.search || "";
+  var LOCAL = {
+    "/games/kicau-mania": "/play/local-kicau-mania/kicau-mania",
+    "/games/ayo-kopdes": "/play/local-ayo-kopdes/ayo-kopdes",
+    "/games/mobil-mbg": "/play/local-mobil-mbg/mobil-mbg",
+    "/games/kejar-koruptor": "/play/local-kejar-koruptor/kejar-koruptor",
+    "/games/solitaire": "/play/local-solitaire/solitaire",
+    "/games/moba": "/play/local-moba/moba-dota"
+  };
+
+  function slugify(value) {
+    return String(value || "")
+      .toLowerCase()
+      .normalize("NFKD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 60) || "game";
+  }
+
+  var noSlash = path.replace(/\/+$/, "") || "/";
+  var canonicalPath = "";
+
+  if (noSlash === "/" || /^\/index\.html?$/i.test(path)) {
+    canonicalPath = "";
+  } else if (/^\/game(\.html)?$/i.test(noSlash)) {
+    var params = new URLSearchParams(search);
+    var id = params.get("id");
+    var title = params.get("title");
+    canonicalPath = id
+      ? "/play/" + encodeURIComponent(id) + (title ? "/" + slugify(title) : "")
+      : "/game";
+  } else {
+    var directoryKey = path.replace(/\/index\.html?$/i, "").replace(/\/+$/, "");
+    if (LOCAL[directoryKey]) {
+      canonicalPath = LOCAL[directoryKey];
+    } else if (/\/index\.html?$/i.test(path)) {
+      canonicalPath = path.replace(/index\.html?$/i, "");
+    } else if (/^\/games\/[^/]+$/i.test(noSlash) || noSlash === "/emulator") {
+      canonicalPath = noSlash + "/";
+    } else {
+      canonicalPath = noSlash.replace(/\.html?$/i, "");
+    }
+  }
+
+  var link = d.createElement("link");
+  link.rel = "canonical";
+  link.href = ORIGIN + canonicalPath;
+  d.head.appendChild(link);
+})();
+</script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Emulator Runtime — Gimboot</title>
 </head>

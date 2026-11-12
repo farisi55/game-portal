@@ -73,11 +73,10 @@ const FAKE_REMOTE_GAMES = [
   },
 ];
 
-const GAME_URL_PATTERN = /\/game\?id=local-kicau-mania/;
-// Catalog cards link to /game?id=<id> (buildGamePageUrl in js/utils.js), which
-// the Worker 301s to /play/<id>/<slug> in a single hop. Match the pre-redirect
-// href rather than the canonical /play/ path.
-const KICAU_CARD_SELECTOR = '#game-grid .game-card__link[href*="id=local-kicau-mania"]';
+const GAME_URL_PATTERN = /\/play\/local-kicau-mania\/kicau-mania$/;
+// Catalog cards link directly to the canonical /play/<id>/<slug> form
+// (buildPlayUrl in js/utils.js), so no redirect hop is involved.
+const KICAU_CARD_SELECTOR = '#game-grid .game-card__link[href*="/play/local-kicau-mania/"]';
 const GAME_FRAME_URL_FRAGMENT = '/games/kicau-mania/index.html';
 
 // One wrangler dev server for the whole suite.
@@ -172,16 +171,15 @@ describe('Gimboot end-to-end smoke: catalog → play → record → share', () =
       await expect(kicauCard).toHaveCount(1, { timeout: 30_000 });
       await expect(kicauCard).toHaveAttribute('href', GAME_URL_PATTERN);
       await expect(page.locator('#game-grid .game-card')).toHaveCount(
-        // 5 LOCAL_GAMES (client config) + 3 stubbed remote games
-        8,
+        // 6 LOCAL_GAMES (client config, incl. local-moba) + 3 stubbed remote games
+        9,
       );
 
       // ---- Step 2: Player page (/play/{id}/{slug}) -------------------------
       await kicauCard.click();
-      // The Worker redirects /game?id=X → /play/<id>/<slug> in one hop, and
-      // preserves the original query string on the destination. Match the
-      // canonical path prefix; the trailing query is incidental.
-      await expect(page).toHaveURL(/\/play\/local-kicau-mania\/kicau-mania(\?|$)/, { timeout: 30_000 });
+      // The card already points at the canonical play URL, so navigation is
+      // direct (no /game?id= redirect hop and no query string).
+      await expect(page).toHaveURL(/\/play\/local-kicau-mania\/kicau-mania$/, { timeout: 30_000 });
 
       // Title resolves to the game's real name (not the generic "Game").
       await expect(page.locator('#game-title')).toHaveText('Kicau Mania');

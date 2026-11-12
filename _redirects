@@ -1,0 +1,21 @@
+# ============================================================================
+# Gimboot — Cloudflare redirect rules (Pages + Workers static assets)
+#
+# This file must live in the deployed static-asset root (this directory).
+# Static rules are listed before dynamic rules; the first match wins.
+# Query strings are preserved by Cloudflare's asset redirect engine, so
+# /game.html?id=gm-123 becomes /game?id=gm-123 (the ?id= value survives).
+#
+# NOTE: redirects in this file are NOT applied to requests served directly
+# by src/index.js. The Worker enforces the same rules in code so production
+# behaviour does not depend on asset-layer routing (see Task #032).
+# ============================================================================
+
+# 1. Root document -> clean root URL
+/index.html / 301
+/index.htm / 301
+
+# 2. Legacy game shell -> clean game route (query string preserved)
+/game.html /game 301
+/game.html/ /game 301
+/game.html* /game 301

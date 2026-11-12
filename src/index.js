@@ -30,6 +30,10 @@ const GAMEPIX_PAGINATION_OPTIONS = [12, 24, 48, 96];
 
 const CACHE_TTL_SECONDS = 1800; // 30 menit
 const SITE_NAME = 'Gimboot';
+// Canonical host. Always emit this origin in canonical tags, Open Graph URLs,
+// JSON-LD, and sitemap entries — never the request host. Preview/workers.dev
+// deployments must not compete with the production custom domain in search.
+const SITE_ORIGIN = 'https://gimboot.com';
 const ALLOWED_HTTP_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
 const MAX_BODY_BYTES = 5 * 1024 * 1024;
 const RATE_LIMIT_MAX = 100;
@@ -195,6 +199,16 @@ const LOCAL_GAMES = [
   },
 ];
 
+// Maps a first-party game shell folder (/games/<slug>) to the public SEO
+// landing page that should be indexed instead of the raw iframe document.
+// Derived from LOCAL_GAMES so the two can never drift apart.
+const LOCAL_GAME_CANONICALS = Object.fromEntries(
+  LOCAL_GAMES.map((game) => {
+    const folder = new URL(game.url, SITE_ORIGIN).pathname.replace(/\/index\.html$/i, '');
+    return [folder, `/play/${encodeURIComponent(game.id)}/${slugify(game.title)}`];
+  }),
+);
+
 export default {
   async fetch(request, env, ctx) {
     const requestId = crypto.randomUUID();
@@ -214,6 +228,7 @@ export default {
     }
 
     let response;
+    let canonicalUrl = '';
 
     if (!ALLOWED_HTTP_METHODS.has(request.method)) {
       response = new Response('Method Not Allowed', {
@@ -225,20 +240,29 @@ export default {
         status: 204,
         headers: { Allow: 'GET, HEAD, OPTIONS' },
       });
-    } else if (
-      (url.pathname.toLowerCase() === '/game.html' || url.pathname === '/game') &&
-      url.searchParams.has('id')
-    ) {
+    } else if (/^\/index\.html?$/i.test(url.pathname)) {
+      // /index.html and /index.htm are duplicates of the root document.
+      // Tracking/query params are irrelevant on the root page, so drop them.
+      response = redirectSingleHop(url, '/', false);
+    } else if (/^\/game\.html(\/.*)?$/i.test(url.pathname)) {
+      // Legacy shell (including trailing/wildcard paths): one 301 hop,
+      // preserving ?id= and every other query parameter. First-party games go
+      // straight to their /play landing page (single hop, no
+      // /game.html -> /game -> /play chain) and drop the now-irrelevant query
+      // string.
+      const gameId = url.searchParams.get('id');
+      const localGame = LOCAL_GAMES.find((g) => String(g.id) === gameId);
+      response = localGame
+        ? redirectSingleHop(url, `/play/${encodeURIComponent(localGame.id)}/${slugify(localGame.title)}`, false)
+        : redirectSingleHop(url, '/game');
+    } else if (url.pathname === '/game' && url.searchParams.has('id')) {
       const gameId = url.searchParams.get('id');
       const localGame = LOCAL_GAMES.find((g) => String(g.id) === gameId);
       if (localGame) {
-        const playPath = `/play/${encodeURIComponent(localGame.id)}/${slugify(localGame.title)}`;
-        response = redirectSingleHop(url, playPath);
+        response = redirectSingleHop(url, `/play/${encodeURIComponent(localGame.id)}/${slugify(localGame.title)}`, false);
       } else {
         response = await handleGameRoute(request, url, env, requestId);
       }
-    } else if (url.pathname.toLowerCase() === '/game.html') {
-      response = redirectSingleHop(url, '/game');
     } else if (url.protocol === 'http:' && !isLoopbackHost(url.hostname)) {
       const httpsUrl = new URL(url);
       httpsUrl.protocol = 'https:';
@@ -259,9 +283,16 @@ export default {
       response = await handleSitemap(url, env, ctx, requestId);
     } else {
       response = await env.ASSETS.fetch(request);
+      // Static HTML (catalog, emulator shell, first-party game shells) has no
+      // hand-written canonical. Inject one server-side so Googlebot never has
+      // to execute JavaScript to discover it. /play, /game, and /share are
+      // handled above and own their canonical tags.
+      if (isHtmlResponse(response)) {
+        canonicalUrl = canonicalUrlForStaticPage(url);
+      }
     }
 
-    return withSecurityHeaders(response, requestId, url.hostname, url.pathname);
+    return withSecurityHeaders(response, requestId, url.hostname, url.pathname, canonicalUrl);
   },
 };
 
@@ -292,16 +323,23 @@ function handleApiHealth() {
   );
 }
 
-function withSecurityHeaders(response, requestId = '', hostname = '', pathname = '') {
+function withSecurityHeaders(response, requestId = '', hostname = '', pathname = '', canonicalUrl = '') {
   const headers = new Headers(response.headers);
   const nonce = isHtmlResponse(response) ? createNonce() : null;
   let body = response.body;
 
   if (nonce) {
-    body = new HTMLRewriter()
-      .on('script', new SetAttribute('nonce', nonce))
-      .transform(response)
-      .body;
+    let rewriter = new HTMLRewriter().on('script', new SetAttribute('nonce', nonce));
+
+    // Server-rendered canonical for static HTML. Remove any hand-written
+    // canonical first so a page can never emit two conflicting tags.
+    if (canonicalUrl) {
+      rewriter = rewriter
+        .on('link[rel="canonical"]', new RemoveElement())
+        .on('head', new AppendHtml(`<link rel="canonical" href="${escapeHtmlAttr(canonicalUrl)}">`));
+    }
+
+    body = rewriter.transform(response).body;
     headers.delete('Content-Length');
     headers.delete('Content-Encoding');
     headers.delete('ETag');
@@ -509,9 +547,9 @@ export async function handleShareRoute(request, url, env, ctx) {
       return Response.redirect(new URL('/', url), 302);
     }
 
-    const targetUrl = `${url.origin}/play/${encodeURIComponent(game.id)}/${slugify(game.title)}`;
+    const targetUrl = `${SITE_ORIGIN}/play/${encodeURIComponent(game.id)}/${slugify(game.title)}`;
 
-    const imageUrl = absoluteUrl(game.thumb, url.origin);
+    const imageUrl = absoluteUrl(game.thumb, SITE_ORIGIN);
     const description = `Play ${game.title} free online at ${SITE_NAME}. ${game.category} game, no install — just play, have fun, right in your browser.`;
 
     const html = `<!DOCTYPE html>
@@ -577,29 +615,61 @@ export function clampNum(rawNum, fallback, max) {
 // ----------------------------------------------------------------------------
 
 /** Single-hop redirect: HTTPS + pathname normalization in one 301. */
-export function redirectSingleHop(url, pathname) {
+export function redirectSingleHop(url, pathname, preserveSearch = true) {
   const canonical = new URL(url);
   canonical.protocol = 'https:';
   canonical.pathname = pathname;
+  if (!preserveSearch) canonical.search = '';
   canonical.hash = '';
   return Response.redirect(canonical.toString(), 301);
 }
 
 function canonicalGameUrl(url, game) {
-  if (game) {
-    const playUrl = new URL(url);
-    playUrl.protocol = 'https:';
-    playUrl.pathname = `/play/${encodeURIComponent(game.id)}/${slugify(game.title)}`;
-    playUrl.search = '';
-    playUrl.hash = '';
-    return playUrl;
+  const gameId = game ? game.id : url.searchParams.get('id');
+  if (!gameId) return `${SITE_ORIGIN}/game`;
+
+  // Remote feeds do not need a server-side lookup here: the catalog link
+  // already supplies the title, and /play/:id/:slug only reads the id. If the
+  // slug is missing, /play/:id still resolves and the server re-canonicalizes.
+  const title = game ? game.title : (url.searchParams.get('title') || '');
+  const slugPart = title ? `/${slugify(title)}` : '';
+  return `${SITE_ORIGIN}/play/${encodeURIComponent(gameId)}${slugPart}`;
+}
+
+/**
+ * Canonical for static HTML that is not handled by /play, /game, or /share.
+ * Kept in sync with the client-side canonical snippet in every HTML file.
+ */
+export function canonicalUrlForStaticPage(url) {
+  const path = url.pathname || '/';
+
+  if (path === '/' || /^\/index\.html?$/i.test(path)) return SITE_ORIGIN;
+
+  if (/^\/game(\.html)?$/i.test(path)) {
+    const id = url.searchParams.get('id');
+    if (!id) return `${SITE_ORIGIN}/game`;
+    const title = url.searchParams.get('title') || '';
+    const slugPart = title ? `/${slugify(title)}` : '';
+    return `${SITE_ORIGIN}/play/${encodeURIComponent(id)}${slugPart}`;
   }
-  const canonical = new URL(url);
-  canonical.protocol = 'https:';
-  canonical.pathname = '/game';
-  canonical.search = '';
-  canonical.hash = '';
-  return canonical;
+
+  const directoryKey = path.replace(/\/index\.html?$/i, '').replace(/\/+$/, '');
+  if (LOCAL_GAME_CANONICALS[directoryKey]) {
+    return SITE_ORIGIN + LOCAL_GAME_CANONICALS[directoryKey];
+  }
+
+  if (/\/index\.html?$/i.test(path)) {
+    // Directory-style URL: keep the trailing slash so relative assets and
+    // Cloudflare's auto-trailing-slash routing both stay correct.
+    return SITE_ORIGIN + path.replace(/index\.html?$/i, '');
+  }
+
+  const noSlash = path.replace(/\/+$/, '') || '/';
+  if (/^\/games\/[^/]+$/i.test(noSlash) || noSlash === '/emulator') {
+    return `${SITE_ORIGIN}${noSlash}/`;
+  }
+
+  return `${SITE_ORIGIN}${noSlash.replace(/\.html?$/i, '')}`;
 }
 
 function safeImageUrl(maybeRelative, origin) {
@@ -625,7 +695,7 @@ export async function handleGameRoute(request, url, env) {
   const seoDescription = category
     ? `Mainkan ${title}, game ${category} seru secara gratis di ${SITE_NAME}.`
     : `Mainkan ${title} seru secara gratis di ${SITE_NAME}.`;
-  const imageUrl = safeImageUrl(thumb, canonical.origin);
+  const imageUrl = safeImageUrl(thumb, SITE_ORIGIN);
 
   const headExtra = `
 <link rel="canonical" href="${escapeHtmlAttr(canonical.toString())}">
@@ -678,8 +748,8 @@ export async function handlePlayRoute(request, url, env, ctx) {
 
   const seoTitle = `Play ${game.title} Free, No Download - ${SITE_NAME}`;
   const seoDescription = `Play ${game.title} free online at ${SITE_NAME}. ${game.category} game, no install — just play, have fun, right in your browser.`;
-  const canonicalUrl = `${url.origin}/play/${encodeURIComponent(game.id)}/${slugify(game.title)}`;
-  const imageUrl = absoluteUrl(game.thumb, url.origin);
+  const canonicalUrl = `${SITE_ORIGIN}/play/${encodeURIComponent(game.id)}/${slugify(game.title)}`;
+  const imageUrl = absoluteUrl(game.thumb, SITE_ORIGIN);
 
   // JSON-LD structured data — lets Google AI (Gemini/SGE) understand the
   // page content without guessing. Escaped for safe embedding in a <script>
@@ -750,6 +820,10 @@ class AppendHtml {
   element(element) { element.append(this.html, { html: true }); }
 }
 
+class RemoveElement {
+  element(element) { element.remove(); }
+}
+
 function absoluteUrl(maybeRelative, origin) {
   if (!maybeRelative) return '';
   try {
@@ -800,18 +874,18 @@ export function slugify(text) {
 // to first crawl the catalog grid's client-rendered links.
 // ----------------------------------------------------------------------------
 
-async function handleSitemap(url, env, ctx) {
+async function handleSitemap(_url, env, ctx) {
   const { games } = await getCombinedGames(CATALOG_MAX_NUM, env, ctx);
   const allGames = [...LOCAL_GAMES, ...(games || [])];
 
-  // Always emit HTTPS canonical URLs in the sitemap regardless of the
-  // incoming request's protocol — prevents http:// entries if the sitemap
-  // is ever fetched over plain HTTP (should not happen after redirect fix,
-  // but defense-in-depth).
-  const baseUrl = `https://${url.host}`;
+  // Always emit the production custom-domain origin, regardless of the
+  // incoming request host/protocol. This keeps workers.dev previews from
+  // leaking into the production sitemap.
+  const baseUrl = SITE_ORIGIN;
 
   const urlEntries = [
     `<url><loc>${escapeHtmlAttr(baseUrl)}/</loc><changefreq>daily</changefreq><priority>1.0</priority></url>`,
+    `<url><loc>${escapeHtmlAttr(baseUrl)}/emulator/</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>`,
     ...allGames.map((g) => {
       const loc = `${baseUrl}/play/${encodeURIComponent(g.id)}/${slugify(g.title)}`;
       return `<url><loc>${escapeHtmlAttr(loc)}</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>`;
