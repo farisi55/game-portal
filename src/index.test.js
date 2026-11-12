@@ -12,6 +12,7 @@ import worker, {
   handleShareRoute,
   handlePlayRoute,
   handleGameRoute,
+  canonicalUrlForStaticPage,
   redirectSingleHop,
   clampNum,
   escapeHtmlAttr,
@@ -663,12 +664,67 @@ describe('Output Encoding — Share/Play/Game Routes', () => {
       expect(body).toContain('canonical" href="https://gimboot.com/play/local-moba/moba-dota"');
     });
 
-    it('falls back to /game canonical for unknown game id', async () => {
+    it('canonicalizes an unknown remote game id to /play/:id/:slug (not /game)', async () => {
       const url = makeUrl('/game?id=unknown-game&title=Test');
       const res = await handleGameRoute(new Request(url.toString()), url, createMockEnv());
       const body = await res.text();
 
+      expect(body).toContain('canonical" href="https://gimboot.com/play/unknown-game/test"');
+    });
+
+    it('falls back to /game canonical when the legacy shell has no id', async () => {
+      const url = makeUrl('/game?title=Test');
+      const res = await handleGameRoute(new Request(url.toString()), url, createMockEnv());
+      const body = await res.text();
+
       expect(body).toContain('canonical" href="https://gimboot.com/game"');
+    });
+  });
+
+  // -----------------------------------------------------------------------
+  // canonicalUrlForStaticPage — server-rendered canonical for static HTML
+  // -----------------------------------------------------------------------
+
+  describe('canonicalUrlForStaticPage', () => {
+    it('always canonicalizes the root to the bare production origin', () => {
+      expect(canonicalUrlForStaticPage(makeUrl('/'))).toBe('https://gimboot.com');
+      expect(canonicalUrlForStaticPage(makeUrl('/index.html'))).toBe('https://gimboot.com');
+      expect(canonicalUrlForStaticPage(makeUrl('/?q=search'))).toBe('https://gimboot.com');
+    });
+
+    it('maps first-party game shells to their /play landing page', () => {
+      expect(canonicalUrlForStaticPage(makeUrl('/games/solitaire/index.html'))).toBe(
+        'https://gimboot.com/play/local-solitaire/solitaire'
+      );
+      expect(canonicalUrlForStaticPage(makeUrl('/games/moba/'))).toBe(
+        'https://gimboot.com/play/local-moba/moba-dota'
+      );
+    });
+
+    it('keeps directory-style trailing slashes for emulator/unknown game folders', () => {
+      expect(canonicalUrlForStaticPage(makeUrl('/emulator'))).toBe('https://gimboot.com/emulator/');
+      expect(canonicalUrlForStaticPage(makeUrl('/emulator/index.html'))).toBe(
+        'https://gimboot.com/emulator/'
+      );
+      expect(canonicalUrlForStaticPage(makeUrl('/games/unknown/index.html'))).toBe(
+        'https://gimboot.com/games/unknown/'
+      );
+    });
+
+    it('strips .html and trailing slashes from ordinary clean URLs', () => {
+      expect(canonicalUrlForStaticPage(makeUrl('/game.html'))).toBe('https://gimboot.com/game');
+      expect(canonicalUrlForStaticPage(makeUrl('/some-page.html'))).toBe(
+        'https://gimboot.com/some-page'
+      );
+      expect(canonicalUrlForStaticPage(makeUrl('/some-page/'))).toBe(
+        'https://gimboot.com/some-page'
+      );
+    });
+
+    it('builds /play canonical from a legacy /game?id=&title= URL', () => {
+      expect(
+        canonicalUrlForStaticPage(makeUrl('/game?id=gm-123&title=Space%20Explorer'))
+      ).toBe('https://gimboot.com/play/gm-123/space-explorer');
     });
   });
 
@@ -916,6 +972,14 @@ describe('Output Encoding — Share/Play/Game Routes', () => {
       expect(res.headers.get('Location')).toBe('https://gimboot.com/game?foo=bar');
     });
 
+    it('drops the query string when preserveSearch is false', () => {
+      const url = new URL('https://gimboot.com/index.html?utm_source=newsletter');
+      const res = redirectSingleHop(url, '/', false);
+
+      expect(res.status).toBe(301);
+      expect(res.headers.get('Location')).toBe('https://gimboot.com/');
+    });
+
     it('redirects http://gimboot.com/ to https://gimboot.com/ as single hop', () => {
       const url = new URL('http://gimboot.com/');
       const res = redirectSingleHop(url, '/');
@@ -949,6 +1013,55 @@ describe('Output Encoding — Share/Play/Game Routes', () => {
       expect(isLoopbackHost(null)).toBe(false);
       expect(isLoopbackHost(undefined)).toBe(false);
     });
+  });
+});
+
+describe('Clean URL redirects and server-side canonical (Task #032)', () => {
+  async function fetchThroughWorker(path) {
+    const req = new Request(`https://gimboot.com${path}`);
+    return worker.fetch(req, createMockEnv(), createMockCtx());
+  }
+
+  it('301s /index.html to / and drops tracking query params', async () => {
+    const res = await fetchThroughWorker('/index.html?utm_source=newsletter');
+    expect(res.status).toBe(301);
+    expect(res.headers.get('Location')).toBe('https://gimboot.com/');
+  });
+
+  it('301s /game.html?id=gm-... to /game?id=... preserving the query string', async () => {
+    const res = await fetchThroughWorker('/game.html?id=gm-123&title=Test%20Game');
+    expect(res.status).toBe(301);
+    expect(res.headers.get('Location')).toBe(
+      'https://gimboot.com/game?id=gm-123&title=Test%20Game'
+    );
+  });
+
+  it('301s /game.html/ wildcard paths to /game', async () => {
+    const res = await fetchThroughWorker('/game.html/');
+    expect(res.status).toBe(301);
+    expect(res.headers.get('Location')).toBe('https://gimboot.com/game');
+  });
+
+  it('301s /game.html?id=local-... directly to /play in one hop', async () => {
+    const res = await fetchThroughWorker('/game.html?id=local-kicau-mania&title=Kicau%20Mania');
+    expect(res.status).toBe(301);
+    expect(res.headers.get('Location')).toBe(
+      'https://gimboot.com/play/local-kicau-mania/kicau-mania'
+    );
+  });
+
+  it('injects a server-side canonical into static HTML', async () => {
+    const res = await fetchThroughWorker('/');
+    const body = await res.text();
+    expect(body).toContain('<link rel="canonical" href="https://gimboot.com">');
+  });
+
+  it('injects the /play canonical for a first-party game shell', async () => {
+    const res = await fetchThroughWorker('/games/solitaire/index.html');
+    const body = await res.text();
+    expect(body).toContain(
+      '<link rel="canonical" href="https://gimboot.com/play/local-solitaire/solitaire">'
+    );
   });
 });
 

@@ -15,7 +15,13 @@ compatibility_date = "2026-07-28"
 [assets]
 directory = "."
 binding = "ASSETS"
-not_found_handling = "single-page-application"
+# This is a multi-page site with no client-side router, so an unmatched URL
+# must be a real 404. The old "single-page-application" fallback served
+# /index.html with 200 for every unknown path, creating soft-404 duplicates
+# that Google reports as "Crawled - currently not indexed" (Task #032).
+# Clean URLs still work: html_handling defaults to auto-trailing-slash
+# (/emulator -> /emulator/, /emulator/runtime -> runtime.html).
+not_found_handling = "none"
 run_worker_first = [ "/*" ]
 
 # Required by `npx wrangler preview` (staging-preview mechanism, Task #017).

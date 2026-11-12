@@ -1,5 +1,5 @@
 import { CONFIG } from './config.js';
-import { debounce, buildPlayUrl, buildGamePageUrl, writeSessionGames, fetchGameCatalog } from './utils.js';
+import { debounce, buildPlayUrl, writeSessionGames, fetchGameCatalog } from './utils.js';
 import { getFavorites, getRecentGames, toggleFavorite, isFavorite, saveRecent } from './state.js';
 
 const TABS = [
@@ -379,7 +379,12 @@ function appendSearchOnlineButton() {
 }
 
 function createCardElement(game) {
-  const playUrl = buildGamePageUrl(game);
+  // Link every card to the canonical /play/{id}/{slug} URL. The old
+  // /game?id=&title=&url= form remains supported for legacy links, but it
+  // must never be the internal link target: Google then crawls thousands of
+  // duplicate query-string URLs and reports "Duplicate without user-selected
+  // canonical" (GSC 2026-11-12).
+  const playUrl = buildPlayUrl(game);
   const sourceBadge = game.source
     ? createTextElement('span', 'game-card__source', game.source)
     : null;

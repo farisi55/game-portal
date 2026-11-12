@@ -1,7 +1,7 @@
 ---
 project: Gimboot
-knowledge_version: 1.6.16
-changelog_version: 1.0.38
+knowledge_version: 1.6.17
+changelog_version: 1.0.39
 created: 2026-08-28
 status: in_progress
 milestone: 1 of 1
@@ -45,7 +45,7 @@ simple_mode: false
 > `prd.md` diperbarui ke v1.6.0 (§3.1, §3.2, §4.1, §4.2, §5 baru, §8, §9, §10), lalu v1.6.1 setelah poin 9 dikonfirmasi final; `knowledge.md` ke v1.6.0 lalu v1.6.1 (§2, §3, §7, §9).
 
 ## [NEXT TASKS]
-(none — roadmap asli 26 task selesai; Task #027 (2026-10-13, permintaan developer), Task #028 (2026-10-14, rework Solitaire + `npm run dev`), Task #029 (2026-10-14, badge "No Ads" + tab "No Ads Game"), Task #030 (2026-10-15, fix wrangler dev), dan Task #031 (2026-10-17, integrasi + rename Moba DOTA) dieksekusi & pindah ke [COMPLETED])
+(none — roadmap asli 26 task selesai; Task #027 (2026-10-13, permintaan developer), Task #028 (2026-10-14, rework Solitaire + `npm run dev`), Task #029 (2026-10-14, badge "No Ads" + tab "No Ads Game"), Task #030 (2026-10-15, fix wrangler dev), Task #031 (2026-10-17, integrasi + rename Moba DOTA), dan Task #032 (2026-11-12, fix GSC indexing/canonical) dieksekusi & pindah ke [COMPLETED])
 
 
 ## [IN PROGRESS]
@@ -66,6 +66,34 @@ Satu Cloudflare Worker dengan static assets (`src/index.js`) menangani seluruh r
 
 ### [Retroaktif] Sistem Viral Sharing
 `games/shared/ui-share.js`/`.css`: confetti + Web Share API saat rekor pecah, dengan fallback clipboard-copy, terhubung ke halaman share ber-OG-tag di `src/index.js`. Catatan cakupan audit: isi `ui-share.js` belum dibaca baris-per-baris — deskripsi ini berdasarkan nama file, penggunaannya di `js/player.js`, dan `README.md`, bukan verifikasi kode penuh (lihat "Catatan Metodologi Audit" di `knowledge.md`).
+
+### Task #032 — Ad-hoc: Fix GSC Indexing, Clean URL Redirects & Server-Side Canonical ✅
+- **Completed:** 2026-11-12
+- **Request:** Perbaiki tiga masalah Google Search Console yang masih muncul di gimboot.com — validasi gagal untuk "Crawled - currently not indexed" dan "Page with redirect", serta masalah baru "Duplicate, without user-selected canonical".
+- **Root cause:** (1) URL duplikat `.html`/trailing slash masih dapat di-crawl; (2) `/game.html*` tidak selalu di-redirect dalam satu hop; (3) kanonik hanya dibuat lewat JavaScript, yang tidak selalu dieksekusi Googlebot sebelum penetapan kanonik; (4) link katalog internal masih memakai `/game?id=...` (query-string duplicate).
+- **Files created:**
+  - `_redirects` — 301 `/index.html` & `/index.htm` → `/`; `/game.html`, `/game.html/`, `/game.html*` → `/game` (query preserved). Catatan: file ini hanya berlaku di asset layer; bukan jalur yang dilalui Worker.
+  - `sitemap.xml` — sitemap statis clean-URL (tanpa `.html`): root, `/emulator/`, dan 6 `/play/...`; fallback/referensi, produksi tetap memakai sitemap dinamis Worker.
+- **Files modified:**
+  - `src/index.js` — `SITE_ORIGIN = 'https://gimboot.com'`; redirect 301 `/index.html|.htm` → `/` tanpa query; `/game.html` selalu 301 satu hop (ID lokal langsung `/play/...` tanpa query, ID remote `/game` query preserved); `canonicalUrlForStaticPage()` + `RemoveElement` HTMLRewriter untuk menghapus canonical lama dan menyuntik tepat satu canonical server-side ke seluruh HTML statis; `canonicalGameUrl` remote tak dikenal → `/play/:id/:slug`; `canonicalGameUrl` tanpa ID → `/game`; sitemap memakai `SITE_ORIGIN` + entri `/emulator/`; `redirectSingleHop(url, pathname, preserveSearch)`.
+  - `js/catalog.js` — kartu katalog memakai `buildPlayUrl(game)` (bukan `buildGamePageUrl`), sehingga link internal tidak lagi menghasilkan URL berquery.
+  - `js/player.js` — kartu "related games" juga memakai `buildPlayUrl`, menutup sisa link internal ke `/game?id=...`.
+  - `wrangler.toml` — `not_found_handling` diubah `single-page-application` → `none`; URL tak dikenal kini 404 asli, bukan `/index.html` 200 (soft-404). Clean URL tetap bekerja via `html_handling` default `auto-trailing-slash`.
+  - `e2e/full-flow.test.js` — assertion kartu katalog diarahkan ke `/play/local-kicau-mania/kicau-mania` (bukan `/game?id=...`); jumlah kartu dikoreksi 8 → 9 (6 local + 3 stub) karena `local-moba` dari Task #031 belum tercermin di suite.
+  - `src/index.test.js` — tes `canonicalUrlForStaticPage`, redirect `/index.html`/`/game.html` (termasuk trailing slash, lokal & remote), canonical server-side pada HTML statis, dan `redirectSingleHop` tanpa query.
+  - 10 file HTML (`index.html`, `game.html`, `emulator/index.html`, `emulator/runtime.html`, 6 `games/*/index.html`) — snippet canonical inline `data-gimboot-canonical` tepat di bawah `<head>`: keluar bila canonical sudah ada (server menang), lewati localhost, `ORIGIN` hardcoded, root → origin tanpa `/index.html`, `/game?id=&title=` → `/play/:id/:slug`, folder game lokal → `/play/...`, buang `.html`/trailing slash kecuali path direktori.
+  - `knowledge.md`, `changelog.md` — aturan routing/canonical, monitoring GSC, anti-pattern JS-only canonical, dan riwayat task.
+- **Acceptance criteria met:**
+  - [x] `/index.html` dan `/index.htm` 301 ke `/`; `/game.html*` 301 ke `/game` (ID lokal langsung ke `/play/...`) tanpa redirect chain.
+  - [x] Query `?id=` dipertahankan saat redirect ke `/game`; dibuang saat tujuan sudah final (`/`, `/play/...`).
+  - [x] Setiap halaman HTML mengirim tepat satu `<link rel="canonical">` absolut dari server; snippet inline tidak menduplikasi.
+  - [x] Root canonical selalu `https://gimboot.com` (tanpa `/index.html`, tanpa host preview).
+  - [x] Sitemap tidak memuat URL `.html`; semua entri `/play/...` dan `/emulator/` clean.
+  - [x] Link katalog internal memakai `/play/:id/:slug`.
+  - [x] URL yang tidak cocok dengan aset/route mengembalikan 404 asli, bukan katalog `200 OK` (soft-404).
+- **Verification:** `npm test` — **183 tes lulus** (5 file); `npm run test:e2e` — **4 tes lulus** (2 file); `npm run lint` — 0 error/0 warning; `git diff --check` bersih. Smoke test `wrangler dev` (port 8799): `/this-does-not-exist-xyz` → **404** (bukan 200 soft-404), `/emulator/runtime` → 200, `/emulator` → 307 `/emulator/`, `/` → 200, `/index.html` → 301 `/`, `/game.html?id=gm-123&title=Test` → 301 `/game?id=gm-123&title=Test`, `/games/solitaire/` → 200; canonical root = `https://gimboot.com`, canonical game shell = `https://gimboot.com/play/local-solitaire/solitaire`.
+- **Notes:** `_redirects` TIDAK diterapkan pada request yang dilayani Worker karena `run_worker_first = ["/*"]`; aturan di `src/index.js` adalah yang benar-benar berlaku di produksi. Setelah deploy, jalankan "Validate fix" di GSC untuk ketiga masalah dan pantau 2–4 minggu. Kanonik server-side adalah sumber kebenaran; snippet JS hanya fallback.
+- **Knowledge drift:** diperbarui di `knowledge.md` §3 (folder tree, `_redirects`, `sitemap.xml`, canonical), §7 (aturan URL bersih & redirect), §8 (monitoring GSC 2026-11-12), §9 (anti-pattern JS-only canonical).
 
 ### Task #031 — Ad-hoc: Integrasi & Rename Moba DOTA ✅
 - **Completed:** 2026-10-17
@@ -95,6 +123,7 @@ Satu Cloudflare Worker dengan static assets (`src/index.js`) menangani seluruh r
 > v1.0.5 (2026-08-31): Task #004 completed — `package.json` + `package-lock.json` introduced with ESLint 10.9.1 (flat config), Prettier 3.9.6, Vitest 4.1.11, jsdom 26.1.0. `eslint.config.js`, `.prettierrc`, `.prettierignore`, `vitest.config.js` created. Minor lint fixes in `js/state.js`, `js/catalog.js`, `js/player.js`, `src/index.js`. `npm run lint` and `npm test` both exit 0; `npm ci` exits 0 (0 vulnerabilities). @knowledge v1.3.0: §2 dev tooling stack added; §4 Formatter/Linter/Testing updated with actual versions. Task #005 promoted to [IN PROGRESS].
 > v1.0.6 (2026-09-01): Task #005 completed — husky 9.1.7 installed as git hooks manager. Pre-commit hook blocks `.env` files (clear error message) and runs lint. `.husky/` removed from `.gitignore` so hooks are committed. `prepare` script in `package.json` ensures hooks auto-install on `npm install`/`npm ci`. Task #006 promoted to [IN PROGRESS].
 > v1.0.7 (2026-09-01): Task #006 completed — `package.json` build script added (`npm run lint && npm audit --audit-level=high`). Cloudflare Workers Builds dashboard build command to be set to `npm run build`. Lint error causes non-zero exit blocking deploy; clean build passes.
+> v1.0.39 (2026-11-12): Task #032 completed — Fix GSC indexing untuk gimboot.com: validasi "Crawled - currently not indexed" & "Page with redirect" serta masalah baru "Duplicate, without user-selected canonical". Ditambahkan `_redirects` (301 `/index.html`/`/index.htm` → `/`, `/game.html*` → `/game`) dan `sitemap.xml` statis clean-URL; karena produksi adalah Worker dengan `run_worker_first=["/*"]`, aturan redirect ditegakkan ulang di `src/index.js` (satu hop, ID lokal langsung ke `/play/...`, query preserved untuk ID remote). Kanonik tidak lagi bergantung pada JavaScript: HTMLRewriter menyuntik tepat satu `<link rel="canonical">` absolut dari `SITE_ORIGIN` (`https://gimboot.com`) ke seluruh HTML statis, sementara 10 file HTML mendapat snippet inline `data-gimboot-canonical` sebagai fallback. Link katalog internal beralih ke `/play/:id/:slug`; `wrangler.toml` `not_found_handling` menjadi `none` agar URL tak dikenal 404 asli (menghapus soft-404 dari SPA fallback). Verifikasi: 183 unit test + 4 E2E test lulus, smoke test `wrangler dev` (404 asli, redirect & canonical benar), ESLint bersih, `git diff --check` bersih. @knowledge v1.6.16 → v1.6.17.
 > v1.0.38 (2026-10-17): Task #031 completed — Realm Siege 3D diintegrasikan sebagai Moba DOTA dari repo sumber terpisah ke `games/moba/` sebagai build Vite/React/Three.js siap produksi, beserta Draco decoder lokal dan thumbnail khusus; registrasi `local-moba` kategori MOBA disinkronkan di `js/config.js` dan `src/index.js`, tes canonical `moba-dota` ditambahkan. Nama game diperbarui pada katalog, metadata/artwork portal, menu utama, dan layar loading di repo sumber. Verifikasi: TypeScript/Vite build berhasil, ESLint bersih, 170 unit tests lulus, `git diff --check` bersih.
 
 ### Task #001 — Environment Audit & Security Baseline ✅
