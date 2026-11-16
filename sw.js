@@ -1,7 +1,10 @@
-const CACHE_NAME = 'gimboot-portal-v6';
+const CACHE_NAME = 'gimboot-portal-v7';
+// Only real, stable documents/assets belong here. `/game` is intentionally
+// absent: it is a legacy redirect that now depends on a catalog lookup and
+// 404s without a valid ?id=, so precaching it would poison the shell with an
+// error page.
 const APP_SHELL = [
   '/',
-  '/game',
   '/manifest.json',
   '/icon-192.png',
   '/icon-512.png',
@@ -50,10 +53,10 @@ self.addEventListener('fetch', (event) => {
   if (request.mode === 'navigate') {
     event.respondWith(
       fetch(request).catch(async () => {
-        const path = requestUrl.pathname.toLowerCase();
-        const fallback = path.startsWith('/play/') || path === '/game' || path === '/game.html'
-          ? (await caches.match('/game')) || (await caches.match('/'))
-          : await caches.match('/');
+        // Game pages are server-rendered per game and intentionally not
+        // precached. Offline, fall back to the catalog shell — never to a
+        // cached legacy /game redirect or an empty response.
+        const fallback = await caches.match('/');
         return fallback || new Response('Offline', { status: 503 });
       })
     );

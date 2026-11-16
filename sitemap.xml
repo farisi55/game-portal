@@ -1,60 +1,59 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Static clean-URL sitemap for Gimboot.
+  Static clean-URL sitemap fallback for Gimboot.
 
-  Production note: this project is deployed as a Cloudflare Worker with
-  static assets. The Worker handles GET /sitemap.xml dynamically and merges
-  these core local-game URLs with the full remote catalog (GameMonetize +
-  GamePix), so the live sitemap is always complete. This static file is the
-  correct fallback structure for a pure Cloudflare Pages deployment and is
-  intentionally free of .html URLs.
+  Production note: this project is a Cloudflare Worker with static assets
+  (wrangler.toml, `run_worker_first = ["/*"]`). The Worker handles
+  GET /sitemap.xml dynamically and merges the root URL plus every catalog
+  game's canonical /play/{id}/{slug} URL. This file is the correct fallback
+  for a pure static deployment and is intentionally limited to those forms:
+
+    - https://gimboot.com/ (root, trailing slash)
+    - https://gimboot.com/play/{id}/{slug} (canonical game pages)
+
+  Never add .html URLs, /game?id= query URLs, /emulator/ (not a search
+  landing page), or duplicate spellings of a game slug.
 -->
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://gimboot.com/</loc>
-    <lastmod>2026-11-12</lastmod>
+    <lastmod>2026-11-16</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://gimboot.com/emulator/</loc>
-    <lastmod>2026-11-12</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
     <loc>https://gimboot.com/play/local-kicau-mania/kicau-mania</loc>
-    <lastmod>2026-11-12</lastmod>
+    <lastmod>2026-11-16</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://gimboot.com/play/local-ayo-kopdes/ayo-kopdes</loc>
-    <lastmod>2026-11-12</lastmod>
+    <loc>https://gimboot.com/play/local-ayo-kopdes/ayo-ke-kopdes</loc>
+    <lastmod>2026-11-16</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://gimboot.com/play/local-mobil-mbg/mobil-mbg</loc>
-    <lastmod>2026-11-12</lastmod>
+    <lastmod>2026-11-16</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://gimboot.com/play/local-kejar-koruptor/kejar-koruptor</loc>
-    <lastmod>2026-11-12</lastmod>
+    <lastmod>2026-11-16</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://gimboot.com/play/local-solitaire/solitaire</loc>
-    <lastmod>2026-11-12</lastmod>
+    <lastmod>2026-11-16</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://gimboot.com/play/local-moba/moba-dota</loc>
-    <lastmod>2026-11-12</lastmod>
+    <lastmod>2026-11-16</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>

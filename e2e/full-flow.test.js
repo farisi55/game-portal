@@ -9,10 +9,11 @@
 //   share text) → score bridged to PWA high-score → share → close.
 //
 // Also guards the share/SEO surface at the HTTP level:
-//   - /play/{id}/{slug} serves OG tags for the local game (hermetic —
-//     does not depend on the upstream feed, see Task #012's handler).
+//   - /play/{id}/{slug} is server-rendered: unique <title>, meta description,
+//     canonical, Open Graph tags, JSON-LD VideoGame, and visible body copy.
 //   - /share/{id} serves OG tags.
-//   - /game?id={id} still 301s to /play/{id}/{slug} in a single hop.
+//   - /game?id={id} and /game.html?id={id} 301 to /play/{id}/{slug} in a
+//     single hop; missing/unknown ids are 404s (no indexable thin shells).
 //
 // Determinism strategy:
 //   - The external games feed is stubbed at the network layer (Playwright
@@ -184,6 +185,22 @@ describe('Gimboot end-to-end smoke: catalog → play → record → share', () =
       // Title resolves to the game's real name (not the generic "Game").
       await expect(page.locator('#game-title')).toHaveText('Kicau Mania');
 
+      // Server-rendered SEO block is present without any client JS work:
+      // canonical, robots, Open Graph, JSON-LD, and visible explanatory copy.
+      await expect(page.locator('#game-seo-content')).toHaveCount(1);
+      await expect(page.locator('#game-seo-content')).toContainText('Tentang Kicau Mania');
+      await expect(page.locator('link[rel="canonical"]')).toHaveAttribute(
+        'href',
+        'https://gimboot.com/play/local-kicau-mania/kicau-mania',
+      );
+      await expect(page.locator('meta[name="robots"]')).toHaveAttribute(
+        'content',
+        'index, follow, max-image-preview:large',
+      );
+      const jsonLd = await page.locator('script[type="application/ld+json"]').textContent();
+      expect(String(jsonLd)).toContain('"@type":"VideoGame"');
+      expect(String(jsonLd)).toContain('"name":"Kicau Mania"');
+
       // Server-rendered OG tags carry the game name (share-preview surface).
       const ogTitle = await page.locator('meta[property="og:title"]').getAttribute('content');
       expect(String(ogTitle)).toContain('Kicau Mania');
@@ -281,6 +298,41 @@ describe('Gimboot end-to-end smoke: catalog → play → record → share', () =
       });
       expect(res.status()).toBe(301);
       expect(res.headers()['location']).toContain('/play/local-kicau-mania/');
+    } finally {
+      await browser.close();
+    }
+  });
+
+  test('legacy shells never serve an indexable 200 page', async () => {
+    const browser = await chromium.launch();
+    const context = await browser.newContext({ ignoreHTTPSErrors: true });
+
+    try {
+      // /game with no id: real 404, noindex, never a thin shell.
+      const noId = await context.request.get(`${baseUrl}/game`, { maxRedirects: 0 });
+      expect(noId.status()).toBe(404);
+      expect(noId.headers()['x-robots-tag']).toContain('noindex');
+
+      // /game.html with no id has no canonical destination: one hop to /.
+      const htmlNoId = await context.request.get(`${baseUrl}/game.html`, { maxRedirects: 0 });
+      expect(htmlNoId.status()).toBe(301);
+      expect(new URL(htmlNoId.headers()['location']).pathname).toBe('/');
+
+      // /game.html?id= goes straight to /play — no /game.html -> /game hop.
+      const htmlId = await context.request.get(
+        `${baseUrl}/game.html?id=local-kicau-mania&title=Ignored`,
+        { maxRedirects: 0 },
+      );
+      expect(htmlId.status()).toBe(301);
+      expect(htmlId.headers()['location']).toContain('/play/local-kicau-mania/kicau-mania');
+      expect(htmlId.headers()['location']).not.toContain('title=');
+
+      // Following the redirect resolves to a single, canonical 200 page.
+      const followed = await context.request.get(
+        `${baseUrl}/game.html?id=local-kicau-mania`,
+      );
+      expect(followed.status()).toBe(200);
+      expect(new URL(followed.url()).pathname).toBe('/play/local-kicau-mania/kicau-mania');
     } finally {
       await browser.close();
     }

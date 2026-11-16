@@ -2,22 +2,20 @@ import { CONFIG } from './config.js';
 import { buildPlayUrl, isAllowedEmbedUrl, readSessionGames, fetchGameCatalog } from './utils.js';
 import { saveRecent, toggleFavorite, isFavorite } from './state.js';
 
-const params = new URLSearchParams(window.location.search);
-
-// Arrived via the SEO-friendly /play/{id}/{slug} route: src/index.js already
-// src/index.js adds the resolved game as meta tags so the page stays within
-// the site's strict CSP. Falls back to the older ?id=&url=&title=... format.
+// The canonical player route is /play/{id}/{slug}. The Worker resolves the
+// catalog and injects the game as meta tags, so this script never trusts
+// query-string game data or an arbitrary ?url= value. Legacy /game and
+// /game.html requests are 301-redirected server-side before they reach here.
 const ssrGameId = readMetaContent('gimboot-play-id');
 const ssrGame = readServerGame();
 const pathGameId = readPlayIdFromPathname(window.location.pathname);
-const playRouteGameId = ssrGameId || pathGameId;
+const gameId = ssrGameId || pathGameId;
 
-const gameId = playRouteGameId || params.get('id');
-let embedUrl = params.get('url');
-let title = params.get('title') || 'Game';
-let category = params.get('category') || '';
-let width = Number(params.get('w')) || null;
-let height = Number(params.get('h')) || null;
+let embedUrl = '';
+let title = 'Game';
+let category = '';
+let width = null;
+let height = null;
 let game = null;
 
 const els = {
@@ -35,16 +33,13 @@ const els = {
   related: document.getElementById('related-grid'),
   relatedStatus: document.getElementById('related-status'),
   playerStatus: document.getElementById('player-status'),
-  howToPlayGame: document.getElementById('how-to-play-game'),
-  howToPlayGame2: document.getElementById('how-to-play-game-2'),
-  featureGame: document.getElementById('feature-game'),
 };
 
 init();
 
 async function init() {
-  if (playRouteGameId) {
-    game = ssrGame && String(ssrGame.id) === String(playRouteGameId) ? ssrGame : null;
+  if (gameId) {
+    game = ssrGame && String(ssrGame.id) === String(gameId) ? ssrGame : null;
 
     if (!game) {
       let games;
@@ -57,7 +52,7 @@ async function init() {
         games = CONFIG.LOCAL_GAMES;
       }
 
-      game = (games || []).find((g) => String(g.id) === String(playRouteGameId));
+      game = (games || []).find((g) => String(g.id) === String(gameId));
     }
 
     if (game) {
@@ -74,8 +69,8 @@ async function init() {
     return;
   }
 
-  // Fallback: if game not resolved yet (e.g., accessed via ?id= query params),
-  // look it up from LOCAL_GAMES so thumb/category/width/height are available.
+  // Fallback: if a local game was not resolved yet, look it up from
+  // LOCAL_GAMES so thumb/category/width/height are available.
   if (!game && gameId) {
     const local = CONFIG.LOCAL_GAMES.find((g) => String(g.id) === String(gameId));
     if (local) {
@@ -88,15 +83,11 @@ async function init() {
     }
   }
 
-  // /play/ and /game both get <title> from the Worker (and /game also from
-  // the early head script). Don't clobber those SEO strings here.
+  // /play gets its <title> from the Worker's server-side renderer. Don't
+  // clobber those SEO strings here; these assignments only update the visible
+  // player heading and category badge.
   els.title.textContent = title;
   els.category.textContent = category;
-
-  // Populate SEO content sections with the game title
-  if (els.howToPlayGame) els.howToPlayGame.textContent = title;
-  if (els.howToPlayGame2) els.howToPlayGame2.textContent = title;
-  if (els.featureGame) els.featureGame.textContent = title;
 
   const gameWidth = Number(width);
   const gameHeight = Number(height);

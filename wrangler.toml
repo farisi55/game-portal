@@ -19,6 +19,8 @@ binding = "ASSETS"
 # must be a real 404. The old "single-page-application" fallback served
 # /index.html with 200 for every unknown path, creating soft-404 duplicates
 # that Google reports as "Crawled - currently not indexed" (Task #032).
+# `src/index.js` turns extensionless 404s into the branded /404.html response
+# (status 404, `X-Robots-Tag: noindex`) while asset misses stay bare 404s.
 # Clean URLs still work: html_handling defaults to auto-trailing-slash
 # (/emulator -> /emulator/, /emulator/runtime -> runtime.html).
 not_found_handling = "none"

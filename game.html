@@ -2,75 +2,18 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<script data-gimboot-canonical>
-(function () {
-  var d = document;
-  if (d.querySelector('link[rel="canonical"]')) return;
-  var h = location.hostname.toLowerCase();
-  if (h === "localhost" || h === "127.0.0.1" || h === "0.0.0.0" || h === "[::1]") return;
-
-  var ORIGIN = "https://gimboot.com";
-  var path = location.pathname || "/";
-  var search = location.search || "";
-  var LOCAL = {
-    "/games/kicau-mania": "/play/local-kicau-mania/kicau-mania",
-    "/games/ayo-kopdes": "/play/local-ayo-kopdes/ayo-kopdes",
-    "/games/mobil-mbg": "/play/local-mobil-mbg/mobil-mbg",
-    "/games/kejar-koruptor": "/play/local-kejar-koruptor/kejar-koruptor",
-    "/games/solitaire": "/play/local-solitaire/solitaire",
-    "/games/moba": "/play/local-moba/moba-dota"
-  };
-
-  function slugify(value) {
-    return String(value || "")
-      .toLowerCase()
-      .normalize("NFKD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-+|-+$/g, "")
-      .slice(0, 60) || "game";
-  }
-
-  var noSlash = path.replace(/\/+$/, "") || "/";
-  var canonicalPath = "";
-
-  if (noSlash === "/" || /^\/index\.html?$/i.test(path)) {
-    canonicalPath = "";
-  } else if (/^\/game(\.html)?$/i.test(noSlash)) {
-    var params = new URLSearchParams(search);
-    var id = params.get("id");
-    var title = params.get("title");
-    canonicalPath = id
-      ? "/play/" + encodeURIComponent(id) + (title ? "/" + slugify(title) : "")
-      : "/game";
-  } else {
-    var directoryKey = path.replace(/\/index\.html?$/i, "").replace(/\/+$/, "");
-    if (LOCAL[directoryKey]) {
-      canonicalPath = LOCAL[directoryKey];
-    } else if (/\/index\.html?$/i.test(path)) {
-      canonicalPath = path.replace(/index\.html?$/i, "");
-    } else if (/^\/games\/[^/]+$/i.test(noSlash) || noSlash === "/emulator") {
-      canonicalPath = noSlash + "/";
-    } else {
-      canonicalPath = noSlash.replace(/\.html?$/i, "");
-    }
-  }
-
-  var link = d.createElement("link");
-  link.rel = "canonical";
-  link.href = ORIGIN + canonicalPath;
-  d.head.appendChild(link);
-})();
-</script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!--
+  This file is the shared player shell, not a public landing page.
+  src/index.js fetches it from the asset store and transforms it in place for
+  the canonical /play/{id}/{slug} route (title, description, canonical, OG,
+  Twitter, JSON-LD, and visible Indonesian SEO copy). The raw shell is
+  therefore noindex and must never be linked directly. Each game gets its own
+  server-rendered canonical; there is intentionally no canonical tag here.
+-->
+<meta name="robots" content="noindex, follow">
 <title>Loading… — Gimboot</title>
 <meta name="description" content="Play instantly in your browser — no downloads, no sign-up. No install, just play, have fun.">
-<script>
-(function () {
-  if (location.pathname.toLowerCase() !== '/game.html') return;
-  location.replace('https://' + location.host + '/game' + location.search);
-})();
-</script>
 <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="/icon-192.png">
@@ -139,19 +82,11 @@
 
   <div class="status-block" id="player-status" hidden></div>
 
-  <section class="game-info">
-    <h2 id="how-to-play-title">How to Play <span id="how-to-play-game"></span></h2>
-    <p id="how-to-play-text">Click the Play button above to start <span id="how-to-play-game-2"></span> instantly in your browser. No download, no install — just pure fun. Use your keyboard, mouse, or touch screen to control the game. The game loads directly in your browser and works on Windows, Android, iOS, and MacOS.</p>
-
-    <h2>Features</h2>
-    <ul class="game-features">
-      <li>Play <span id="feature-game"></span> free online — no download, no install</li>
-      <li>Works on Windows, Android, iOS, and MacOS</li>
-      <li>Instant loading in your browser</li>
-      <li>Full screen mode for immersive gameplay</li>
-      <li>No sign-up or registration required</li>
-    </ul>
-  </section>
+  <!--
+    Visible game copy (Tentang / Cara Bermain / Fitur) is injected server-side
+    by functions/game.js into #game-seo-content. Keeping a second static copy
+    here would duplicate the same H2s and keyword-stuff the page.
+  -->
 
   <section class="related-section">
     <h2>Related Games</h2>

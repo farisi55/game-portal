@@ -1,21 +1,29 @@
 # ============================================================================
-# Gimboot — Cloudflare redirect rules (Pages + Workers static assets)
+# Gimboot — static-asset redirect fallback
 #
-# This file must live in the deployed static-asset root (this directory).
-# Static rules are listed before dynamic rules; the first match wins.
-# Query strings are preserved by Cloudflare's asset redirect engine, so
-# /game.html?id=gm-123 becomes /game?id=gm-123 (the ?id= value survives).
+# PRODUCTION IS A WORKER, NOT PAGES.
+# `wrangler.toml` sets `run_worker_first = ["/*"]`, so every production
+# request is handled by `src/index.js` first. The Worker performs the real
+# canonical redirects:
 #
-# NOTE: redirects in this file are NOT applied to requests served directly
-# by src/index.js. The Worker enforces the same rules in code so production
-# behaviour does not depend on asset-layer routing (see Task #032).
+#   /index.html, /index.htm       -> 301 /            (query dropped)
+#   /game.html?id=<valid>        -> 301 /play/{id}/{slug}  (one hop)
+#   /game.html (no id)           -> 301 /
+#   /game?id=<valid>             -> 301 /play/{id}/{slug}  (one hop)
+#   /game (no/invalid id)        -> 404
+#
+# This file is only a fallback for a pure static deployment (plain asset
+# hosting), where no server-side catalog lookup exists. See the note below for
+# why the legacy game paths are deliberately not listed here.
 # ============================================================================
 
-# 1. Root document -> clean root URL
+# 1. Duplicate root documents -> canonical root
 /index.html / 301
 /index.htm / 301
 
-# 2. Legacy game shell -> clean game route (query string preserved)
-/game.html /game 301
-/game.html/ /game 301
-/game.html* /game 301
+# NOTE: no /game or /game.html rules here. Production is Worker-first
+# (`run_worker_first = ["/*"]`), so src/index.js owns those paths and can do a
+# server-side catalog lookup. The asset binding also applies this file to
+# env.ASSETS.fetch(), so a redirect rule here would make the canonical /play
+# renderer unable to read game.html and return 503. A pure static deployment
+# simply serves game.html (marked noindex) instead of redirecting it.

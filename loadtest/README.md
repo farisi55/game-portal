@@ -1,8 +1,8 @@
 # Load Test — Task #016 (Phase 7)
 
 Two-stage load test for every dynamic route in `src/index.js`
-(`/api/games`, `/api/search`, `/share/:id`, `/play/:id/:slug`, `/game`,
-`/sitemap.xml`), plus a cache-cold scenario.
+(`/api/games`, `/api/search`, `/share/:id`, `/play/:id/:slug`, the legacy
+`/game` redirect, `/sitemap.xml`), plus a cache-cold scenario.
 
 ## Prerequisites
 

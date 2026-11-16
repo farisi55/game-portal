@@ -1,6 +1,6 @@
 # Gimboot API — OpenAPI 3.1 specification.
 # Task #019 (2026-10-09): generated from src/index.js and verified endpoint-by-
-# endpoint against the production deployment https://games.farisi55.workers.dev.
+# endpoint against the production deployment https://gimboot.com.
 # Contract source: @knowledge §5; every response shape below was observed live.
 openapi: 3.1.0
 info:
@@ -34,7 +34,7 @@ info:
   license:
     name: UNLICENSED
 servers:
-  - url: https://games.farisi55.workers.dev
+  - url: https://gimboot.com
     description: Production (Cloudflare Worker)
   - url: http://localhost:8787
     description: Local development (`npx wrangler dev` / `unstable_dev`)
@@ -249,9 +249,9 @@ paths:
                   <title>Play Kicau Mania on Gimboot!</title>
                   <meta property="og:type" content="website">
                   <meta property="og:title" content="Play Kicau Mania Instantly!">
-                  <meta property="og:image" content="https://games.farisi55.workers.dev/games/kicau-mania/thumb.svg">
+                  <meta property="og:image" content="https://gimboot.com/games/kicau-mania/thumb.svg">
                   <meta name="twitter:card" content="summary_large_image">
-                  <meta http-equiv="refresh" content="0; url=https://games.farisi55.workers.dev/play/local-kicau-mania/kicau-mania">
+                  <meta http-equiv="refresh" content="0; url=https://gimboot.com/play/local-kicau-mania/kicau-mania">
                 </head>
                 <body>
                   <p>Loading game... <a href="...">Click here</a> if not automatically redirected.</p>
@@ -266,7 +266,7 @@ paths:
               schema:
                 type: string
                 format: uri
-                example: https://games.farisi55.workers.dev/
+                example: https://gimboot.com/
         '405':
           $ref: '#/components/responses/MethodNotAllowed'
         '429':
@@ -278,36 +278,45 @@ paths:
       operationId: getPlayPage
       description: |
         The single canonical game URL (replaces the legacy `game.html` /
-        `?id=` variants). Serves the shared game shell with server-side SEO
-        injection via HTMLRewriter:
+        `?id=` variants). Resolves `{id}` against first-party `LOCAL_GAMES`
+        first, then the merged catalog, and renders a complete server-side
+        SEO page via HTMLRewriter:
 
-        - **Known game** (merged catalog incl. `local-*`): `<title>`,
-          meta description, `og:*` / `twitter:*`, `<link rel="canonical">`,
-          `gimboot-play-*` transport metas and a JSON-LD `VideoGame` block.
-        - **Unknown id**: shell served with only
-          `<meta name="gimboot-play-id">` so the client can retry the
-          catalog lookup without losing the play identity.
-        - **Missing id** (`/play/`): plain shell, unmodified.
+        - `<title>{Game} - Main Gratis di Gimboot</title>`
+        - meta description, `og:*` / `twitter:*`, exactly one absolute
+          `<link rel="canonical">`, `<meta name="robots" content="index, follow, max-image-preview:large">`
+        - JSON-LD `VideoGame`
+        - visible Indonesian “Tentang / Cara Bermain / Fitur” body copy
+        - escaped `gimboot-play-*` transport metas for `js/player.js`
 
-        The `{slug}` segment is **ignored server-side** — it exists purely as
-        an SEO/descriptive URL signal and never affects resolution.
+        URL canonicalization is strict: the `{slug}` must equal the
+        title-derived slug, there must be no trailing slash and no query
+        string. Any other form of a known game URL returns `301` to the
+        canonical `/play/{id}/{slug}`.
+
+        Unknown ids return a real `404` (noindex) instead of a soft-404
+        shell. If the merged catalog is completely unavailable, the route
+        returns `503` with `Retry-After` so a feed outage cannot deindex a
+        valid game.
       parameters:
         - $ref: '#/components/parameters/GameId'
         - name: slug
           in: path
           required: true
-          description: Human-readable game slug (informational only, not validated).
+          description: |
+            Title-derived slug. Validated server-side: a missing, stale, or
+            wrong slug returns `301` to the canonical form.
           schema:
             type: string
           example: kicau-mania
       responses:
         '200':
-          description: Game shell HTML with (or without) SEO injection.
+          description: Fully server-rendered game page (SEO + visible content).
           headers:
             Content-Type:
               schema:
                 type: string
-                example: text/html
+                example: text/html; charset=utf-8
             x-request-id:
               $ref: '#/components/headers/XRequestId'
           content:
@@ -315,17 +324,50 @@ paths:
               schema:
                 type: string
               example: |
-                <html lang="en">
+                <html lang="id">
                 <head>
-                  <title>Play Kicau Mania Free, No Download - Gimboot</title>
-                  <meta property="og:title" content="Play Kicau Mania Free, No Download - Gimboot">
-                  <link rel="canonical" href="https://games.farisi55.workers.dev/play/local-kicau-mania/kicau-mania">
-                  <meta name="gimboot-play-id" content="local-kicau-mania">
-                  <meta name="gimboot-play-width" content="360">
-                  <script type="application/ld+json">{"@context":"https://schema.org","@type":"VideoGame", ...}</script>
+                  <title>Kicau Mania - Main Gratis di Gimboot</title>
+                  <meta name="description" content="Kicau Mania adalah game arcade santai...">
+                  <link rel="canonical" href="https://gimboot.com/play/local-kicau-mania/kicau-mania">
+                  <meta name="robots" content="index, follow, max-image-preview:large">
+                  <meta property="og:title" content="Kicau Mania - Main Gratis di Gimboot">
+                  <meta property="og:url" content="https://gimboot.com/play/local-kicau-mania/kicau-mania">
+                  <script type="application/ld+json">{"@context":"https://schema.org","@type":"VideoGame","name":"Kicau Mania", ...}</script>
                 </head>
-                <body>...</body>
+                <body>
+                  <h1 id="game-title">Kicau Mania</h1>
+                  <section id="game-seo-content">...Tentang Kicau Mania...</section>
+                </body>
                 </html>
+        '301':
+          description: |
+            Non-canonical form of a known game URL: missing/wrong slug,
+            trailing slash, or any query string. Redirects to
+            `/play/{id}/{slug}` with the query string dropped.
+          headers:
+            Location:
+              schema:
+                type: string
+                format: uri
+              example: https://gimboot.com/play/local-kicau-mania/kicau-mania
+        '404':
+          description: |
+            Missing id (`/play/`) or an id not present in the merged catalog.
+            Branded HTML with `X-Robots-Tag: noindex, follow`; no canonical.
+          headers:
+            X-Robots-Tag:
+              schema:
+                type: string
+                example: noindex, follow
+        '503':
+          description: |
+            Merged catalog unavailable (both feeds failed/empty), so the id
+            cannot be verified. Temporary; keeps valid game URLs indexed.
+          headers:
+            Retry-After:
+              schema:
+                type: string
+                example: '3600'
         '405':
           $ref: '#/components/responses/MethodNotAllowed'
         '429':
@@ -333,81 +375,58 @@ paths:
   /game:
     get:
       tags: [pages]
-      summary: Game shell (legacy route) with query-param SEO + canonical redirect
+      summary: Legacy game URL — validated single-hop 301 to /play/{id}/{slug}
       operationId: getGameRoute
       description: |
-        Dispatch behavior:
+        Legacy query-param route. It **never renders a 200 HTML page**.
 
-        - **`id` = known first-party (`local-*`) game** → `301` to the
-          canonical `/play/{id}/{slug}` — the original query string is
-          preserved on the redirect target (single-hop redirect clears only
-          the fragment).
-        - **`id` present but not a first-party game** (e.g. a feed id) →
-          `200` shell, SEO taken from the query params below.
-        - **No `id`** → `200` shell with SEO from the query params
-          (defaults: title `Game`, empty description suffix).
+        - **Known `id`** (first-party or merged catalog) → `301` to the
+          canonical `/play/{id}/{slug}`. Every other query parameter
+          (`title`, `thumb`, `utm_*`, …) is ignored and dropped.
+        - **Missing `id`** → `404` (branded, noindex).
+        - **Unknown `id`** (catalog available) → `404`.
+        - **Catalog unavailable** and the id is not first-party → `503`
+          with `Retry-After: 3600` (temporary, avoids deindexing).
 
-        Alias: `/game.html` → `301` `/game` (query preserved); with a known
-        `id` it also lands on `/play/...` in a single hop.
+        Alias: `/game.html` (and `/game.html/*`) follows the same rules,
+        except that a shell with **no** `id` has no canonical destination and
+        returns `301` to `/`. There is no `/game.html → /game → /play`
+        chain: the Worker emits the final destination directly.
       parameters:
         - name: id
           in: query
           required: false
-          description: Game id — known `local-*` ids trigger the `301` to `/play/...`.
+          description: |
+            Game id. This is the only query parameter read; all others are
+            ignored and removed by the redirect.
           schema:
             type: string
           example: local-kicau-mania
-        - name: title
-          in: query
-          required: false
-          description: SEO title input (default `Game`).
-          schema:
-            type: string
-          example: Demo Game
-        - name: category
-          in: query
-          required: false
-          description: Category for the meta description (empty → generic wording).
-          schema:
-            type: string
-          example: Arcade
-        - name: thumb
-          in: query
-          required: false
-          description: Thumbnail URL for `og:image` / `twitter:image` (relative or absolute).
-          schema:
-            type: string
       responses:
-        '200':
-          description: Game shell HTML with SEO injected from query params.
-          headers:
-            Content-Type:
-              schema:
-                type: string
-                example: text/html
-            x-request-id:
-              $ref: '#/components/headers/XRequestId'
-          content:
-            text/html:
-              schema:
-                type: string
-              example: |
-                <html>
-                <head>
-                  <title>Demo Game - Main Gratis di Gimboot</title>
-                  <meta name="description" content="Mainkan Demo Game, game Arcade seru secara gratis di Gimboot.">
-                  <link rel="canonical" href="https://games.farisi55.workers.dev/game">
-                </head>
-                ...
-                </html>
         '301':
-          description: Known first-party `id` → canonical `/play/{id}/{slug}` (query preserved).
+          description: Known `id` → canonical `/play/{id}/{slug}` (query dropped).
           headers:
             Location:
               schema:
                 type: string
                 format: uri
-              example: https://games.farisi55.workers.dev/play/local-kicau-mania/kicau-mania?id=local-kicau-mania
+              example: https://gimboot.com/play/local-kicau-mania/kicau-mania
+        '404':
+          description: |
+            Missing or unknown `id`. Branded HTML with
+            `X-Robots-Tag: noindex, follow`; no canonical.
+          headers:
+            X-Robots-Tag:
+              schema:
+                type: string
+                example: noindex, follow
+        '503':
+          description: Catalog unavailable for a non-first-party id.
+          headers:
+            Retry-After:
+              schema:
+                type: string
+                example: '3600'
         '405':
           $ref: '#/components/responses/MethodNotAllowed'
         '429':
@@ -419,12 +438,14 @@ paths:
       operationId: getSitemap
       description: |
         `urlset` containing the home page (`changefreq: daily`, `priority:
-        1.0`) plus one `/play/{id}/{slug}` entry per game
+        1.0`) plus one canonical `/play/{id}/{slug}` entry per unique game
         (`changefreq: weekly`, `priority: 0.8`) for **first-party
         `local-*` games merged with up to `CATALOG_MAX_NUM` (200) feed
-        games** (205 `<url>` entries observed live). Locations are always
-        emitted as canonical `https://` URLs. Referenced by `robots.txt`.
-        Edge-cached 30 minutes (`public, max-age=1800`).
+        games**. Locations are always emitted as canonical `https://`
+        URLs on `https://gimboot.com` — never `/game?...`, never a `.html`
+        URL, and never with extra query parameters. IDs are deduplicated.
+        Referenced by `robots.txt`. Edge-cached 30 minutes
+        (`public, max-age=1800`).
       responses:
         '200':
           description: XML sitemap.
@@ -444,8 +465,8 @@ paths:
               example: |
                 <?xml version="1.0" encoding="UTF-8"?>
                 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-                <url><loc>https://games.farisi55.workers.dev/</loc><changefreq>daily</changefreq><priority>1.0</priority></url>
-                <url><loc>https://games.farisi55.workers.dev/play/local-kicau-mania/kicau-mania</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+                <url><loc>https://gimboot.com/</loc><changefreq>daily</changefreq><priority>1.0</priority></url>
+                <url><loc>https://gimboot.com/play/local-kicau-mania/kicau-mania</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
                 </urlset>
         '405':
           $ref: '#/components/responses/MethodNotAllowed'

@@ -1,19 +1,19 @@
 {
   "name": "gimboot",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "Multi-source HTML5 game portal — no install, just play, have fun.",
   "private": true,
   "type": "module",
   "scripts": {
     "dev": "wrangler dev",
-    "lint": "eslint js/ src/ games/shared/ --max-warnings 0",
-    "lint:fix": "eslint js/ src/ games/shared/ --fix",
+    "lint": "eslint js/ src/ functions/ games/shared/ --max-warnings 0",
+    "lint:fix": "eslint js/ src/ functions/ games/shared/ --fix",
     "format": "prettier --write \"**/*.{js,json,md}\"",
     "format:check": "prettier --check \"**/*.{js,json,md}\"",
     "test": "vitest run",
     "test:e2e": "vitest run --config vitest.e2e.config.js",
     "test:watch": "vitest",
-    "build": "npm run lint && npm test && npm audit --audit-level=high",
+    "build": "npm run lint && npm test && npm audit --audit-level=high --omit=dev",
     "prepare": "husky"
   },
   "devDependencies": {
