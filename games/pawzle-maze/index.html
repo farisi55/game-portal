@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0d3324">
+  <meta name="description" content="Pawzle Maze — bantu Miko si kucing menemukan ikan di dalam labirin.">
+  <title>Pawzle Maze</title>
+  <link rel="icon" type="image/svg+xml" href="cat-icon.svg">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- Game surface only. The portal owns its own brand, title, favorite and fullscreen controls. -->
+  <header class="topbar" aria-label="Game toolbar">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true">🐾</span>
+      <span class="brand-name">Pawzle Maze</span>
+    </div>
+
+    <div class="stats" aria-label="Statistik permainan">
+      <div class="stat level-stat"><span class="stat-label">Level</span><span class="stat-value"><i id="level-dot"></i><b id="active-level-name">EASY</b></span></div>
+      <div class="stat"><span class="stat-label">Time</span><span class="stat-value" id="time-value">00:00</span></div>
+      <div class="stat"><span class="stat-label">Moves</span><span class="stat-value" id="steps-value">0</span></div>
+      <div class="stat"><span class="stat-label">Best</span><span class="stat-value" id="best-time-value">—</span></div>
+    </div>
+
+    <div class="actions">
+      <button class="btn" id="music-toggle" type="button" aria-pressed="true" title="Matikan musik">
+        <span class="sound-on" aria-hidden="true">♫</span><span class="sound-off" aria-hidden="true">♩</span><span class="lbl" id="music-label">Sound ON</span>
+      </button>
+      <button class="btn" id="menu-toggle" type="button" aria-expanded="false" aria-controls="ingame-menu" title="Pilih level dan opsi">
+        <span aria-hidden="true">☰</span><span class="lbl">Options</span>
+      </button>
+      <button class="btn primary" id="new-maze-button" type="button" title="Buat labirin baru">
+        <span aria-hidden="true">⤨</span><span class="lbl">New Maze</span>
+      </button>
+    </div>
+  </header>
+
+  <main id="table" aria-label="Area permainan">
+    <section class="maze-layout">
+      <div class="maze-top-labels">
+        <span><i class="legend-dot start-dot"></i> START</span>
+        <span class="maze-tip">Drag Miko through the maze · Arrow Keys / WASD</span>
+        <span><i class="legend-dot goal-dot"></i> FISH</span>
+      </div>
+
+      <div class="canvas-wrap">
+        <canvas id="maze-canvas" width="640" height="640" role="img" aria-label="Labirin. Klik dan tarik Miko mengikuti lorong, atau gunakan tombol panah dan WASD."></canvas>
+      </div>
+
+      <div class="maze-footer">
+        <span><i class="live-dot"></i><span id="game-status" aria-live="polite">Miko siap berangkat!</span></span>
+        <span id="maze-size-label">7 × 7 petak</span>
+      </div>
+
+      <div class="board-controls-row">
+        <div class="board-hint"><span class="hint-key">↔</span> Drag Miko <i></i><span class="hint-key">⌨</span> Arrow Keys / WASD</div>
+        <div class="dpad" aria-label="Tombol arah">
+          <span></span><button type="button" class="dpad-button" data-direction="up" aria-label="Atas">↑</button><span></span>
+          <button type="button" class="dpad-button" data-direction="left" aria-label="Kiri">←</button><span class="dpad-center" aria-hidden="true">🐾</span><button type="button" class="dpad-button" data-direction="right" aria-label="Kanan">→</button>
+          <span></span><button type="button" class="dpad-button" data-direction="down" aria-label="Bawah">↓</button><span></span>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Options popover is part of the game surface; no separate menu page. -->
+  <div class="menu-backdrop" id="menu-backdrop" hidden></div>
+  <section class="ingame-menu" id="ingame-menu" role="dialog" aria-modal="true" aria-labelledby="menu-title" hidden>
+    <div class="menu-heading">
+      <div><p class="eyebrow">PAWZLE SETTINGS</p><h2 id="menu-title">Game options</h2></div>
+      <button class="close-button" id="menu-close" type="button" aria-label="Tutup menu">×</button>
+    </div>
+    <div class="menu-section">
+      <div class="menu-section-title"><strong>Select difficulty</strong><small>Setiap level membuat susunan maze baru</small></div>
+      <div class="menu-levels" role="group" aria-label="Pilih tingkat kesulitan">
+        <button type="button" class="menu-level is-active" data-level="easy" aria-pressed="true"><span>🌱</span><strong>Easy</strong><small>7 × 7</small></button>
+        <button type="button" class="menu-level" data-level="medium" aria-pressed="false"><span>🌼</span><strong>Medium</strong><small>14 × 14</small></button>
+        <button type="button" class="menu-level" data-level="hard" aria-pressed="false"><span>🌶️</span><strong>Hard</strong><small>18 × 18</small></button>
+        <button type="button" class="menu-level" data-level="veryhard" aria-pressed="false"><span>🔥</span><strong>Very Hard</strong><small>24 × 24</small></button>
+        <button type="button" class="menu-level nightmare-level" data-level="nightmare" aria-pressed="false"><span>☠</span><strong>Nightmare</strong><small>34 × 34</small></button>
+      </div>
+    </div>
+    <div class="menu-section menu-actions-section">
+      <strong>Game controls</strong>
+      <button class="menu-action" id="restart-button" type="button"><span>↺</span><span><b>Restart level</b><small>Kembali ke titik awal di labirin ini</small></span></button>
+      <button class="menu-action" id="menu-new-maze-button" type="button"><span>⟳</span><span><b>New maze</b><small>Buat susunan labirin acak yang baru</small></span></button>
+      <button class="menu-action" id="menu-music-button" type="button"><span>♫</span><span><b id="menu-music-label">Matikan musik</b><small>Musik latar selama bermain</small></span><span class="switch-indicator" id="music-switch">ON</span></button>
+    </div>
+    <p class="menu-footnote">Petunjuk: klik dan tahan Miko, lalu tarik mengikuti lorong. D-pad dan keyboard juga tersedia.</p>
+  </section>
+
+  <div class="modal-backdrop" id="win-modal" hidden>
+    <section class="win-dialog" role="dialog" aria-modal="true" aria-labelledby="win-title">
+      <div class="confetti confetti-one" aria-hidden="true">✦</div><div class="confetti confetti-two" aria-hidden="true">✧</div>
+      <div class="win-mascot" aria-hidden="true"><span>🐱</span><i>🐟</i></div>
+      <p class="eyebrow win-eyebrow" id="win-level-label">LEVEL EASY SELESAI</p>
+      <h2 id="win-title">Yeay! Miko menemukan ikan!</h2>
+      <p class="win-subtitle">Petualangan berhasil diselesaikan.</p>
+      <div class="completion-time-wrap"><small>WAKTU PENYELESAIAN</small><strong id="completion-time">00:00</strong></div>
+      <div class="record-result" id="record-result" aria-live="polite"><span class="record-symbol">♛</span><span id="record-summary">Rekor baru!</span></div>
+      <div class="result-stats"><div><small>JUMLAH LANGKAH</small><strong id="completion-steps">0</strong></div><div><small>REKOR TERBAIK</small><strong id="completion-best">00:00</strong></div></div>
+      <div class="win-actions">
+        <button class="result-primary" id="play-again-button" type="button">Main lagi <span>↻</span></button>
+        <button class="result-secondary" id="choose-level-button" type="button">Pilih level</button>
+        <button class="result-next" id="next-level-button" type="button">Level berikutnya <span>→</span></button>
+      </div>
+    </section>
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>
