@@ -1,7 +1,7 @@
 ---
 project: Gimboot
-knowledge_version: 1.6.17
-changelog_version: 1.0.39
+knowledge_version: 1.6.18
+changelog_version: 1.0.40
 created: 2026-08-28
 status: in_progress
 milestone: 1 of 1
@@ -66,6 +66,51 @@ Satu Cloudflare Worker dengan static assets (`src/index.js`) menangani seluruh r
 
 ### [Retroaktif] Sistem Viral Sharing
 `games/shared/ui-share.js`/`.css`: confetti + Web Share API saat rekor pecah, dengan fallback clipboard-copy, terhubung ke halaman share ber-OG-tag di `src/index.js`. Catatan cakupan audit: isi `ui-share.js` belum dibaca baris-per-baris — deskripsi ini berdasarkan nama file, penggunaannya di `js/player.js`, dan `README.md`, bukan verifikasi kode penuh (lihat "Catatan Metodologi Audit" di `knowledge.md`).
+
+### Task #033 — Ad-hoc: GSC Indexing Remediation v2 — Legacy `/game` Redirects, Canonical `/play` & Server-Rendered Game Pages ✅
+- **Completed:** 2026-11-16
+- **Phase:** Ad-hoc (lanjutan Task #032; permintaan developer menindaklanjuti laporan Google Search Console `gimboot.com`: "Halaman dengan pengalihan", "Crawled - currently not indexed", "Duplicate, without user-selected canonical")
+- **Status:** OK
+- **Branch:** `dev` (seluruh perubahan belum di-commit saat entri ini ditulis)
+- **Context / akar masalah:**
+  1. `/game` masih melayani shell HTML 200 berisi konten tipis dan dapat diindeks sebagai duplikat `/play`.
+  2. `/game.html` masih melewati dua hop (`/game.html` → `/game` → `/play`) sehingga muncul sebagai "Page with redirect".
+  3. Halaman `/play` mengandalkan JavaScript untuk mengisi title/description/konten; Googlebot tidak selalu mengeksekusinya → "Crawled - currently not indexed" dan "Duplicate, without user-selected canonical".
+  4. Canonical root ditulis tanpa trailing slash (`https://gimboot.com`), berbeda dari URL yang benar-benar diserve (`https://gimboot.com/`).
+  5. Sitemap statis memuat `/emulator/` dan slug `ayo-kopdes` yang salah, serta masih ada link internal `http://` dan `*.html`.
+- **Files created / modified:**
+  - `functions/game.js` — **baru**: renderer HTMLRewriter bersama + helper SEO (`buildGameSeo`, `buildHeadExtra`, `buildBodySection`, `escapeHtml`, `escapeJsonLd`, `slugify`, `gameCanonicalPath`). Menghapus lalu menambahkan tepat satu canonical/robots/OG/Twitter/JSON-LD, dan menambahkan konten Indonesia terlihat ("Tentang / Cara Bermain / Fitur"). **Bug keamanan ditemukan lewat test:** `HTMLRewriter.setAttribute()` di workerd tidak meng-escape nilai atribut → `SetAttribute` sekarang meng-escape sendiri.
+  - `src/index.js` — `/game` dan `/game.html` memvalidasi `id` ke katalog lalu **301 satu hop** ke `/play/{id}/{slug}`; ID hilang/tidak dikenal → **404** noindex; katalog down & bukan first-party → **503** + `Retry-After: 3600`. `/play` menegakkan slug/trailing-slash/query kanonik, me-render SSR penuh, dan 404 untuk ID tak dikenal. Sitemap dinamis hanya `SITE_ROOT` + URL `/play` unik. `/share` diberi `noindex`. 404 branded untuk path extensionless; `/404` dan `/404.html` hard-404. Shell diambil via `env.ASSETS.fetch('https://assets.local/game')`.
+  - `index.html` — canonical statis `https://gimboot.com/` + `og:url`; snippet canonical inline dihapus.
+  - `game.html` — shell `noindex`; canonical inline, redirect klien `/game.html`, dan section How-to-Play duplikat dihapus (konten kini dari renderer).
+  - 8 shell HTML lain (`emulator/index.html`, `emulator/runtime.html`, 6 `games/*/index.html`) — snippet `data-gimboot-canonical` inline dihapus.
+  - `404.html` — **baru**: halaman 404 branded, noindex.
+  - `_redirects` — hanya fallback statis `/index.html`/`/index.htm` → `/`. Aturan `/game*` dihapus karena asset binding juga menerapkan file ini saat `env.ASSETS.fetch('/game')`, sehingga rule tersebut membuat renderer `/play` mendapat 301 dan mengembalikan 503. Aturan redirect legacy sepenuhnya milik Worker (`run_worker_first`), tanpa rantai redirect.
+  - `sitemap.xml` — fallback statis: `/emulator/` dihapus, slug `ayo-kopdes` → `ayo-ke-kopdes`, tanggal diperbarui; hanya root + `/play`.
+  - `sw.js` — cache `gimboot-portal-v7`; `/game` dihapus dari precache; fallback navigasi offline selalu `/`.
+  - `js/player.js` — tidak lagi membaca data game dari query param; hanya SSR meta/path. `js/utils.js` — `buildGamePageUrl` dihapus. `js/config.js` — komentar route diperbarui.
+  - `games/shared/ui-share.js` — peta ID→slug kanonik; `ayo-kopdes` → `ayo-ke-kopdes`; tambah `moba-dota`.
+  - `src/index.test.js` / `e2e/full-flow.test.js` — kontrak baru: 301/404/503 legacy, canonical/SSR/JSON-LD `/play`, `_redirects`/asset-shell regression via E2E, escaping atribut.
+  - `eslint.config.js` / `package.json` — `functions/` masuk lint; versi `1.0.6`.
+  - `loadtest/gimboot.js` — route `/game` menjadi `legacy_game` yang meng-assert 301.
+- **Acceptance criteria met:**
+  - [x] `/game` dan `/game.html` tidak pernah 200: valid → 301 satu hop; hilang/tidak dikenal → 404; katalog down → 503
+  - [x] `/play/{id}/{slug}` adalah satu-satunya URL game kanonik; slug/query/trailing-slash menyimpang → 301
+  - [x] SSR memuat title `{Game} - Main Gratis di Gimboot`, meta description, tepat satu canonical absolut, robots `index, follow, max-image-preview:large`, OG/Twitter, JSON-LD `VideoGame`, dan konten terlihat
+  - [x] Root canonical `https://gimboot.com/` (trailing slash) ada sebagai tag statis dan tidak terduplikasi
+  - [x] Sitemap hanya `https://gimboot.com/` + URL `/play` tanpa parameter ekstra
+  - [x] Tidak ada link internal `index.html`/`game.html`/`http://` yang tersisa di file yang diaudit
+  - [x] `_redirects` tidak membuat rantai redirect
+- **Verification:** `npm test` — **196 tes lulus** (5 file); `npm run test:e2e` — **5 tes lulus** (2 file, termasuk journey + legacy shell hygiene); `npm run lint` — 0 error/0 warning. Smoke `wrangler dev` (port 8799): `/` 200 (1 canonical), `/index.html` 301 `/`, `/game` 404, `/game?id=local-*` 301 `/play/...`, `/game.html` 301 `/`, `/game.html?id=local-*` 301 `/play/...`, `/play` 200 (canonical/title/robots/JSON-LD), `/play/{id}` 301, `/play/{id}/{slug}/` 301, query 301, `/404` + `/404.html` 404, `/this-page-does-not-exist` 404 branded, `/sitemap.xml` 200 (206 URL `/play`, 0 `/game`, tanpa `http://` selain xmlns), `/share/local-kicau-mania` 200 + `X-Robots-Tag: noindex`.
+- **Decisions made:**
+  - [ARCH] **D1 — canonical tetap `/play/{id}/{slug}`, bukan `/game?id=`**: query canonical akan mengembalikan duplikasi parameter yang justru sedang dibereskan.
+  - [SEO] **D2 — katalog down = 503, bukan 404**: 404 untuk game valid saat feed outage akan men-deindex halaman yang sebenarnya sehat.
+  - [ARCH] **D3 — `_redirects` tidak memuat aturan `/game*`**: asset binding menerapkan `_redirects` pada `env.ASSETS.fetch()`; aturan legacy di sana memblokir renderer SSR. Worker-first routing adalah sumber kebenaran produksi.
+- **Notes:**
+  - `/game.html` tanpa `id` → 301 `/` (tidak ada tujuan kanonik); `/game` tanpa `id` → 404.
+  - Shell `game.html` tetap `noindex` agar deployment statis murni (tanpa Worker) tidak menghasilkan halaman duplikat yang dapat diindeks.
+  - `not_found_handling = "none"` dipertahankan karena Worker merender 404 branded sendiri.
+- **Knowledge drift:** @knowledge v1.6.17 → **v1.6.18** (route contract `/game*`, canonical `/play`, SSR renderer, temuan escaping `setAttribute`).
 
 ### Task #032 — Ad-hoc: Fix GSC Indexing, Clean URL Redirects & Server-Side Canonical ✅
 - **Completed:** 2026-11-12

@@ -4,7 +4,6 @@ import {
   debounce,
   slugify,
   buildPlayUrl,
-  buildGamePageUrl,
   isAllowedEmbedUrl,
   readSessionGames,
   writeSessionGames,
@@ -170,37 +169,6 @@ describe('js/utils.js', () => {
     it('handles undefined title', () => {
       const url = buildPlayUrl({ id: '1', title: undefined });
       expect(url).toContain('game');
-    });
-  });
-
-  describe('buildGamePageUrl', () => {
-    it('builds /game? URL with query params', () => {
-      const url = buildGamePageUrl(TEST_GAME);
-      expect(url).toBe('/game?id=game-1&title=Test+Game&category=Action&url=http%3A%2F%2Fexample.com&thumb=thumb.svg');
-    });
-
-    it('includes thumb when provided', () => {
-      const url = buildGamePageUrl({ ...TEST_GAME, thumb: 'custom-thumb.svg' });
-      expect(url).toContain('thumb=custom-thumb.svg');
-    });
-
-    it('omits thumb when undefined', () => {
-      const url = buildGamePageUrl({ ...TEST_GAME, thumb: undefined });
-      expect(!url.includes('thumb')).toBe(true);
-    });
-
-    it('includes all stringified params', () => {
-      const url = buildGamePageUrl({
-        id: '',
-        title: '',
-        category: '',
-        url: '',
-        thumb: '',
-      });
-      expect(url).toContain('id=');
-      expect(url).toContain('title=');
-      expect(url).toContain('category=');
-      expect(url).toContain('url=');
     });
   });
 

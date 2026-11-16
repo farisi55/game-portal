@@ -8,24 +8,26 @@
   'use strict';
 
   /* ------------------------------------------------------------------
-     0. GAME ID RESOLUTION
-     Games call ViralShare.show('<slug>', score) using their folder slug
-     (e.g. 'kicau-mania'), but the portal's canonical game IDs are the
-     LOCAL_GAMES ids (e.g. 'local-kicau-mania'). Share links pointing at
-     the raw slug would miss the server's LOCAL_GAMES lookup and land on
-     a generic page — so map slug -> canonical id here. When a new
-     first-party game is added, register it in this map.
+     0. GAME ID + CANONICAL SLUG RESOLUTION
+     Games call ViralShare.show('<folder-slug>', score) using their folder
+     name (e.g. 'ayo-kopdes'), but the portal's canonical game ID is the
+     LOCAL_GAMES id ('local-ayo-kopdes') and the canonical URL slug is derived
+     from the TITLE, not the folder ('ayo-ke-kopdes'). The share URL must
+     match gameCanonicalPath() byte-for-byte, otherwise the link takes a 301
+     hop and is not the canonical URL. When a new first-party game is added,
+     register both values in this map.
   ------------------------------------------------------------------ */
-  var GAME_ID_BY_SLUG = {
-    'kicau-mania': 'local-kicau-mania',
-    'ayo-kopdes': 'local-ayo-kopdes',
-    'mobil-mbg': 'local-mobil-mbg',
-    'kejar-koruptor': 'local-kejar-koruptor',
-    'solitaire': 'local-solitaire',
+  var CANONICAL_GAMES = {
+    'kicau-mania': { id: 'local-kicau-mania', slug: 'kicau-mania' },
+    'ayo-kopdes': { id: 'local-ayo-kopdes', slug: 'ayo-ke-kopdes' },
+    'mobil-mbg': { id: 'local-mobil-mbg', slug: 'mobil-mbg' },
+    'kejar-koruptor': { id: 'local-kejar-koruptor', slug: 'kejar-koruptor' },
+    'solitaire': { id: 'local-solitaire', slug: 'solitaire' },
+    'moba': { id: 'local-moba', slug: 'moba-dota' },
   };
 
-  function resolveGameId (slug) {
-    return GAME_ID_BY_SLUG[slug] || slug;
+  function resolveCanonicalGame (slug) {
+    return CANONICAL_GAMES[slug] || { id: slug, slug: slugify(slug) };
   }
 
   /* ------------------------------------------------------------------
@@ -52,6 +54,10 @@
       '\u{1F492}\u{1F389} Baru saja menyelesaikan Solitaire Klondike dengan skor {SKOR}! ' +
       'Udah siap bersaing untuk merebut rekor tertinggi? Buktikan di sini! ' +
       '#Solitaire #Gimboot \u2192 ',
+    'moba':
+      '\u2694\uFE0F Baru saja menaklukkan medan Moba DOTA dengan skor {SKOR}! ' +
+      'Pilih hero, kuasai arena, dan buktikan kamu yang terkuat. ' +
+      '#MobaDOTA #Gimboot \u2192 ',
   };
 
   var BASE_URL = 'https://gimboot.com/play/';
@@ -65,10 +71,10 @@
    * COPY templates end with an arrow pointing at the link.
    */
   function buildShareText (gameId, score) {
-    var canonicalId = resolveGameId(gameId);
+    var canonical = resolveCanonicalGame(gameId);
     var tpl = COPY[gameId] || COPY['kejar-koruptor'];
     var text = tpl.replace('{SKOR}', String(score));
-    return text + BASE_URL + encodeURIComponent(canonicalId) + '/' + encodeURIComponent(slugify(gameId));
+    return text + BASE_URL + encodeURIComponent(canonical.id) + '/' + encodeURIComponent(canonical.slug);
   }
 
   /** Mirrors js/utils.js's slugify — keep the two in sync. */

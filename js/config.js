@@ -15,11 +15,12 @@ export const CONFIG = {
   LOAD_MORE_COUNT: 10,
   MAX_GAME_COUNT: 200,
 
-  // Hostnames allowed as an <iframe src>. /game reads `url` from the
-  // query string, so without this allowlist the player page could be used
-  // to frame arbitrary third-party URLs. Anything outside this list (and
-  // outside our own games/ folder — see isAllowedEmbedUrl in utils.js) is
-  // refused before it ever reaches the DOM.
+  // Hostnames allowed as an <iframe src>. The canonical /play/{id}/{slug}
+  // route resolves the embed URL server-side and exposes it as a meta tag, so
+  // the player never accepts a URL from the query string. This allowlist is
+  // the second line of defense for every resolved value. Anything outside
+  // this list (and outside our own games/ folder — see isAllowedEmbedUrl in
+  // utils.js) is refused before it ever reaches the DOM.
   ALLOWED_EMBED_HOSTS: [
     'html5.gamemonetize.co',
     'gamemonetize.co',
@@ -108,7 +109,7 @@ export const CONFIG = {
   RELATED_GAMES_LIMIT: 12,
 
   // sessionStorage key used to hand the already-fetched catalog from
-  // index.html to /game, avoiding a second network round-trip when the
-  // person clicks from the grid into a game.
+  // index.html to the player page, avoiding a second network round-trip when
+  // the person clicks from the grid into a game.
   SESSION_CACHE_KEY: 'gp_games_cache_v1',
 };

@@ -106,7 +106,7 @@ const ROUTES = [
   { name: 'api_search', path: '/api/search?q=racing', kind: 'json', weight: 15, feedDependent: true },
   { name: 'share', path: '/share/local-kicau-mania', kind: 'html', weight: 12, feedDependent: true },
   { name: 'play', path: '/play/local-kicau-mania/kicau-mania', kind: 'html', weight: 28, feedDependent: true },
-  { name: 'game', path: '/game', kind: 'html', weight: 5, feedDependent: false },
+  { name: 'legacy_game', path: '/game?id=local-kicau-mania', kind: 'redirect', weight: 5, feedDependent: false },
   { name: 'sitemap', path: '/sitemap.xml', kind: 'xml', weight: 5, feedDependent: true },
 ];
 
@@ -191,10 +191,13 @@ function pickRoute(stage) {
  * Content-type assertion per route kind — catches a 200 whose body is an
  * unexpected error document rather than the route's real payload.
  * @param {object} response - k6 response object
- * @param {string} kind - 'json' | 'html' | 'xml'
- * @returns {boolean} whether the response content-type matches the route
+ * @param {string} kind - 'json' | 'html' | 'xml' | 'redirect'
+ * @returns {boolean} whether the response matches the route kind
  */
 function contentTypeMatches(response, kind) {
+  if (kind === 'redirect') {
+    return Boolean(response.headers.Location || response.headers.location);
+  }
   const contentType = (response.headers['Content-Type'] || response.headers['content-type'] || '')
     .toLowerCase()
     .trim();
@@ -215,6 +218,7 @@ export default function () {
 
   const route = pickRoute(STAGE);
   issueOffset.add(Date.now() - SCENARIO_START);
+  const expectedStatus = route.kind === 'redirect' ? 301 : 200;
   const response = http.get(`${BASE_URL}${route.path}`, {
     headers: {
       'CF-Connecting-IP': simulatedClientIp(__VU),
@@ -223,18 +227,18 @@ export default function () {
     },
     tags: { name: route.name },
     timeout: '60s',
+    redirects: route.kind === 'redirect' ? 0 : undefined,
   });
 
   const isError = response.status === 0 || response.status >= 400;
-  check(
-    response,
-    {
-      [`${route.name} returns 200`]: (r) => r.status === 200,
-      [`${route.name} content-type matches route`]: (r) => contentTypeMatches(r, route.kind),
-      [`${route.name} body non-empty`]: (r) => r.body !== null && r.body.length > 0,
-    },
-    { route: route.name }
-  );
+  const routeChecks = {
+    [`${route.name} returns ${expectedStatus}`]: (r) => r.status === expectedStatus,
+    [`${route.name} response matches route kind`]: (r) => contentTypeMatches(r, route.kind),
+  };
+  if (route.kind !== 'redirect') {
+    routeChecks[`${route.name} body non-empty`] = (r) => r.body !== null && r.body.length > 0;
+  }
+  check(response, routeChecks, { route: route.name });
 
   routeDuration[route.name].add(response.timings.duration);
   routeErrors[route.name].add(isError ? 1 : 0);

@@ -86,19 +86,20 @@ The following gate-required fixes were applied to `src/index.js`, `eslint.config
 
 - **Execution date:** 2026-09-24
 - **Scope:** The full player journey through the live `src/index.js` routes, driven against a real `wrangler dev` server and a real Chromium browser (Playwright, via `npm run test:e2e`).
-- **Result:** PASS — 3/3 tests, zero console errors.
+- **Result:** PASS — 4/4 tests in `full-flow.test.js` (5/5 across the E2E suite including the emulator flow), zero console errors.
 
 ### What the suite exercises
 
-`e2e/full-flow.test.js` (3 tests, ~52s):
+`e2e/full-flow.test.js` (4 tests):
 
-1. **Full player journey** — catalog card → `/game?id=` → 301 to `/play/{id}/{slug}` → Play Now → lazy iframe → deterministic new record via the game's classic-script globals → ViralShare modal (confetti + score) → score bridged to the PWA global high-score (`arcade-high-score-v1`) → Share button copies the canonical deep link → close. Asserts zero `console.error`/`pageerror` across every frame.
+1. **Full player journey** — catalog card links directly to canonical `/play/{id}/{slug}` (no `/game` hop) → SSR title/canonical/robots/OG/JSON-LD and visible SEO copy are present → Play Now → lazy iframe → deterministic new record via the game's classic-script globals → ViralShare modal (confetti + score) → score bridged to the PWA global high-score (`arcade-high-score-v1`) → Share button copies the canonical deep link → close. Asserts zero `console.error`/`pageerror` across every frame.
 2. **Share/SEO surface** — `GET /share/local-kicau-mania` serves `og:title`/`og:image` carrying the real game name and thumb.
 3. **Legacy redirect** — `GET /game?id=local-kicau-mania` (maxRedirects: 0) returns exactly one 301 to `/play/local-kicau-mania/...`.
+4. **Legacy shell hygiene** — `GET /game` and unknown ids are real 404s with `X-Robots-Tag: noindex`; `GET /game.html` (no id) 301s to `/`; `GET /game.html?id=local-kicau-mania` 301s straight to `/play/...` with the query dropped, and following it resolves to a single 200 page.
 
 ### Determinism strategy
 
-- The external games feed is stubbed at the network layer (Playwright `context.route`), so the suite never depends on GameMonetize/GamePix availability. The stub IDs use the `gm-` prefix so `fetchGameCatalog`'s balanced split keeps them in the catalog (5 LOCAL_GAMES + 3 stubbed remote = 8 cards since Task #027; previously 4 + 3 = 7).
+- The external games feed is stubbed at the network layer (Playwright `context.route`), so the suite never depends on GameMonetize/GamePix availability. The stub IDs use the `gm-` prefix so `fetchGameCatalog`'s balanced split keeps them in the catalog (6 LOCAL_GAMES + 3 stubbed remote = 9 cards).
 - The server is booted with `localProtocol: 'http'`, not HTTPS. wrangler dev serves a self-signed cert over HTTPS and every script fetch from the game iframe then trips a hard `console.error` ("An SSL certificate error occurred when fetching the script"). Over plain HTTP the journey is completely clean. The Worker's http→https 301 is gated on `isLoopbackHost()` so it still fires for real production traffic — the suite just doesn't exercise it here.
 - The game is driven through its classic-script globals (`startPlaying()` / `state.score = 5` / `gameOver()`) rather than physics flapping, so the "new record" path is deterministic.
 

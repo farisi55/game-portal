@@ -10,7 +10,7 @@ export default [
   // Base recommended rules for all JavaScript files
   {
     ...js.configs.recommended,
-    files: ['js/**/*.js', 'src/**/*.js', 'games/shared/**/*.js'],
+    files: ['js/**/*.js', 'src/**/*.js', 'functions/**/*.js', 'games/shared/**/*.js'],
   },
   // Global ignores — don't lint generated output, tool folders, or game logic
   // files that are standalone Canvas apps (not ES modules sharing our tooling)
@@ -34,7 +34,7 @@ export default [
   },
   // Linting rules for Worker + portal JS
   {
-    files: ['js/**/*.js', 'src/**/*.js', 'games/shared/**/*.js'],
+    files: ['js/**/*.js', 'src/**/*.js', 'functions/**/*.js', 'games/shared/**/*.js'],
     languageOptions: {
       ecmaVersion: 2022,
       sourceType: 'module',

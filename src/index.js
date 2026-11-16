@@ -18,7 +18,33 @@
 // (see wrangler.toml — `npx wrangler deploy`, not `wrangler pages deploy`).
 // ============================================================================
 
-const WORKER_VERSION = '1.0.4';
+import {
+  SITE_NAME,
+  SITE_ORIGIN,
+  SITE_ROOT,
+  absoluteUrl,
+  decodeEntities,
+  escapeHtmlAttr,
+  escapeJsonLd,
+  gameCanonicalPath,
+  gameCanonicalUrl,
+  renderGamePage,
+  slugify,
+  AppendHtml,
+  RemoveElement,
+  SetAttribute,
+} from '../functions/game.js';
+
+export {
+  decodeEntities,
+  escapeHtmlAttr,
+  escapeJsonLd,
+  gameCanonicalPath,
+  gameCanonicalUrl,
+  slugify,
+};
+
+const WORKER_VERSION = '1.0.6';
 
 const GM_FEED_BASE = 'https://gamemonetize.com/feed.php';
 const CATALOG_DEFAULT_NUM = 50;
@@ -29,11 +55,9 @@ const GAMEPIX_DEFAULT_SID = '985I2';
 const GAMEPIX_PAGINATION_OPTIONS = [12, 24, 48, 96];
 
 const CACHE_TTL_SECONDS = 1800; // 30 menit
-const SITE_NAME = 'Gimboot';
-// Canonical host. Always emit this origin in canonical tags, Open Graph URLs,
-// JSON-LD, and sitemap entries — never the request host. Preview/workers.dev
-// deployments must not compete with the production custom domain in search.
-const SITE_ORIGIN = 'https://gimboot.com';
+// SITE_ORIGIN / SITE_ROOT are imported from functions/game.js. Canonical host
+// is always the production custom domain — never the request host. Preview /
+// workers.dev deployments must not compete with gimboot.com in search.
 const ALLOWED_HTTP_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
 const MAX_BODY_BYTES = 5 * 1024 * 1024;
 const RATE_LIMIT_MAX = 100;
@@ -141,6 +165,8 @@ const LOCAL_GAMES = [
     id: 'local-kicau-mania',
     title: 'Kicau Mania',
     category: 'Arcade',
+    description:
+      'Kicau Mania adalah game arcade santai tentang melatih burung kicau. Ketuk pada momen yang tepat untuk menjaga irama kicau, kumpulkan skor sebanyak mungkin, dan kalahkan rekor pemain lain. Cocok dimainkan sebentar-sebentar di ponsel maupun desktop.',
     url: '/games/kicau-mania/index.html',
     thumb: '/games/kicau-mania/thumb.svg',
     width: 360,
@@ -151,6 +177,8 @@ const LOCAL_GAMES = [
     id: 'local-ayo-kopdes',
     title: 'Ayo ke Kopdes',
     category: 'Arcade',
+    description:
+      'Ayo ke Kopdes mengajak Anda berbelanja di minimarket desa. Ambil barang yang ada di daftar belanja, hindari keranjang yang salah, dan selesaikan pesanan sebelum waktu habis. Game arcade ringan yang mudah dipahami dan seru untuk semua usia.',
     url: '/games/ayo-kopdes/index.html',
     thumb: '/games/ayo-kopdes/thumb.svg',
     width: 960,
@@ -161,6 +189,8 @@ const LOCAL_GAMES = [
     id: 'local-mobil-mbg',
     title: 'Mobil MBG',
     category: 'Arcade',
+    description:
+      'Mobil MBG adalah game menyetir santai bertema pengantaran makanan. Kemudikan mobil retro, hindari rintangan, dan antar pesanan tepat waktu. Kontrol sederhana, tempo cepat, dan tantangan yang cocok untuk permainan singkat di browser.',
     url: '/games/mobil-mbg/index.html',
     thumb: '/games/mobil-mbg/thumb.svg',
     width: 360,
@@ -171,6 +201,8 @@ const LOCAL_GAMES = [
     id: 'local-kejar-koruptor',
     title: 'Kejar Koruptor',
     category: 'Arcade',
+    description:
+      'Kejar Koruptor adalah game arcade kejar-kejaran yang seru. Bergerak cepat, hindari polisi, dan tangkap koruptor yang kabur. Setiap ronde menghadirkan tantangan baru dengan kontrol keyboard atau layar sentuh yang responsif.',
     url: '/games/kejar-koruptor/index.html',
     thumb: '/games/kejar-koruptor/thumb.svg',
     width: 360,
@@ -181,6 +213,8 @@ const LOCAL_GAMES = [
     id: 'local-solitaire',
     title: 'Solitaire',
     category: 'Cards',
+    description:
+      'Mainkan Solitaire Klondike klasik langsung di browser. Susun kartu ke foundation, buka kartu tertutup, dan pindahkan kartu antar-tumpukan dengan klik atau ketuk. Tidak perlu instal, tidak perlu akun, dan bisa dimainkan di desktop maupun ponsel.',
     url: '/games/solitaire/index.html',
     thumb: '/games/solitaire/thumb.svg',
     width: 1024,
@@ -191,6 +225,8 @@ const LOCAL_GAMES = [
     id: 'local-moba',
     title: 'Moba DOTA',
     category: 'MOBA',
+    description:
+      'Moba DOTA adalah game MOBA 3D yang dimainkan langsung di browser. Pilih karakter, kendalikan hero dengan WASD dan mouse, lalu bertarung untuk menguasai medan. Grafis tiga dimensi dan kontrol responsif tanpa perlu download atau instal.',
     url: '/games/moba/index.html',
     thumb: '/games/moba/thumb.svg',
     width: 1280,
@@ -245,24 +281,18 @@ export default {
       // Tracking/query params are irrelevant on the root page, so drop them.
       response = redirectSingleHop(url, '/', false);
     } else if (/^\/game\.html(\/.*)?$/i.test(url.pathname)) {
-      // Legacy shell (including trailing/wildcard paths): one 301 hop,
-      // preserving ?id= and every other query parameter. First-party games go
-      // straight to their /play landing page (single hop, no
-      // /game.html -> /game -> /play chain) and drop the now-irrelevant query
-      // string.
-      const gameId = url.searchParams.get('id');
-      const localGame = LOCAL_GAMES.find((g) => String(g.id) === gameId);
-      response = localGame
-        ? redirectSingleHop(url, `/play/${encodeURIComponent(localGame.id)}/${slugify(localGame.title)}`, false)
-        : redirectSingleHop(url, '/game');
-    } else if (url.pathname === '/game' && url.searchParams.has('id')) {
-      const gameId = url.searchParams.get('id');
-      const localGame = LOCAL_GAMES.find((g) => String(g.id) === gameId);
-      if (localGame) {
-        response = redirectSingleHop(url, `/play/${encodeURIComponent(localGame.id)}/${slugify(localGame.title)}`, false);
-      } else {
-        response = await handleGameRoute(request, url, env, requestId);
-      }
+      // Legacy shell (including trailing/wildcard paths): exactly one 301 hop
+      // to the canonical /play URL (query string dropped). No
+      // /game.html -> /game -> /play chain. A shell with no ?id= goes back to
+      // the catalog instead of becoming an indexable thin page.
+      response = await handleLegacyGameHtmlRoute(request, url, env, ctx);
+    } else if (/^\/game\/?$/.test(url.pathname)) {
+      // Legacy query-param player. Validate the id against the live catalog,
+      // then 301 to the canonical /play URL. Missing/unknown ids are 404s so
+      // Google never indexes an empty shell or an error page.
+      // `/game/` is included so the asset layer's trailing-slash
+      // normalization cannot insert an extra 307 ahead of the 301.
+      response = await handleGameRoute(request, url, env, ctx);
     } else if (url.protocol === 'http:' && !isLoopbackHost(url.hostname)) {
       const httpsUrl = new URL(url);
       httpsUrl.protocol = 'https:';
@@ -277,17 +307,26 @@ export default {
       response = await handleShareRoute(request, url, env, ctx, requestId);
     } else if (url.pathname.startsWith('/play/')) {
       response = await handlePlayRoute(request, url, env, ctx, requestId);
-    } else if (url.pathname === '/game') {
-      response = await handleGameRoute(request, url, env, requestId);
+    } else if (url.pathname === '/play' || url.pathname === '/play/') {
+      // /play without a game id is not a page. 404 rather than serving the
+      // generic shell (soft-404 / "duplicate without canonical" in GSC).
+      response = await notFoundResponse(request, env);
+    } else if (/^\/404(?:\.html)?$/i.test(url.pathname)) {
+      // The error document itself is not a public page. Cloudflare can serve
+      // /404.html at /404 with a 200, so make both spellings a real 404 and
+      // never let a canonical be injected into them.
+      response = await notFoundResponse(request, env);
     } else if (url.pathname === '/sitemap.xml') {
       response = await handleSitemap(url, env, ctx, requestId);
     } else {
       response = await env.ASSETS.fetch(request);
-      // Static HTML (catalog, emulator shell, first-party game shells) has no
-      // hand-written canonical. Inject one server-side so Googlebot never has
-      // to execute JavaScript to discover it. /play, /game, and /share are
-      // handled above and own their canonical tags.
-      if (isHtmlResponse(response)) {
+
+      // Unknown extensionless paths must be a real, branded 404 — never a
+      // 200 shell. Asset requests (missing .js/.css/images) keep the asset
+      // server's bare 404 so callers still see the correct content type.
+      if (response.status === 404 && wantsHtml(request, url)) {
+        response = await notFoundResponse(request, env);
+      } else if (response.status === 200 && isHtmlResponse(response)) {
         canonicalUrl = canonicalUrlForStaticPage(url);
       }
     }
@@ -372,6 +411,23 @@ function withSecurityHeaders(response, requestId = '', hostname = '', pathname =
 
 function isHtmlResponse(response) {
   return (response.headers.get('content-type') || '').toLowerCase().includes('text/html');
+}
+
+/**
+ * True when a 404 should be rendered as an HTML page rather than returned as
+ * a bare asset miss. Browser navigations declare text/html; extensionless
+ * paths are also treated as pages. A request for `/missing.js` keeps the
+ * asset server's plain 404 so script loaders and monitors still get a
+ * non-HTML body.
+ */
+function wantsHtml(request, url) {
+  const accept = (request.headers.get('accept') || '').toLowerCase();
+  const destination = (request.headers.get('sec-fetch-dest') || '').toLowerCase();
+  if (accept.includes('text/html') || destination === 'document' || destination === 'iframe') {
+    return true;
+  }
+  const lastSegment = url.pathname.split('/').pop() || '';
+  return !/\.[a-z0-9]{2,8}$/i.test(lastSegment);
 }
 
 function createNonce() {
@@ -558,6 +614,7 @@ export async function handleShareRoute(request, url, env, ctx) {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Play ${escapeHtmlAttr(game.title)} on ${SITE_NAME}!</title>
+  <meta name="robots" content="noindex, follow">
 
   <!-- Open Graph / Facebook / Threads -->
   <meta property="og:type" content="website">
@@ -585,6 +642,10 @@ export async function handleShareRoute(request, url, env, ctx) {
       headers: {
         'Content-Type': 'text/html;charset=UTF-8',
         'Cache-Control': 'public, max-age=86400',
+        // /share/{id} is a social-card endpoint with a meta refresh, not a
+        // search landing page. Keep it out of the index and pass authority to
+        // the canonical /play URL it points at.
+        'X-Robots-Tag': 'noindex, follow',
       },
     });
   } catch (error) {
@@ -603,15 +664,15 @@ export function clampNum(rawNum, fallback, max) {
 // ----------------------------------------------------------------------------
 // Programmatic SEO: /play/{id}/{slug}
 //
-// Only the {id} segment is read — {slug} exists purely so the URL itself is
-// descriptive (a ranking signal, and clearer when shared) and is otherwise
-// ignored, so it can never go stale or cause a lookup to fail. The actual
-// game.html asset is fetched as-is and then transformed in place with
-// Cloudflare's native HTMLRewriter (a streaming parser, not fragile string
-// splicing) to set a per-game <title>, meta description, and Open Graph /
-// Twitter Card tags before it ever reaches the browser or a crawler — so
-// each of these thousands of URLs is a genuinely distinct, indexable page
-// from one shared codebase.
+// Only the {id} segment is used for the catalog lookup. The {slug} is
+// validated against the title-derived slug so exactly one URL can return 200;
+// a missing/stale slug, trailing slash, or any query string gets a single 301
+// to the canonical form. The game.html asset is fetched as-is and transformed
+// in place with Cloudflare's native HTMLRewriter (a streaming parser, not
+// fragile string splicing) to set a per-game <title>, meta description,
+// canonical, Open Graph/Twitter tags, JSON-LD, and visible body copy before it
+// ever reaches the browser or a crawler — so each of these thousands of URLs
+// is a genuinely distinct, indexable page from one shared codebase.
 // ----------------------------------------------------------------------------
 
 /** Single-hop redirect: HTTPS + pathname normalization in one 301. */
@@ -624,34 +685,18 @@ export function redirectSingleHop(url, pathname, preserveSearch = true) {
   return Response.redirect(canonical.toString(), 301);
 }
 
-function canonicalGameUrl(url, game) {
-  const gameId = game ? game.id : url.searchParams.get('id');
-  if (!gameId) return `${SITE_ORIGIN}/game`;
-
-  // Remote feeds do not need a server-side lookup here: the catalog link
-  // already supplies the title, and /play/:id/:slug only reads the id. If the
-  // slug is missing, /play/:id still resolves and the server re-canonicalizes.
-  const title = game ? game.title : (url.searchParams.get('title') || '');
-  const slugPart = title ? `/${slugify(title)}` : '';
-  return `${SITE_ORIGIN}/play/${encodeURIComponent(gameId)}${slugPart}`;
-}
-
 /**
- * Canonical for static HTML that is not handled by /play, /game, or /share.
- * Kept in sync with the client-side canonical snippet in every HTML file.
+ * Canonical for static HTML assets that are not handled by /play or /share.
+ * Kept in sync with the server-side canonical injection in withSecurityHeaders.
+ * Legacy /game and /game.html return '' — those URLs are either a
+ * catalog-validated 301 or a hard 404, never an indexable page.
  */
 export function canonicalUrlForStaticPage(url) {
   const path = url.pathname || '/';
 
-  if (path === '/' || /^\/index\.html?$/i.test(path)) return SITE_ORIGIN;
+  if (path === '/' || /^\/index\.html?$/i.test(path)) return SITE_ROOT;
 
-  if (/^\/game(\.html)?$/i.test(path)) {
-    const id = url.searchParams.get('id');
-    if (!id) return `${SITE_ORIGIN}/game`;
-    const title = url.searchParams.get('title') || '';
-    const slugPart = title ? `/${slugify(title)}` : '';
-    return `${SITE_ORIGIN}/play/${encodeURIComponent(id)}${slugPart}`;
-  }
+  if (/^\/game(?:\.html)?(?:\/.*)?$/i.test(path)) return '';
 
   const directoryKey = path.replace(/\/index\.html?$/i, '').replace(/\/+$/, '');
   if (LOCAL_GAME_CANONICALS[directoryKey]) {
@@ -672,201 +717,202 @@ export function canonicalUrlForStaticPage(url) {
   return `${SITE_ORIGIN}${noSlash.replace(/\.html?$/i, '')}`;
 }
 
-function safeImageUrl(maybeRelative, origin) {
-  const abs = absoluteUrl(maybeRelative, origin);
-  try {
-    const parsed = new URL(abs);
-    if (parsed.protocol === 'https:' || parsed.protocol === 'http:') return parsed.toString();
-  } catch {
-    // fall through
-  }
-  return `${origin}/icon-512.png`;
-}
-
-export async function handleGameRoute(request, url, env) {
-  const assetResponse = await env.ASSETS.fetch(new Request('https://assets.local/game', request));
-  const gameId = url.searchParams.get('id');
-  const title = (url.searchParams.get('title') || 'Game').trim() || 'Game';
-  const category = (url.searchParams.get('category') || '').trim();
-  const thumb = url.searchParams.get('thumb') || '';
-  const game = gameId ? LOCAL_GAMES.find((g) => String(g.id) === gameId) : null;
-  const canonical = canonicalGameUrl(url, game);
-  const seoTitle = `${title} - Main Gratis di ${SITE_NAME}`;
-  const seoDescription = category
-    ? `Mainkan ${title}, game ${category} seru secara gratis di ${SITE_NAME}.`
-    : `Mainkan ${title} seru secara gratis di ${SITE_NAME}.`;
-  const imageUrl = safeImageUrl(thumb, SITE_ORIGIN);
-
-  const headExtra = `
-<link rel="canonical" href="${escapeHtmlAttr(canonical.toString())}">
-<meta property="og:type" content="website">
-<meta property="og:site_name" content="${escapeHtmlAttr(SITE_NAME)}">
-<meta property="og:title" content="${escapeHtmlAttr(seoTitle)}">
-<meta property="og:description" content="${escapeHtmlAttr(seoDescription)}">
-<meta property="og:image" content="${escapeHtmlAttr(imageUrl)}">
-<meta property="og:url" content="${escapeHtmlAttr(canonical.toString())}">
-<meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="${escapeHtmlAttr(seoTitle)}">
-<meta name="twitter:description" content="${escapeHtmlAttr(seoDescription)}">
-<meta name="twitter:image" content="${escapeHtmlAttr(imageUrl)}">
-`;
-
-  return new HTMLRewriter()
-    .on('title', new SetTextContent(seoTitle))
-    .on('meta[name="description"]', new SetAttribute('content', seoDescription))
-    .on('head', new AppendHtml(headExtra))
-    .transform(assetResponse);
-}
-
-export async function handlePlayRoute(request, url, env, ctx) {
-  const segments = url.pathname.split('/').filter(Boolean); // ['play', '<id>', '<slug>']
-  const gameId = segments[1] ? decodeURIComponent(segments[1]) : null;
-
-  // Cloudflare Workers Assets' default html_handling canonicalizes
-  // /game.html to /game with a 307. Fetch the canonical path directly so
-  // HTMLRewriter receives the actual shell HTML instead of a redirect.
-  const assetResponse = await env.ASSETS.fetch(new Request('https://assets.local/game', request));
-
-  if (!gameId) return assetResponse;
-
-  // A shared /play URL must resolve games loaded after the home page's first
-  // 50 items too. Use the full catalog window for server-side SEO metadata.
-  const num = CATALOG_MAX_NUM * 2;
-  const { games } = await getCombinedGames(num, env, ctx);
-  const allGames = [...LOCAL_GAMES, ...(games || [])];
-  const game = allGames.find((g) => String(g.id) === gameId);
-
-  // Preserve the id even when the feed lookup misses. The client can retry
-  // the catalog lookup from the URL, which lets a cached or temporarily
-  // incomplete server-side catalog recover without losing the play identity.
-  if (!game) {
-    const playIdMeta = `<meta name="gimboot-play-id" content="${escapeHtmlAttr(gameId)}">`;
-    return new HTMLRewriter()
-      .on('head', new AppendHtml(playIdMeta))
-      .transform(assetResponse);
-  }
-
-  const seoTitle = `Play ${game.title} Free, No Download - ${SITE_NAME}`;
-  const seoDescription = `Play ${game.title} free online at ${SITE_NAME}. ${game.category} game, no install — just play, have fun, right in your browser.`;
-  const canonicalUrl = `${SITE_ORIGIN}/play/${encodeURIComponent(game.id)}/${slugify(game.title)}`;
-  const imageUrl = absoluteUrl(game.thumb, SITE_ORIGIN);
-
-  // JSON-LD structured data — lets Google AI (Gemini/SGE) understand the
-  // page content without guessing. Escaped for safe embedding in a <script>
-  // tag: HTML entities are NOT parsed inside script data, so we escape the
-  // three characters that could terminate the script element instead.
-  const jsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'VideoGame',
-    name: game.title,
-    description: seoDescription,
-    genre: game.category,
-    playMode: 'SinglePlayer',
-    applicationCategory: 'GameApplication',
-    operatingSystem: 'Windows, Android, iOS, MacOS',
-    gamePlatform: 'Web Browser',
-    url: canonicalUrl,
-    image: imageUrl,
-    offers: {
-      '@type': 'Offer',
-      price: '0',
-      priceCurrency: 'IDR',
-      category: 'free',
-    },
-  };
-  const jsonLdHtml = `<script type="application/ld+json">${escapeJsonLd(jsonLd)}</script>`;
-
-  const headExtra = `
-<meta property="og:type" content="website">
-<meta property="og:site_name" content="${escapeHtmlAttr(SITE_NAME)}">
-<meta property="og:title" content="${escapeHtmlAttr(seoTitle)}">
-<meta property="og:description" content="${escapeHtmlAttr(seoDescription)}">
-<meta property="og:image" content="${escapeHtmlAttr(imageUrl)}">
-<meta property="og:url" content="${escapeHtmlAttr(canonicalUrl)}">
-<meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="${escapeHtmlAttr(seoTitle)}">
-<meta name="twitter:description" content="${escapeHtmlAttr(seoDescription)}">
-<meta name="twitter:image" content="${escapeHtmlAttr(imageUrl)}">
-<link rel="canonical" href="${escapeHtmlAttr(canonicalUrl)}">
-<meta name="gimboot-play-id" content="${escapeHtmlAttr(game.id)}">
-<meta name="gimboot-play-url" content="${escapeHtmlAttr(game.url)}">
-<meta name="gimboot-play-title" content="${escapeHtmlAttr(game.title)}">
-<meta name="gimboot-play-category" content="${escapeHtmlAttr(game.category)}">
-<meta name="gimboot-play-image" content="${escapeHtmlAttr(imageUrl)}">
-<meta name="gimboot-play-width" content="${escapeHtmlAttr(game.width ?? '')}">
-<meta name="gimboot-play-height" content="${escapeHtmlAttr(game.height ?? '')}">
-${jsonLdHtml}
-`;
-
-  return new HTMLRewriter()
-    .on('title', new SetTextContent(seoTitle))
-    .on('meta[name="description"]', new SetAttribute('content', seoDescription))
-    .on('head', new AppendHtml(headExtra))
-    .transform(assetResponse);
-}
-
-class SetTextContent {
-  constructor(content) { this.content = content; }
-  element(element) { element.setInnerContent(this.content); }
-}
-
-class SetAttribute {
-  constructor(name, value) { this.name = name; this.value = value; }
-  element(element) { element.setAttribute(this.name, this.value); }
-}
-
-class AppendHtml {
-  constructor(html) { this.html = html; }
-  element(element) { element.append(this.html, { html: true }); }
-}
-
-class RemoveElement {
-  element(element) { element.remove(); }
-}
-
-function absoluteUrl(maybeRelative, origin) {
-  if (!maybeRelative) return '';
-  try {
-    return new URL(maybeRelative, origin).toString();
-  } catch {
-    return maybeRelative;
-  }
-}
-
-/** Escapes a string for safe insertion into an HTML attribute. */
-export function escapeHtmlAttr(str) {
-  return String(str ?? '')
-    .replace(/&/g, '\u0026amp;')
-    .replace(/</g, '\u0026lt;')
-    .replace(/>/g, '\u0026gt;')
-    .replace(/"/g, '\u0026quot;')
-    .replace(/'/g, '\u0026#039;');
+/**
+ * Legacy game shell route. /game.html and /game.html/* never render HTML:
+ * they resolve the id to a real catalog game and 301 straight to /play in a
+ * single hop. A shell with no id has no canonical destination, so it goes
+ * back to the catalog. Unknown ids are 404s, not soft-404 shells.
+ */
+export async function handleLegacyGameHtmlRoute(request, url, env, ctx) {
+  const gameId = (url.searchParams.get('id') || '').trim();
+  if (!gameId) return redirectSingleHop(url, '/', false);
+  return handleGameRoute(request, url, env, ctx);
 }
 
 /**
- * Escapes a JSON-LD object for safe embedding inside a <script type="application/ld+json">
- * tag. HTML entities are NOT decoded inside script data, so we must escape the
- * three character sequences that could prematurely terminate the script element:
- * `</script`, `<!--`, and `-->`. JSON.stringify already handles quotes/backslashes.
+ * Legacy /game?id= route. The id is the ONLY parameter that is read; every
+ * other query parameter is deliberately ignored and dropped by the redirect.
+ * The response is never a 200 HTML shell:
+ *   - valid id      -> 301 /play/{id}/{slug}
+ *   - unknown id    -> 404 (noindex)
+ *   - catalog down  -> 503 (temporary; do not deindex the game)
+ *   - missing id    -> 404
  */
-export function escapeJsonLd(obj) {
-  return JSON.stringify(obj)
-    .replace(/</g, '\\u003c')
-    .replace(/>/g, '\\u003e')
-    .replace(/&/g, '\\u0026');
+export async function handleGameRoute(request, url, env, ctx) {
+  const gameId = (url.searchParams.get('id') || '').trim();
+  if (!gameId) return notFoundResponse(request, env);
+
+  const resolution = await resolveGameById(gameId, env, ctx);
+  if (resolution.status === 'unavailable') return serviceUnavailableResponse(request);
+  if (!resolution.game) return notFoundResponse(request, env);
+
+  return redirectSingleHop(url, gameCanonicalPath(resolution.game), false);
 }
 
-/** Mirrors js/utils.js's slugify exactly — keep the two in sync. */
-export function slugify(text) {
-  return (
-    String(text ?? '')
-      .toLowerCase()
-      .normalize('NFKD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-+|-+$/g, '')
-      .slice(0, 60) || 'game'
-  );
+/**
+ * Canonical game page: /play/{id}/{slug}. Resolves the id against LOCAL_GAMES
+ * first, then the live merged catalog. Renders the shell server-side so
+ * Googlebot gets unique title/meta/OG/JSON-LD and visible body text without
+ * executing JavaScript.
+ */
+export async function handlePlayRoute(request, url, env, ctx) {
+  const segments = url.pathname.split('/').filter(Boolean); // ['play', '<id>', '<slug>']
+  let gameId;
+  try {
+    gameId = segments[1] ? decodeURIComponent(segments[1]) : null;
+  } catch {
+    gameId = null;
+  }
+  if (!gameId) return notFoundResponse(request, env);
+
+  const resolution = await resolveGameById(gameId, env, ctx);
+  if (resolution.status === 'unavailable') return serviceUnavailableResponse(request);
+  if (!resolution.game) return notFoundResponse(request, env);
+
+  const game = resolution.game;
+  const canonicalPath = gameCanonicalPath(game);
+
+  // Enforce exactly one canonical game URL: correct slug, no trailing slash,
+  // no extra path segments, and no query parameters. This prevents the
+  // parameter-bloat / duplicate-URL patterns that caused the GSC report:
+  //   /play/{id}                    (missing slug)
+  //   /play/{id}/{wrong-slug}       (title changed)
+  //   /play/{id}/{slug}/            (trailing slash)
+  //   /play/{id}/{slug}?utm=...     (tracking parameters)
+  if (url.pathname !== canonicalPath || url.search) {
+    return redirectSingleHop(url, canonicalPath, false);
+  }
+
+  // Cloudflare Workers Assets' default html_handling canonicalizes
+  // /game.html to /game with a 307. Fetch the canonical shell path directly so
+  // HTMLRewriter receives actual HTML instead of a redirect.
+  //
+  // IMPORTANT: `_redirects` is also applied to env.ASSETS.fetch(). Do NOT add
+  // `/game` or `/game.html` rules there — an internal 301 would make this
+  // fetch non-OK and every /play page would return 503. The legacy redirects
+  // live in this Worker, which runs first for public requests.
+  const assetResponse = await env.ASSETS.fetch(new Request('https://assets.local/game', request));
+  if (!assetResponse.ok || !isHtmlResponse(assetResponse)) {
+    return serviceUnavailableResponse(request);
+  }
+
+  return renderGamePage(assetResponse, game, {
+    origin: SITE_ORIGIN,
+    siteName: SITE_NAME,
+  });
+}
+
+/** Resolves a game id against first-party games, then the merged catalog. */
+export async function resolveGameById(gameId, env, ctx) {
+  if (!gameId) return { game: null, status: 'missing' };
+
+  const localGame = LOCAL_GAMES.find((game) => String(game.id) === gameId);
+  if (localGame) return { game: localGame, status: 'ok' };
+
+  try {
+    const { games } = await getCombinedGames(CATALOG_MAX_NUM * 2, env, ctx);
+    if (!games) return { game: null, status: 'unavailable' };
+
+    const game = games.find((item) => String(item.id) === gameId);
+    return { game: game || null, status: game ? 'ok' : 'notfound' };
+  } catch (error) {
+    structuredLog('error', 'Game catalog lookup failed', { reason: String(error) });
+    return { game: null, status: 'unavailable' };
+  }
+}
+
+const FALLBACK_404_HTML = `<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Game Tidak Ditemukan — Gimboot</title>
+<meta name="robots" content="noindex, follow">
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<header class="site-header">
+  <div class="header-inner">
+    <a href="/" class="brand-lockup"><span class="brand-text"><span class="wordmark">GIMBOOT</span><span class="tagline">No Install, Just Play, Have Fun</span></span></a>
+  </div>
+</header>
+<main>
+  <div class="status-block">
+    <p class="status-title">Game tidak ditemukan</p>
+    <p class="status-subtitle">Game yang Anda cari tidak ada di katalog atau sudah tidak tersedia.</p>
+    <a class="btn btn--primary" href="/">Kembali ke Katalog</a>
+  </div>
+</main>
+<footer class="site-footer"><p>Gimboot — no install, just play, have fun.</p></footer>
+</body>
+</html>`;
+
+/**
+ * Branded 404 with a hard 404 status and noindex. Prefers the static
+ * /404.html asset when available, so Cloudflare's not_found_handling and this
+ * route share the same page. Never gets a canonical tag injected.
+ */
+export async function notFoundResponse(request, env) {
+  let html = FALLBACK_404_HTML;
+  try {
+    if (env && env.ASSETS && typeof env.ASSETS.fetch === 'function') {
+      // Fetch the extensionless path: html_handling ("auto-trailing-slash")
+      // serves 404.html there, whereas /404.html itself can answer with a 307.
+      const asset = await env.ASSETS.fetch(
+        new Request('https://assets.local/404', {
+          method: 'GET',
+          headers: { Accept: 'text/html' },
+        })
+      );
+      if (asset.ok && isHtmlResponse(asset)) {
+        const text = await asset.text();
+        if (text.trim()) html = text;
+      }
+    }
+  } catch {
+    // fall back to the inline 404 page
+  }
+
+  return new Response(request.method === 'HEAD' ? null : html, {
+    status: 404,
+    headers: {
+      'Content-Type': 'text/html; charset=utf-8',
+      'Cache-Control': 'no-store',
+      'X-Robots-Tag': 'noindex, follow',
+    },
+  });
+}
+
+/**
+ * 503 for the case where the upstream catalog cannot be reached and the id is
+ * not a first-party game. Returning 503 instead of 404 tells Google the URL
+ * is temporarily unverifiable, so a feed outage can never deindex a valid
+ * game page.
+ */
+export function serviceUnavailableResponse(request) {
+  const html = `<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sementara Tidak Tersedia — Gimboot</title>
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<header class="site-header"><div class="header-inner"><a href="/" class="brand-lockup"><span class="brand-text"><span class="wordmark">GIMBOOT</span><span class="tagline">No Install, Just Play, Have Fun</span></span></a></div></header>
+<main><div class="status-block"><p class="status-title">Katalog sedang dimuat ulang</p><p class="status-subtitle">Coba muat ulang halaman ini beberapa saat lagi.</p><a class="btn btn--primary" href="/">Kembali ke Katalog</a></div></main>
+<footer class="site-footer"><p>Gimboot — no install, just play, have fun.</p></footer>
+</body>
+</html>`;
+
+  return new Response(request.method === 'HEAD' ? null : html, {
+    status: 503,
+    headers: {
+      'Content-Type': 'text/html; charset=utf-8',
+      'Cache-Control': 'no-store',
+      'Retry-After': '3600',
+    },
+  });
 }
 
 // ----------------------------------------------------------------------------
@@ -880,16 +926,24 @@ async function handleSitemap(_url, env, ctx) {
 
   // Always emit the production custom-domain origin, regardless of the
   // incoming request host/protocol. This keeps workers.dev previews from
-  // leaking into the production sitemap.
-  const baseUrl = SITE_ORIGIN;
+  // leaking into the production sitemap. Every game entry is the canonical
+  // /play/{id}/{slug} form — never /game?id=, never a .html URL.
+  const seenIds = new Set();
+  const gameEntries = allGames
+    .filter((game) => {
+      const id = String(game?.id ?? '');
+      if (!id || !game.title || seenIds.has(id)) return false;
+      seenIds.add(id);
+      return true;
+    })
+    .map((game) => {
+      const loc = gameCanonicalUrl(game, SITE_ORIGIN);
+      return `<url><loc>${escapeHtmlAttr(loc)}</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>`;
+    });
 
   const urlEntries = [
-    `<url><loc>${escapeHtmlAttr(baseUrl)}/</loc><changefreq>daily</changefreq><priority>1.0</priority></url>`,
-    `<url><loc>${escapeHtmlAttr(baseUrl)}/emulator/</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>`,
-    ...allGames.map((g) => {
-      const loc = `${baseUrl}/play/${encodeURIComponent(g.id)}/${slugify(g.title)}`;
-      return `<url><loc>${escapeHtmlAttr(loc)}</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>`;
-    }),
+    `<url><loc>${escapeHtmlAttr(SITE_ROOT)}</loc><changefreq>daily</changefreq><priority>1.0</priority></url>`,
+    ...gameEntries,
   ];
 
   const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urlEntries.join('\n')}\n</urlset>`;
@@ -949,6 +1003,7 @@ export function parseGameMonetizeFeed(xml) {
       id: `gm-${id}`,
       title,
       category: tag('category') || 'Arcade',
+      description: tag('description') || tag('instructions') || '',
       url,
       thumb: tag('thumb'),
       width,
@@ -957,25 +1012,6 @@ export function parseGameMonetizeFeed(xml) {
   }
 
   return items;
-}
-
-const ENTITY_MAP = {
-  amp: '&', lt: '<', gt: '>', quot: '"', apos: "'",
-  mdash: '\u2014', ndash: '\u2013', hellip: '\u2026',
-  rsquo: '\u2019', lsquo: '\u2018', rdquo: '\u201d', ldquo: '\u201c',
-  rarr: '\u2192', larr: '\u2190', uarr: '\u2191', darr: '\u2193',
-  middot: '\u00b7', bull: '\u2022', zwj: '',
-};
-
-/** Decodes HTML entities (named + numeric) with a two-pass approach. */
-export function decodeEntities(str) {
-  let out = str;
-  for (let pass = 0; pass < 2; pass++) {
-    out = out
-      .replace(/&#(\d+);/g, (_, code) => String.fromCharCode(Number(code)))
-      .replace(/&([a-zA-Z]+);/g, (m, name) => (name in ENTITY_MAP ? ENTITY_MAP[name] : m));
-  }
-  return out;
 }
 
 // ----------------------------------------------------------------------------
@@ -1003,6 +1039,7 @@ async function fetchGamePix(env, count) {
       id: `gp-${item.id}`,
       title: item.title,
       category: capitalize(item.category) || 'Arcade',
+      description: item.description || item.short_description || item.instructions || '',
       url: item.url,
       thumb: item.banner_image || item.image || '',
       width: item.width || null,

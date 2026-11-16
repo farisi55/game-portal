@@ -158,7 +158,7 @@ Full rollback runbook: `changelog.md` Task #018 (upcoming — README "Rolling ba
 | `GET /` | 200 | 200 |
 | `GET /api/health` | 200 `{"status":"ok","version":"1.0.4","timestamp":"2026-10-09T07:17:37.872Z"}` | 200 `{"status":"ok","version":"1.0.4",...}` |
 | `GET /api/games?limit=1` | 200 | 200 |
-| `GET /game.html` | 301 → `…/game` (host-relative) | 301 → `…/game` (host-relative) |
+| `GET /game.html` | 301 → `/` (no id; host-relative) | 301 → `/` (no id; host-relative) |
 | `GET /` body sha256 | `feb8fb68…` (branch build) | `8a1d2d74…` (main build) — **distinct** |
 
 - **Result: PASS** — the test branch produced a working preview URL distinct from production and was smoke-tested manually. Distinctness is proven by the separate hostname and the different served body: the preview serves the `dev`-based branch build (worker code newer than production, whose active deployment builds `main` @ `770e907`).

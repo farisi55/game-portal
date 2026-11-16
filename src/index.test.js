@@ -85,13 +85,41 @@ function makeUrl(path) {
 }
 
 function createMockEnv(overrides = {}) {
+  // A miniature version of game.html. It intentionally contains stale SEO
+  // tags (canonical, description, robots, OG) so renderGamePage's
+  // remove-then-add behavior is exercised by the tests.
+  const shell = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>Loading… — Gimboot</title>
+<meta name="description" content="stale description">
+<link rel="canonical" href="https://gimboot.com/game">
+<meta name="robots" content="noindex, follow">
+<meta property="og:title" content="stale og title">
+</head>
+<body>
+<h1 id="game-title">Loading…</h1>
+<span id="game-category"></span>
+<iframe id="game-frame" title=""></iframe>
+<main></main>
+</body>
+</html>`;
+
   return {
     ASSETS: {
-      fetch: vi.fn().mockResolvedValue(
-        new Response('<html><head></head><body></body></html>', {
+      fetch: vi.fn().mockImplementation(async (request) => {
+        const requestUrl =
+          typeof request === 'string' ? request : new URL(request.url).pathname;
+        if (requestUrl === '/404' || requestUrl === '/404.html') {
+          return new Response(
+            '<!DOCTYPE html><html><head><title>Not Found — Gimboot</title><meta name="robots" content="noindex"></head><body><h1>404</h1></body></html>',
+            { status: 200, headers: { 'Content-Type': 'text/html' } }
+          );
+        }
+        return new Response(shell, {
           headers: { 'Content-Type': 'text/html' },
-        })
-      ),
+        });
+      }),
     },
     GAMEPIX_SID: 'test-sid',
     ...overrides,
@@ -594,90 +622,96 @@ describe('Output Encoding — Share/Play/Game Routes', () => {
   // -----------------------------------------------------------------------
 
   describe('handleGameRoute', () => {
-    it('escapes < and > in title query param', async () => {
-      const malicious = '<script>alert(1)</script>';
-      const url = makeUrl(`/game?title=${encodeURIComponent(malicious)}&category=Arcade`);
-      const res = await handleGameRoute(new Request(url.toString()), url, createMockEnv());
-      const body = await res.text();
-
-      expect(body).not.toContain('<script>alert(1)</script>');
-      expect(body).toContain('&lt;script&gt;');
+    beforeEach(() => {
+      fetchSpy.mockImplementation(async (fetchUrl) => {
+        if (String(fetchUrl).includes('gamemonetize.com')) {
+          return makeGameMonetizeResponse(GM_XML_FIXTURE);
+        }
+        if (String(fetchUrl).includes('gamepix.com')) {
+          return makeGamePixResponse(GP_JSON_FIXTURE);
+        }
+        return makeErrorResponse(404);
+      });
     });
 
-    it('escapes " in category query param', async () => {
-      const malicious = '" onmouseover="alert(1)';
-      const url = makeUrl(`/game?title=Test&category=${encodeURIComponent(malicious)}`);
-      const res = await handleGameRoute(new Request(url.toString()), url, createMockEnv());
-      const body = await res.text();
+    it('301s a valid first-party id to the canonical /play URL', async () => {
+      const url = makeUrl('/game?id=local-kicau-mania');
+      const res = await handleGameRoute(new Request(url.toString()), url, createMockEnv(), createMockCtx());
 
-      expect(body).not.toContain('" onmouseover="alert(1)');
-      expect(body).toContain('&quot;');
-    });
-
-    it('sanitizes javascript: URI in thumb param — og:image falls back to default icon', async () => {
-      const url = makeUrl('/game?title=Test&thumb=javascript:alert(1)');
-      const res = await handleGameRoute(new Request(url.toString()), url, createMockEnv());
-      const body = await res.text();
-
-      // safeImageUrl rejects javascript: protocol, falls back to icon-512.png
-      expect(body).toContain('icon-512.png');
-      // The javascript: URI must NOT appear in any og:image or twitter:image tag
-      expect(body).not.toMatch(/og:image.*javascript:/);
-      expect(body).not.toMatch(/twitter:image.*javascript:/);
-    });
-
-    it('escapes </script> in title to prevent premature script-tag termination', async () => {
-      const malicious = '</script><script>alert(1)</script>';
-      const url = makeUrl(`/game?title=${encodeURIComponent(malicious)}`);
-      const res = await handleGameRoute(new Request(url.toString()), url, createMockEnv());
-      const body = await res.text();
-
-      expect(body).not.toContain('</script><script>alert(1)</script>');
-      expect(body).toContain('&lt;/script&gt;');
-    });
-
-    it('escapes & in title (ampersand)', async () => {
-      const malicious = 'Tom & Jerry <b>Bold</b>';
-      const url = makeUrl(`/game?title=${encodeURIComponent(malicious)}`);
-      const res = await handleGameRoute(new Request(url.toString()), url, createMockEnv());
-      const body = await res.text();
-
-      expect(body).not.toContain('Tom & Jerry <b>Bold</b>');
-      expect(body).toContain('Tom &amp; Jerry');
-    });
-
-    it('sets canonical to /play/:id/:slug for LOCAL_GAMES id', async () => {
-      const url = makeUrl('/game?id=local-kicau-mania&title=Kicau%20Mania&category=Arcade');
-      const res = await handleGameRoute(new Request(url.toString()), url, createMockEnv());
-      const body = await res.text();
-
-      expect(body).toContain(
-        'canonical" href="https://gimboot.com/play/local-kicau-mania/kicau-mania"'
+      expect(res.status).toBe(301);
+      expect(res.headers.get('Location')).toBe(
+        'https://gimboot.com/play/local-kicau-mania/kicau-mania'
       );
     });
 
-    it('recognizes Moba DOTA as a local game', async () => {
-      const url = makeUrl('/game?id=local-moba&title=Moba%20DOTA&category=MOBA');
-      const res = await handleGameRoute(new Request(url.toString()), url, createMockEnv());
-      const body = await res.text();
+    it('drops every extra query param and ignores attacker-controlled titles', async () => {
+      const malicious = '<script>alert(1)</script>';
+      const url = makeUrl(
+        `/game?id=local-kicau-mania&title=${encodeURIComponent(malicious)}&thumb=javascript:alert(1)&utm_source=x`
+      );
+      const res = await handleGameRoute(new Request(url.toString()), url, createMockEnv(), createMockCtx());
 
-      expect(body).toContain('canonical" href="https://gimboot.com/play/local-moba/moba-dota"');
+      expect(res.status).toBe(301);
+      const location = res.headers.get('Location');
+      expect(location).toBe('https://gimboot.com/play/local-kicau-mania/kicau-mania');
+      expect(location).not.toContain('script');
+      expect(location).not.toContain('utm_source');
     });
 
-    it('canonicalizes an unknown remote game id to /play/:id/:slug (not /game)', async () => {
-      const url = makeUrl('/game?id=unknown-game&title=Test');
-      const res = await handleGameRoute(new Request(url.toString()), url, createMockEnv());
-      const body = await res.text();
+    it('uses the title-derived slug for Ayo ke Kopdes, not the folder name', async () => {
+      const url = makeUrl('/game?id=local-ayo-kopdes');
+      const res = await handleGameRoute(new Request(url.toString()), url, createMockEnv(), createMockCtx());
 
-      expect(body).toContain('canonical" href="https://gimboot.com/play/unknown-game/test"');
+      expect(res.status).toBe(301);
+      expect(res.headers.get('Location')).toBe(
+        'https://gimboot.com/play/local-ayo-kopdes/ayo-ke-kopdes'
+      );
     });
 
-    it('falls back to /game canonical when the legacy shell has no id', async () => {
+    it('301s a valid remote id to /play/{id}/{slug}', async () => {
+      const url = makeUrl('/game?id=gm-100&title=Anything&thumb=anything');
+      const res = await handleGameRoute(new Request(url.toString()), url, createMockEnv(), createMockCtx());
+
+      expect(res.status).toBe(301);
+      expect(res.headers.get('Location')).toBe(
+        'https://gimboot.com/play/gm-100/puzzle-adventure'
+      );
+    });
+
+    it('404s when the id is missing', async () => {
       const url = makeUrl('/game?title=Test');
-      const res = await handleGameRoute(new Request(url.toString()), url, createMockEnv());
+      const res = await handleGameRoute(new Request(url.toString()), url, createMockEnv(), createMockCtx());
       const body = await res.text();
 
-      expect(body).toContain('canonical" href="https://gimboot.com/game"');
+      expect(res.status).toBe(404);
+      expect(res.headers.get('x-robots-tag')).toContain('noindex');
+      expect(body).not.toContain('rel="canonical"');
+      expect(body).toContain('404');
+    });
+
+    it('404s for an unknown id when the catalog is available', async () => {
+      const url = makeUrl('/game?id=does-not-exist');
+      const res = await handleGameRoute(new Request(url.toString()), url, createMockEnv(), createMockCtx());
+
+      expect(res.status).toBe(404);
+    });
+
+    it('503s when the catalog is unavailable and the id is not first-party', async () => {
+      fetchSpy.mockRejectedValue(new Error('both feeds down'));
+      const url = makeUrl('/game?id=gm-100');
+      const res = await handleGameRoute(new Request(url.toString()), url, createMockEnv(), createMockCtx());
+
+      expect(res.status).toBe(503);
+      expect(res.headers.get('retry-after')).toBe('3600');
+    });
+
+    it('still resolves a first-party id when both feeds are down', async () => {
+      fetchSpy.mockRejectedValue(new Error('both feeds down'));
+      const url = makeUrl('/game?id=local-moba');
+      const res = await handleGameRoute(new Request(url.toString()), url, createMockEnv(), createMockCtx());
+
+      expect(res.status).toBe(301);
+      expect(res.headers.get('Location')).toBe('https://gimboot.com/play/local-moba/moba-dota');
     });
   });
 
@@ -686,10 +720,10 @@ describe('Output Encoding — Share/Play/Game Routes', () => {
   // -----------------------------------------------------------------------
 
   describe('canonicalUrlForStaticPage', () => {
-    it('always canonicalizes the root to the bare production origin', () => {
-      expect(canonicalUrlForStaticPage(makeUrl('/'))).toBe('https://gimboot.com');
-      expect(canonicalUrlForStaticPage(makeUrl('/index.html'))).toBe('https://gimboot.com');
-      expect(canonicalUrlForStaticPage(makeUrl('/?q=search'))).toBe('https://gimboot.com');
+    it('always canonicalizes the root to the production origin with a trailing slash', () => {
+      expect(canonicalUrlForStaticPage(makeUrl('/'))).toBe('https://gimboot.com/');
+      expect(canonicalUrlForStaticPage(makeUrl('/index.html'))).toBe('https://gimboot.com/');
+      expect(canonicalUrlForStaticPage(makeUrl('/?q=search'))).toBe('https://gimboot.com/');
     });
 
     it('maps first-party game shells to their /play landing page', () => {
@@ -698,6 +732,9 @@ describe('Output Encoding — Share/Play/Game Routes', () => {
       );
       expect(canonicalUrlForStaticPage(makeUrl('/games/moba/'))).toBe(
         'https://gimboot.com/play/local-moba/moba-dota'
+      );
+      expect(canonicalUrlForStaticPage(makeUrl('/games/ayo-kopdes/'))).toBe(
+        'https://gimboot.com/play/local-ayo-kopdes/ayo-ke-kopdes'
       );
     });
 
@@ -712,7 +749,6 @@ describe('Output Encoding — Share/Play/Game Routes', () => {
     });
 
     it('strips .html and trailing slashes from ordinary clean URLs', () => {
-      expect(canonicalUrlForStaticPage(makeUrl('/game.html'))).toBe('https://gimboot.com/game');
       expect(canonicalUrlForStaticPage(makeUrl('/some-page.html'))).toBe(
         'https://gimboot.com/some-page'
       );
@@ -721,10 +757,11 @@ describe('Output Encoding — Share/Play/Game Routes', () => {
       );
     });
 
-    it('builds /play canonical from a legacy /game?id=&title= URL', () => {
-      expect(
-        canonicalUrlForStaticPage(makeUrl('/game?id=gm-123&title=Space%20Explorer'))
-      ).toBe('https://gimboot.com/play/gm-123/space-explorer');
+    it('never emits a canonical for legacy /game or /game.html', () => {
+      expect(canonicalUrlForStaticPage(makeUrl('/game'))).toBe('');
+      expect(canonicalUrlForStaticPage(makeUrl('/game.html'))).toBe('');
+      expect(canonicalUrlForStaticPage(makeUrl('/game?id=gm-123&title=Space%20Explorer'))).toBe('');
+      expect(canonicalUrlForStaticPage(makeUrl('/game.html/anything'))).toBe('');
     });
   });
 
@@ -848,7 +885,9 @@ describe('Output Encoding — Share/Play/Game Routes', () => {
         return makeErrorResponse(404);
       });
 
-      const url = makeUrl('/play/gm-play-xss1/malicious-game');
+      // The canonical slug is derived from the (malicious) title; using it
+      // here keeps the handler on the render path instead of a 301.
+      const url = makeUrl('/play/gm-play-xss1/script-alert-1-script');
       const res = await handlePlayRoute(new Request(url.toString()), url, createMockEnv(), createMockCtx());
       const body = await res.text();
 
@@ -874,7 +913,7 @@ describe('Output Encoding — Share/Play/Game Routes', () => {
         return makeErrorResponse(404);
       });
 
-      const url = makeUrl('/play/gm-play-xss2/script-game');
+      const url = makeUrl('/play/gm-play-xss2/script-script-alert-1-script');
       const res = await handlePlayRoute(new Request(url.toString()), url, createMockEnv(), createMockCtx());
       const body = await res.text();
 
@@ -902,26 +941,140 @@ describe('Output Encoding — Share/Play/Game Routes', () => {
         return makeErrorResponse(404);
       });
 
-      const url = makeUrl('/play/gm-play-xss3/quote-game');
+      const url = makeUrl('/play/gm-play-xss3/game-onload-alert-1');
       const res = await handlePlayRoute(new Request(url.toString()), url, createMockEnv(), createMockCtx());
       const body = await res.text();
 
-      expect(body).not.toContain('Game" onload="alert(1)');
-      expect(body).toContain('Game&quot;');
+      // Raw quotes are harmless in text nodes (<title>, <h1>); only attribute
+      // contexts must be entity-encoded.
+      expect(body).not.toContain('title="Game" onload="alert(1)');
+      expect(body).toContain('content="Game&quot; onload=&quot;alert(1)');
     });
 
-    it('returns play-id meta when game not found (unknown ID, no crash)', async () => {
-      fetchSpy.mockImplementation(async () => {
-        return makeGamePixResponse({ items: [] });
+    it('returns 404 for an unknown ID instead of a generic shell (no soft-404)', async () => {
+      // A non-empty catalog is required: an empty merged catalog is treated
+      // as an upstream outage (503), not as "no such game".
+      fetchSpy.mockImplementation(async (fetchUrl) => {
+        if (String(fetchUrl).includes('gamemonetize.com')) {
+          return makeGameMonetizeResponse(GM_XML_FIXTURE);
+        }
+        if (String(fetchUrl).includes('gamepix.com')) return makeGamePixResponse({ items: [] });
+        return makeErrorResponse(404);
       });
 
       const url = makeUrl('/play/unknown-game-id/some-slug');
       const res = await handlePlayRoute(new Request(url.toString()), url, createMockEnv(), createMockCtx());
       const body = await res.text();
 
-      // Should return HTML with the play-id meta, not crash
-      expect(body).toContain('gimboot-play-id');
-      expect(body).toContain('unknown-game-id');
+      expect(res.status).toBe(404);
+      expect(res.headers.get('x-robots-tag')).toContain('noindex');
+      expect(body).not.toContain('gimboot-play-id');
+    });
+
+    it('503s for an unknown ID when the catalog is unavailable', async () => {
+      fetchSpy.mockRejectedValue(new Error('both feeds down'));
+
+      const url = makeUrl('/play/unknown-game-id/some-slug');
+      const res = await handlePlayRoute(new Request(url.toString()), url, createMockEnv(), createMockCtx());
+
+      expect(res.status).toBe(503);
+    });
+
+    it('301s a missing slug to the canonical /play/{id}/{slug} URL', async () => {
+      const url = makeUrl('/play/local-kicau-mania');
+      const res = await handlePlayRoute(new Request(url.toString()), url, createMockEnv(), createMockCtx());
+
+      expect(res.status).toBe(301);
+      expect(res.headers.get('Location')).toBe(
+        'https://gimboot.com/play/local-kicau-mania/kicau-mania'
+      );
+    });
+
+    it('301s a wrong slug to the canonical URL', async () => {
+      const url = makeUrl('/play/local-ayo-kopdes/ayo-kopdes');
+      const res = await handlePlayRoute(new Request(url.toString()), url, createMockEnv(), createMockCtx());
+
+      expect(res.status).toBe(301);
+      expect(res.headers.get('Location')).toBe(
+        'https://gimboot.com/play/local-ayo-kopdes/ayo-ke-kopdes'
+      );
+    });
+
+    it('301s a trailing slash and/or tracking query to the clean canonical URL', async () => {
+      const trailing = makeUrl('/play/local-kicau-mania/kicau-mania/');
+      const trailingRes = await handlePlayRoute(
+        new Request(trailing.toString()),
+        trailing,
+        createMockEnv(),
+        createMockCtx()
+      );
+      expect(trailingRes.status).toBe(301);
+      expect(trailingRes.headers.get('Location')).toBe(
+        'https://gimboot.com/play/local-kicau-mania/kicau-mania'
+      );
+
+      const withQuery = makeUrl('/play/local-kicau-mania/kicau-mania?utm_source=newsletter');
+      const queryRes = await handlePlayRoute(
+        new Request(withQuery.toString()),
+        withQuery,
+        createMockEnv(),
+        createMockCtx()
+      );
+      expect(queryRes.status).toBe(301);
+      expect(queryRes.headers.get('Location')).toBe(
+        'https://gimboot.com/play/local-kicau-mania/kicau-mania'
+      );
+    });
+
+    it('renders a complete, unique SSR page for a canonical /play URL', async () => {
+      const url = makeUrl('/play/local-kicau-mania/kicau-mania');
+      const res = await handlePlayRoute(new Request(url.toString()), url, createMockEnv(), createMockCtx());
+      const body = await res.text();
+
+      expect(res.status).toBe(200);
+      expect(body).toContain('<title>Kicau Mania - Main Gratis di Gimboot</title>');
+      expect(body).toContain(
+        '<link rel="canonical" href="https://gimboot.com/play/local-kicau-mania/kicau-mania">'
+      );
+      expect(body).toContain('<meta name="robots" content="index, follow, max-image-preview:large">');
+      expect(body).toContain('Tentang Kicau Mania');
+      expect(body).toContain('Cara Bermain Kicau Mania');
+      expect(body).toContain('"@type":"VideoGame"');
+      expect(body).toContain('"name":"Kicau Mania"');
+      expect(body).not.toContain('noindex, follow');
+      expect(body).not.toContain('stale description');
+
+      // Exactly one canonical, exactly one robots tag, exactly one VideoGame.
+      expect((body.match(/rel="canonical"/g) || []).length).toBe(1);
+      expect((body.match(/name="robots"/g) || []).length).toBe(1);
+      expect((body.match(/"@type":"VideoGame"/g) || []).length).toBe(1);
+    });
+
+    it('uses the game description in the meta description and visible body', async () => {
+      // GM_XML_FIXTURE has no description; add one to prove feed copy is used.
+      fetchSpy.mockImplementation(async (fetchUrl) => {
+        if (String(fetchUrl).includes('gamemonetize.com')) {
+          const xml = `<?xml version="1.0"?><rss><channel><item>
+            <id>desc-1</id>
+            <title>Description Game</title>
+            <category>Puzzle</category>
+            <description>Susun balok warna dan pecahkan teka-teki.</description>
+            <url>https://example.com/desc</url>
+            <thumb>https://example.com/desc.png</thumb>
+          </item></channel></rss>`;
+          return makeGameMonetizeResponse(xml);
+        }
+        if (String(fetchUrl).includes('gamepix.com')) return makeGamePixResponse({ items: [] });
+        return makeErrorResponse(404);
+      });
+
+      const url = makeUrl('/play/gm-desc-1/description-game');
+      const res = await handlePlayRoute(new Request(url.toString()), url, createMockEnv(), createMockCtx());
+      const body = await res.text();
+
+      expect(res.status).toBe(200);
+      expect(body).toContain('Susun balok warna');
+      expect(body).toMatch(/<meta name="description" content="[^"]*Susun balok warna/);
     });
   });
 
@@ -932,44 +1085,44 @@ describe('Output Encoding — Share/Play/Game Routes', () => {
   describe('redirectSingleHop', () => {
     it('upgrades http to https and normalizes pathname in one 301', () => {
       const url = new URL('http://gimboot.com/game.html?title=Foo');
-      const res = redirectSingleHop(url, '/game');
-
-      expect(res.status).toBe(301);
-      expect(res.headers.get('Location')).toBe('https://gimboot.com/game?title=Foo');
-    });
-
-    it('normalizes /index.html to /game in one hop (single-hop, no chain)', () => {
-      const url = new URL('http://gimboot.com/index.html');
-      const res = redirectSingleHop(url, '/game');
-
-      expect(res.status).toBe(301);
-      expect(res.headers.get('Location')).toBe('https://gimboot.com/game');
-    });
-
-    it('preserves query params (game metadata survives redirect)', () => {
-      const url = new URL('http://gimboot.com/game.html?id=gm-123&title=Test&thumb=/img.png');
-      const res = redirectSingleHop(url, '/game');
+      const res = redirectSingleHop(url, '/play/local-kicau-mania/kicau-mania');
 
       expect(res.status).toBe(301);
       expect(res.headers.get('Location')).toBe(
-        'https://gimboot.com/game?id=gm-123&title=Test&thumb=/img.png'
+        'https://gimboot.com/play/local-kicau-mania/kicau-mania?title=Foo'
       );
+    });
+
+    it('normalizes /index.html to / in one hop (single-hop, no chain)', () => {
+      const url = new URL('http://gimboot.com/index.html');
+      const res = redirectSingleHop(url, '/');
+
+      expect(res.status).toBe(301);
+      expect(res.headers.get('Location')).toBe('https://gimboot.com/');
+    });
+
+    it('can drop query params when the destination is canonical', () => {
+      const url = new URL('http://gimboot.com/game.html?id=gm-123&title=Test&thumb=/img.png');
+      const res = redirectSingleHop(url, '/play/gm-123/test', false);
+
+      expect(res.status).toBe(301);
+      expect(res.headers.get('Location')).toBe('https://gimboot.com/play/gm-123/test');
     });
 
     it('strips hash fragment (not sent to server)', () => {
       const url = new URL('http://gimboot.com/game.html#section');
-      const res = redirectSingleHop(url, '/game');
+      const res = redirectSingleHop(url, '/');
 
       expect(res.status).toBe(301);
-      expect(res.headers.get('Location')).toBe('https://gimboot.com/game');
+      expect(res.headers.get('Location')).toBe('https://gimboot.com/');
     });
 
     it('works for already-HTTPS requests normalizing just the pathname', () => {
       const url = new URL('https://gimboot.com/game.html?foo=bar');
-      const res = redirectSingleHop(url, '/game');
+      const res = redirectSingleHop(url, '/');
 
       expect(res.status).toBe(301);
-      expect(res.headers.get('Location')).toBe('https://gimboot.com/game?foo=bar');
+      expect(res.headers.get('Location')).toBe('https://gimboot.com/?foo=bar');
     });
 
     it('drops the query string when preserveSearch is false', () => {
@@ -1016,30 +1169,28 @@ describe('Output Encoding — Share/Play/Game Routes', () => {
   });
 });
 
-describe('Clean URL redirects and server-side canonical (Task #032)', () => {
-  async function fetchThroughWorker(path) {
+describe('Clean URL redirects, 404s, and server-side canonical (Task #032 + SEO fix)', () => {
+  async function fetchThroughWorker(path, env = createMockEnv()) {
     const req = new Request(`https://gimboot.com${path}`);
-    return worker.fetch(req, createMockEnv(), createMockCtx());
+    return worker.fetch(req, env, createMockCtx());
   }
+
+  beforeEach(() => {
+    fetchSpy.mockImplementation(async (fetchUrl) => {
+      if (String(fetchUrl).includes('gamemonetize.com')) {
+        return makeGameMonetizeResponse(GM_XML_FIXTURE);
+      }
+      if (String(fetchUrl).includes('gamepix.com')) {
+        return makeGamePixResponse(GP_JSON_FIXTURE);
+      }
+      return makeErrorResponse(404);
+    });
+  });
 
   it('301s /index.html to / and drops tracking query params', async () => {
     const res = await fetchThroughWorker('/index.html?utm_source=newsletter');
     expect(res.status).toBe(301);
     expect(res.headers.get('Location')).toBe('https://gimboot.com/');
-  });
-
-  it('301s /game.html?id=gm-... to /game?id=... preserving the query string', async () => {
-    const res = await fetchThroughWorker('/game.html?id=gm-123&title=Test%20Game');
-    expect(res.status).toBe(301);
-    expect(res.headers.get('Location')).toBe(
-      'https://gimboot.com/game?id=gm-123&title=Test%20Game'
-    );
-  });
-
-  it('301s /game.html/ wildcard paths to /game', async () => {
-    const res = await fetchThroughWorker('/game.html/');
-    expect(res.status).toBe(301);
-    expect(res.headers.get('Location')).toBe('https://gimboot.com/game');
   });
 
   it('301s /game.html?id=local-... directly to /play in one hop', async () => {
@@ -1050,10 +1201,115 @@ describe('Clean URL redirects and server-side canonical (Task #032)', () => {
     );
   });
 
-  it('injects a server-side canonical into static HTML', async () => {
+  it('301s /game.html with no id to the catalog root (no chain)', async () => {
+    const res = await fetchThroughWorker('/game.html');
+    expect(res.status).toBe(301);
+    expect(res.headers.get('Location')).toBe('https://gimboot.com/');
+  });
+
+  it('301s /game.html/ wildcard paths to the catalog root (no chain)', async () => {
+    const res = await fetchThroughWorker('/game.html/');
+    expect(res.status).toBe(301);
+    expect(res.headers.get('Location')).toBe('https://gimboot.com/');
+  });
+
+  it('301s /game?id=local-... to /play and drops all other params', async () => {
+    const res = await fetchThroughWorker('/game?id=local-kicau-mania&title=Test');
+    expect(res.status).toBe(301);
+    expect(res.headers.get('Location')).toBe(
+      'https://gimboot.com/play/local-kicau-mania/kicau-mania'
+    );
+  });
+
+  it('301s /game?id=remote-... to /play/{id}/{slug}', async () => {
+    const res = await fetchThroughWorker('/game?id=gm-100&title=Ignored');
+    expect(res.status).toBe(301);
+    expect(res.headers.get('Location')).toBe(
+      'https://gimboot.com/play/gm-100/puzzle-adventure'
+    );
+  });
+
+  it('404s /game without an id', async () => {
+    const res = await fetchThroughWorker('/game');
+    expect(res.status).toBe(404);
+    expect(res.headers.get('x-robots-tag')).toContain('noindex');
+  });
+
+  it('404s /game with an unknown id', async () => {
+    const res = await fetchThroughWorker('/game?id=does-not-exist');
+    expect(res.status).toBe(404);
+  });
+
+  it('treats /game/ with the same single-hop contract as /game', async () => {
+    const valid = await fetchThroughWorker('/game/?id=local-kicau-mania');
+    expect(valid.status).toBe(301);
+    expect(valid.headers.get('Location')).toBe(
+      'https://gimboot.com/play/local-kicau-mania/kicau-mania'
+    );
+
+    const missing = await fetchThroughWorker('/game/');
+    expect(missing.status).toBe(404);
+  });
+
+  it('301s /play/{id} (no slug) to the canonical URL', async () => {
+    const res = await fetchThroughWorker('/play/local-kicau-mania');
+    expect(res.status).toBe(301);
+    expect(res.headers.get('Location')).toBe(
+      'https://gimboot.com/play/local-kicau-mania/kicau-mania'
+    );
+  });
+
+  it('301s a wrong or stale slug to the canonical URL', async () => {
+    const res = await fetchThroughWorker('/play/local-ayo-kopdes/ayo-kopdes');
+    expect(res.status).toBe(301);
+    expect(res.headers.get('Location')).toBe(
+      'https://gimboot.com/play/local-ayo-kopdes/ayo-ke-kopdes'
+    );
+  });
+
+  it('301s /play/{id}/{slug}/ to the no-trailing-slash canonical', async () => {
+    const res = await fetchThroughWorker('/play/local-kicau-mania/kicau-mania/');
+    expect(res.status).toBe(301);
+    expect(res.headers.get('Location')).toBe(
+      'https://gimboot.com/play/local-kicau-mania/kicau-mania'
+    );
+  });
+
+  it('301s /play/{id}/{slug}?utm=... to the clean canonical', async () => {
+    const res = await fetchThroughWorker('/play/local-kicau-mania/kicau-mania?utm_source=x');
+    expect(res.status).toBe(301);
+    expect(res.headers.get('Location')).toBe(
+      'https://gimboot.com/play/local-kicau-mania/kicau-mania'
+    );
+  });
+
+  it('renders the canonical /play page with SSR title, canonical, robots, and JSON-LD', async () => {
+    const res = await fetchThroughWorker('/play/local-kicau-mania/kicau-mania');
+    const body = await res.text();
+
+    expect(res.status).toBe(200);
+    expect(body).toContain('<title>Kicau Mania - Main Gratis di Gimboot</title>');
+    expect(body).toContain(
+      '<link rel="canonical" href="https://gimboot.com/play/local-kicau-mania/kicau-mania">'
+    );
+    expect(body).toContain('<meta name="robots" content="index, follow, max-image-preview:large">');
+    expect(body).toContain('Tentang Kicau Mania');
+    expect(body).toContain('"@type":"VideoGame"');
+    expect(body).not.toContain('noindex, follow');
+    expect((body.match(/rel="canonical"/g) || []).length).toBe(1);
+  });
+
+  it('404s /play/unknown-game-id/slug instead of serving a soft-404 shell', async () => {
+    const res = await fetchThroughWorker('/play/unknown-game-id/some-slug');
+    expect(res.status).toBe(404);
+    expect(res.headers.get('x-robots-tag')).toContain('noindex');
+  });
+
+  it('injects the root canonical with a trailing slash into static HTML', async () => {
     const res = await fetchThroughWorker('/');
     const body = await res.text();
-    expect(body).toContain('<link rel="canonical" href="https://gimboot.com">');
+    expect(body).toContain('<link rel="canonical" href="https://gimboot.com/">');
+    expect((body.match(/rel="canonical"/g) || []).length).toBe(1);
   });
 
   it('injects the /play canonical for a first-party game shell', async () => {
@@ -1062,6 +1318,34 @@ describe('Clean URL redirects and server-side canonical (Task #032)', () => {
     expect(body).toContain(
       '<link rel="canonical" href="https://gimboot.com/play/local-solitaire/solitaire">'
     );
+  });
+
+  it('404s /404 and /404.html without injecting a canonical', async () => {
+    for (const path of ['/404', '/404.html']) {
+      const res = await fetchThroughWorker(path);
+      const body = await res.text();
+      expect(res.status).toBe(404);
+      expect(res.headers.get('x-robots-tag')).toContain('noindex');
+      expect(body).not.toContain('rel="canonical"');
+    }
+  });
+
+  it('renders the branded 404 for an unknown extensionless path', async () => {
+    const env = createMockEnv({
+      ASSETS: {
+        fetch: vi.fn().mockResolvedValue(
+          new Response('asset miss', {
+            status: 404,
+            headers: { 'Content-Type': 'text/plain' },
+          })
+        ),
+      },
+    });
+    const res = await fetchThroughWorker('/this-page-does-not-exist', env);
+    const body = await res.text();
+
+    expect(res.status).toBe(404);
+    expect(body).toContain('Game tidak ditemukan');
   });
 });
 

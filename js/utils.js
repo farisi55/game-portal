@@ -51,17 +51,6 @@ export function buildPlayUrl(game) {
   return `/play/${id}/${slug}`;
 }
 
-export function buildGamePageUrl(game) {
-  const params = new URLSearchParams({
-    id: String(game.id ?? ''),
-    title: String(game.title ?? ''),
-    category: String(game.category ?? ''),
-    url: String(game.url ?? ''),
-  });
-  if (game.thumb) params.set('thumb', String(game.thumb));
-  return `/game?${params.toString()}`;
-}
-
 /**
  * True for a same-origin path under games/ (our own locally-hosted games,
  * e.g. /games/kicau-mania/index.html), with or without a leading slash.
@@ -107,7 +96,7 @@ export function readSessionGames(key) {
   }
 }
 
-/** Writes the game list to sessionStorage so /game can reuse it. */
+/** Writes the game list to sessionStorage so /play can reuse it. */
 export function writeSessionGames(key, games) {
   try {
     sessionStorage.setItem(key, JSON.stringify(games));

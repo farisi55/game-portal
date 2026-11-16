@@ -28,9 +28,10 @@ Live in production. Foundation hardening — automated tests, `/api/health`, a c
 ```
 Browser
   ├─ GET /                         → index.html   (catalog: grid, search, category filter)
-  ├─ GET /play/{id}/{slug}         → src/index.js  (SEO landing page, see below)
-  ├─ GET /game?...                 → src/index.js  (clean query-param player + per-game meta)
-  ├─ GET /game.html?...            → 301 → /game?...  (legacy extension stripped, query kept)
+  ├─ GET /play/{id}/{slug}         → src/index.js  (server-rendered SEO player page; canonical)
+  ├─ GET /game?id=...              → 301 → /play/{id}/{slug}  (legacy, one hop)
+  ├─ GET /game.html?id=...         → 301 → /play/{id}/{slug}  (legacy, one hop)
+  ├─ GET /game (no/unknown id)     → 404 (branded, noindex)
   ├─ GET /share/{id}               → src/index.js  (OG-tagged share page for a specific score)
   ├─ GET /api/games, /api/search   → src/index.js  (Cloudflare Worker)
   ├─ GET /sitemap.xml              → src/index.js  (every /play/ URL, for crawlers)
@@ -51,11 +52,13 @@ Every response — static or dynamic — passes through the Worker first (`run_w
 
 Every game gets its own real, crawlable URL — e.g. `gimboot.com/play/gp-O6650/moto-x3m` — without hand-writing a single page.
 
-`src/index.js` fetches the existing `game.html` asset as-is, then transforms it in place with Cloudflare's native **HTMLRewriter** (a streaming HTML parser, not string splicing) before the response reaches a browser or crawler: `<title>`, `<meta name="description">`, Open Graph/Twitter Card tags, and a `<link rel="canonical">` are all set per-game, plus a small set of escaped `meta` tags carrying the resolved game data so `js/player.js` can load the right game without another lookup.
+`src/index.js` fetches the existing (noindex) `game.html` shell through the asset binding, then transforms it in place with Cloudflare's native **HTMLRewriter** (a streaming HTML parser, not string splicing) before the response reaches a browser or crawler: `<title>`, `<meta name="description">`, Open Graph/Twitter Card tags, a single absolute `<link rel="canonical">`, JSON-LD `VideoGame`, and visible Indonesian “About / How to play / Features” copy are all generated per game. A small set of escaped `meta` tags also carries the resolved game data so `js/player.js` can load the right game without another lookup.
+
+`/game` and `/game.html` are **legacy URLs only**. The Worker validates the `id` against the catalog and issues exactly one 301 to the canonical `/play/{id}/{slug}` URL; missing/unknown IDs are real 404s, and a feed outage returns 503 so a valid game is never deindexed. There is deliberately no `/game` → `/play` redirect chain.
 
 Only the `{id}` segment is ever read — `{slug}` exists purely so the URL reads well for search engines and people sharing links. `js/utils.js`'s `buildPlayUrl()`/`slugify()` generate these URLs client-side; `src/index.js` keeps an intentionally-duplicated `slugify()` that produces byte-identical output, so a game's canonical URL is consistent everywhere it's linked from.
 
-`/sitemap.xml` lists every current game's `/play/` URL plus the homepage, generated live from the same merged catalog — worth submitting to Google Search Console / Bing Webmaster Tools so pages get discovered without waiting on the client-rendered grid to be crawled.
+`/sitemap.xml` lists the homepage plus every current game's canonical `/play/{id}/{slug}` URL — no `/game` query URLs and no extra parameters — generated live from the same merged catalog, worth submitting to Google Search Console / Bing Webmaster Tools so pages get discovered without waiting on the client-rendered grid to be crawled.
 
 One thing to know if you touch routing: because `/play/{id}/{slug}` sits two path segments deep and `/` sits at zero, a relative asset path like `href="css/style.css"` resolves differently at each depth. Every asset reference in `index.html`, `game.html`, `js/config.js`, and `js/pwa.js`'s service-worker registration uses a root-relative path (`/css/style.css`) instead, so the same markup works identically regardless of URL depth.
 
@@ -94,14 +97,16 @@ run_worker_first = ["/*"]
 
 `npx wrangler deploy` is the correct command; `wrangler pages deploy` does not apply to this configuration.
 
-`functions/api/games.js`, `functions/api/search.js`, and `functions/share/[id].js` follow the Cloudflare **Pages** Functions convention, which this deployment model doesn't use — they are not invoked in production. They've been kept as a manually-synced reference copy of part of `src/index.js`'s logic, but are now confirmed for removal; `changelog.md` Task #002 tracks the deletion.
+`functions/api/games.js`, `functions/api/search.js`, and `functions/share/[id].js` followed the Cloudflare **Pages** Functions convention, which this deployment model doesn't use; they have been deleted. The only remaining file under `functions/` is `game.js`, which is the shared HTMLRewriter/SEO renderer **bundled into the Worker** (`.assetsignore` keeps it out of the public asset set).
 
 ## Project structure
 
 ```
 gimboot/
 ├── index.html                   Catalog landing page — grid, search, category filter
-├── game.html                    Legacy query-param player; requests to it 301 to /game
+├── game.html                    Noindex shell template for /play; direct legacy requests 301 or 404 via the Worker
+├── 404.html                     Branded noindex 404 document (served by the Worker, no canonical injected)
+├── _redirects                   Static-hosting fallback only (`/index.html` → `/`); the Worker owns all other redirects
 ├── manifest.json                PWA manifest — name "Gimboot", pixel icons
 ├── sw.js                        Service worker — offline app shell + stale-while-revalidate
 ├── favicon.svg                   Official favicon — content/wiring still needs verification, see Known issues
@@ -134,7 +139,9 @@ gimboot/
 │   ├── moba/                      First-party game, active (Moba DOTA fantasy MOBA)
 │   └── shared/                    ui-share.js/css — confetti + share-prompt module
 ├── src/
-│   └── index.js                  Worker: /api/games, /api/search, /share/:id, /play/{id}/{slug}, /game, /sitemap.xml
+│   └── index.js                  Worker: /api/games, /api/search, /share/:id, /play/{id}/{slug}, legacy /game* redirects, /sitemap.xml
+├── functions/
+│   └── game.js                   HTMLRewriter SEO renderer + slug/canonical helpers (bundled into the Worker)
 ```
 
 Per-game high scores live inside each `games/{slug}/game.js`, not in `js/state.js`. A separate, cross-game high score also exists in `js/pwa.js`, updated via `window.postMessage` from both first-party games and embedded GamePix games (GamePix sends this natively; GameMonetize embeds have no equivalent hook).
@@ -144,7 +151,7 @@ Per-game high scores live inside each `games/{slug}/game.js`, not in `js/state.j
 No secrets are currently required. When one is needed (e.g. a GameMonetize site ID), add it as a Cloudflare environment variable — never commit it to source.
 
 - **Turning on GameMonetize monetization** — paste your real snippet from the GameMonetize dashboard into `ads.txt`, replacing the placeholder line, then redeploy. GameMonetize checks `https://<your-domain>/ads.txt` at the root.
-- **SEO title/description template** — `handlePlayRoute()` in `src/index.js` (`seoTitle` / `seoDescription`).
+- **SEO title/description template** — `buildGameSeo()` in `functions/game.js` (title, meta description, visible “About / How to play / Features” copy, JSON-LD).
 - **GameMonetize catalog size** — `js/config.js` → `DEFAULT_GAME_COUNT`.
 - **GamePix page size / site ID** — `GAMEPIX_PAGINATION` / `GAMEPIX_DEFAULT_SID` at the top of `src/index.js`. Worth double-checking against your GamePix dashboard — `ads.txt` currently has two different GamePix property IDs in its comments.
 - **Adding another first-party game** — drop it under `games/<name>/`, then add an entry to **both** `LOCAL_GAMES` in `js/config.js` (client) and `LOCAL_GAMES` in `src/index.js` (server — needed for its `/play/`, `/share/`, and sitemap entries to work). The two lists are intentionally duplicated rather than shared, since the Worker and the browser's ES modules don't go through a build step together — keep them in sync by hand.
@@ -165,13 +172,13 @@ Keep `thumb.svg` in the target folder (the `--emptyOutDir false` option preserve
 ## Security notes
 
 - `isAllowedEmbedUrl()` in `js/utils.js` only allows (a) absolute `https://` URLs on the GameMonetize/GamePix allowlist, or (b) a same-origin path under `/games/`.
-- Every value injected into `/share/:id`, `/play/:id/:slug`, and `/game`'s HTML/meta output is escaped (`escapeHtmlAttr`/`escapeJsonLd` in `src/index.js`) before it reaches the response.
+- Every value injected into `/share/:id` and the server-rendered `/play/{id}/{slug}` HTML/meta output is escaped (`escapeHtmlAttr`/`escapeJsonLd` in `functions/game.js`) before it reaches the response. `HTMLRewriter` attribute values are escaped explicitly because `setAttribute()` does not entity-encode them in workerd.
 - `/api/games` and `/api/search` return `Access-Control-Allow-Origin: *`. This is an intentional, accepted policy for these two endpoints since they're public, read-only, and carry no sensitive or authenticated data — the project's CORS policy was revised to allow this rather than narrowing the header. Wildcard CORS should still be avoided on any future endpoint that requires authentication or writes state.
 - **Known gap:** `.gitignore` doesn't yet exclude `.env`, `*.pem`, `*.key`, `*.p12`, or `secrets/` — add these before any real secret is introduced (`changelog.md` Task #001).
 
 ## Testing
 
-Run `npm test` for the portal's automated unit tests and `npm run lint` for ESLint. At the time of the Moba DOTA integration (Task #031), the full suite passed with 170 tests; `src/index.test.js` includes coverage for the `local-moba` canonical play URL. The game source repository separately uses `npm run build` for TypeScript checking and its Vite production build. Manual browser QA is still recommended for gameplay and rendering.
+Run `npm test` for the portal's automated unit tests, `npm run test:e2e` for the Playwright journey (real `wrangler dev` + Chromium), and `npm run lint` for ESLint. The suite currently has 196 unit tests and 5 E2E tests, including SSR/canonical/JSON-LD coverage for `/play` and the legacy `/game` redirect/404 contract. The game source repository separately uses `npm run build` for TypeScript checking and its Vite production build. Manual browser QA is still recommended for gameplay and rendering.
 
 ## Known issues & roadmap
 
