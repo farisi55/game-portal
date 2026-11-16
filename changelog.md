@@ -1,7 +1,7 @@
 ---
 project: Gimboot
-knowledge_version: 1.6.19
-changelog_version: 1.0.41
+knowledge_version: 1.6.20
+changelog_version: 1.0.42
 created: 2026-08-28
 status: in_progress
 milestone: 1 of 1
@@ -45,7 +45,7 @@ simple_mode: false
 > `prd.md` diperbarui ke v1.6.0 (§3.1, §3.2, §4.1, §4.2, §5 baru, §8, §9, §10), lalu v1.6.1 setelah poin 9 dikonfirmasi final; `knowledge.md` ke v1.6.0 lalu v1.6.1 (§2, §3, §7, §9).
 
 ## [NEXT TASKS]
-(none — roadmap asli 26 task selesai; Task #027 (2026-10-13, permintaan developer), Task #028 (2026-10-14, rework Solitaire + `npm run dev`), Task #029 (2026-10-14, badge "No Ads" + tab "No Ads Game"), Task #030 (2026-10-15, fix wrangler dev), Task #031 (2026-10-17, integrasi + rename Moba DOTA), Task #032 (2026-11-12, fix GSC indexing/canonical), Task #033 (2026-11-16, GSC remediation v2), dan Task #034 (2026-11-16, integrasi + sinkronisasi Pawzle Maze) dieksekusi & pindah ke [COMPLETED])
+(none — roadmap asli 26 task selesai; Task #027 (2026-10-13, permintaan developer), Task #028 (2026-10-14, rework Solitaire + `npm run dev`), Task #029 (2026-10-14, badge "No Ads" + tab "No Ads Game"), Task #030 (2026-10-15, fix wrangler dev), Task #031 (2026-10-17, integrasi + rename Moba DOTA), Task #032 (2026-11-12, fix GSC indexing/canonical), Task #033 (2026-11-16, GSC remediation v2), Task #034 (2026-11-16, integrasi + sinkronisasi Pawzle Maze), dan Task #035 (2026-11-16, share modal rekor Pawzle Maze) dieksekusi & pindah ke [COMPLETED])
 
 
 ## [IN PROGRESS]
@@ -66,6 +66,24 @@ Satu Cloudflare Worker dengan static assets (`src/index.js`) menangani seluruh r
 
 ### [Retroaktif] Sistem Viral Sharing
 `games/shared/ui-share.js`/`.css`: confetti + Web Share API saat rekor pecah, dengan fallback clipboard-copy, terhubung ke halaman share ber-OG-tag di `src/index.js`. Catatan cakupan audit: isi `ui-share.js` belum dibaca baris-per-baris — deskripsi ini berdasarkan nama file, penggunaannya di `js/player.js`, dan `README.md`, bukan verifikasi kode penuh (lihat "Catatan Metodologi Audit" di `knowledge.md`).
+
+### Task #035 — Ad-hoc: Tambahkan Share Modal Rekor Pawzle Maze ✅
+- **Completed:** 2026-11-16
+- **Phase:** Ad-hoc (permintaan developer: tombol share tidak muncul ketika rekor Pawzle Maze dipecahkan; audit `games/shared`)
+- **Status:** OK
+- **Branch:** `dev` (perubahan belum di-commit saat entri ini ditulis)
+- **Root cause:** `games/pawzle-maze/index.html` tidak memuat `games/shared/ui-share.js`, `finishGame()` tidak memanggil `ViralShare.show()`, dan registry/copywriting `CANONICAL_GAMES`/`COPY` dalam shared module belum mengenali Pawzle Maze.
+- **Files modified:**
+  - `games/shared/ui-share.js` — tambah mapping folder `pawzle-maze` ke `local-pawzle-maze` / slug canonical `pawzle-maze`, serta teks share yang melaporkan waktu rekor.
+  - `games/pawzle-maze/index.html` — muat `../shared/ui-share.js` sebelum `game.js`, mengikuti pola game first-party lain.
+  - `games/pawzle-maze/game.js` — panggil `ViralShare.show('pawzle-maze', formatTime(state.elapsed))` hanya saat `isNewRecord`, setelah hasil permainan diperbarui.
+  - `changelog.md`, `knowledge.md` — catat perbaikan ini dan sinkronkan versi dokumen.
+- **Acceptance criteria:**
+  - [x] Modal share/confetti bersama tampil saat pemain mencetak rekor pertama atau memecahkan best time level.
+  - [x] Tidak tampil untuk penyelesaian yang bukan rekor baru.
+  - [x] Pesan share menyertakan waktu terformat dan tautan canonical `/play/local-pawzle-maze/pawzle-maze`.
+- **Verification:** VS Code melaporkan tidak ada error pada `ui-share.js`, `game.js`, dan `index.html`. Test runner VS Code tidak menemukan test controller; tes otomatis tidak dijalankan pada giliran ini.
+- **Knowledge drift:** `knowledge.md` diperbarui dari **v1.6.19 → v1.6.20**: registry `games/shared/ui-share.js` dan aturan share Pawzle Maze.
 
 ### Task #034 — Ad-hoc: Integrasi & Sinkronisasi Pawzle Maze ✅
 - **Completed:** 2026-11-16

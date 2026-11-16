@@ -461,6 +461,9 @@
       level: state.level, time: state.elapsed, steps: state.steps, newRecord: isNewRecord,
       bestTime: bestAfterFinish, globalBestTime: getGlobalBestTime(), mazeMetrics: state.mazeMetrics
     });
+    if (isNewRecord) {
+      ViralShare.show('pawzle-maze', formatTime(state.elapsed));
+    }
     els.playAgainButton.focus();
   }
 
