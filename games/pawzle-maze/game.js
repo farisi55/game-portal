@@ -34,6 +34,7 @@
     winModal: $('win-modal'), winLevelLabel: $('win-level-label'), completionTime: $('completion-time'),
     recordResult: $('record-result'), recordSummary: $('record-summary'), completionSteps: $('completion-steps'),
     completionBest: $('completion-best'), playAgainButton: $('play-again-button'), chooseLevelButton: $('choose-level-button'),
+    shareRecordButton: $('share-record-button'),
     nextLevelButton: $('next-level-button')
   };
 
@@ -436,6 +437,7 @@
     const bestAfterFinish = Number(state.bestTimes[state.level]);
     els.completionBest.textContent = formatTime(bestAfterFinish);
     els.recordResult.classList.toggle('not-record', !isNewRecord);
+    els.shareRecordButton.hidden = !isNewRecord;
 
     if (isNewRecord) {
       els.recordSummary.textContent = hadPreviousBest
@@ -461,9 +463,6 @@
       level: state.level, time: state.elapsed, steps: state.steps, newRecord: isNewRecord,
       bestTime: bestAfterFinish, globalBestTime: getGlobalBestTime(), mazeMetrics: state.mazeMetrics
     });
-    if (isNewRecord) {
-      ViralShare.show('pawzle-maze', formatTime(state.elapsed));
-    }
     els.playAgainButton.focus();
   }
 
@@ -734,6 +733,9 @@
   els.menuMusicButton.addEventListener('click', () => audio.toggle());
   els.playAgainButton.addEventListener('click', () => { resetRun(); });
   els.chooseLevelButton.addEventListener('click', () => { els.winModal.hidden = true; openMenu(); });
+  els.shareRecordButton.addEventListener('click', () => {
+    window.ViralShare.show('pawzle-maze', formatTime(state.elapsed));
+  });
   els.nextLevelButton.addEventListener('click', () => {
     const next = els.nextLevelButton.dataset.nextLevel;
     if (LEVELS[next]) setLevel(next);
