@@ -1,7 +1,7 @@
 ---
 project: Gimboot
-knowledge_version: 1.6.18
-changelog_version: 1.0.40
+knowledge_version: 1.6.19
+changelog_version: 1.0.41
 created: 2026-08-28
 status: in_progress
 milestone: 1 of 1
@@ -45,7 +45,7 @@ simple_mode: false
 > `prd.md` diperbarui ke v1.6.0 (§3.1, §3.2, §4.1, §4.2, §5 baru, §8, §9, §10), lalu v1.6.1 setelah poin 9 dikonfirmasi final; `knowledge.md` ke v1.6.0 lalu v1.6.1 (§2, §3, §7, §9).
 
 ## [NEXT TASKS]
-(none — roadmap asli 26 task selesai; Task #027 (2026-10-13, permintaan developer), Task #028 (2026-10-14, rework Solitaire + `npm run dev`), Task #029 (2026-10-14, badge "No Ads" + tab "No Ads Game"), Task #030 (2026-10-15, fix wrangler dev), Task #031 (2026-10-17, integrasi + rename Moba DOTA), dan Task #032 (2026-11-12, fix GSC indexing/canonical) dieksekusi & pindah ke [COMPLETED])
+(none — roadmap asli 26 task selesai; Task #027 (2026-10-13, permintaan developer), Task #028 (2026-10-14, rework Solitaire + `npm run dev`), Task #029 (2026-10-14, badge "No Ads" + tab "No Ads Game"), Task #030 (2026-10-15, fix wrangler dev), Task #031 (2026-10-17, integrasi + rename Moba DOTA), Task #032 (2026-11-12, fix GSC indexing/canonical), Task #033 (2026-11-16, GSC remediation v2), dan Task #034 (2026-11-16, integrasi + sinkronisasi Pawzle Maze) dieksekusi & pindah ke [COMPLETED])
 
 
 ## [IN PROGRESS]
@@ -56,7 +56,7 @@ simple_mode: false
 > **Catatan format:** empat entri retroaktif di bawah ini BUKAN task yang dieksekusi lewat proses changelog/gate P04 ini — proses itu baru mulai berlaku sejak Task #001. Entri-entri ini disusun 2026-08-30 dari kondisi kode saat diaudit (2026-08-28) untuk mencatat bahwa produk sudah live sebelum changelog ini ada, sebagaimana disebut `knowledge.md` §1 ("Phase 1 & Phase 3 ... selesai"). Karena itu, tidak ada field "Files to create/modify", "Acceptance criteria" bercentang, atau "Dependencies" seperti task lain — tidak ada catatan asli semacam itu untuk pekerjaan ini, dan menuliskannya di sini akan memberi kesan presisi yang tidak benar-benar ada.
 
 ### [Retroaktif] Katalog Game First-Party
-Roster first-party saat ini berisi enam game mandiri di `games/{slug}/`: Ayo Kopdes, Kejar Koruptor, Mobil MBG, Kicau Mania, Solitaire, dan Moba DOTA (ditambahkan sebagai game ke-6 melalui Task #031). Empat game pertama dikonfirmasi live lewat audit kode 2026-08-28 dan aktif oleh developer 2026-08-30. Rekor tertinggi disimpan mandiri per game di `localStorage` (dengan try-catch untuk mode privat), begitu juga preferensi mute suara bila didukung game.
+Roster first-party saat ini berisi tujuh game mandiri di `games/{slug}/`: Ayo Kopdes, Kejar Koruptor, Mobil MBG, Kicau Mania, Solitaire, Moba DOTA, dan Pawzle Maze (ditambahkan sebagai game ke-7 melalui Task #034). Empat game pertama dikonfirmasi live lewat audit kode 2026-08-28 dan aktif oleh developer 2026-08-30. Rekor tertinggi disimpan mandiri per game di `localStorage` (dengan try-catch untuk mode privat), begitu juga preferensi mute suara bila didukung game.
 
 ### [Retroaktif] Backend Edge & Agregasi Katalog
 Satu Cloudflare Worker dengan static assets (`src/index.js`) menangani seluruh rute dinamis: `/api/games` & `/api/search` (gabungan game first-party + feed live GameMonetize & GamePix, di-cache 30 menit di edge), `/share/:id` & `/play/:id/:slug` (meta OG/Twitter/canonical dinamis dengan output sudah di-escape), `/game` (redirect pengganti `game.html` lama), `/sitemap.xml` (dirujuk `robots.txt`), plus security headers (CSP nonce-based) untuk semua response.
@@ -66,6 +66,30 @@ Satu Cloudflare Worker dengan static assets (`src/index.js`) menangani seluruh r
 
 ### [Retroaktif] Sistem Viral Sharing
 `games/shared/ui-share.js`/`.css`: confetti + Web Share API saat rekor pecah, dengan fallback clipboard-copy, terhubung ke halaman share ber-OG-tag di `src/index.js`. Catatan cakupan audit: isi `ui-share.js` belum dibaca baris-per-baris — deskripsi ini berdasarkan nama file, penggunaannya di `js/player.js`, dan `README.md`, bukan verifikasi kode penuh (lihat "Catatan Metodologi Audit" di `knowledge.md`).
+
+### Task #034 — Ad-hoc: Integrasi & Sinkronisasi Pawzle Maze ✅
+- **Completed:** 2026-11-16
+- **Phase:** Ad-hoc (permintaan developer untuk menjadikan `paws-maze-game` game internal Gimboot)
+- **Status:** OK
+- **Branch:** `dev` (perubahan belum di-commit saat entri ini ditulis)
+- **Context:** Game statis dari `C:\Users\banu.farisi\repo\paws-maze-game` dimasukkan sebagai game first-party di `games/pawzle-maze/`, bukan iframe ke situs eksternal. Setelah integrasi awal, sumber mengalami dua pembaruan Portal Edition; file runtime dan metadata katalog diselaraskan mengikuti struktur game terbaru.
+- **Files created / modified:**
+  - `games/pawzle-maze/index.html`, `styles.css`, `game.js`, `cat-icon.svg` — disinkronkan dari Portal Edition sumber; game surface menggunakan toolbar game, board responsif, opsi, generator maze, completion dialog, dan lima tingkat kesulitan termasuk Nightmare. Tidak memerlukan proses build atau aset runtime eksternal.
+  - `games/pawzle-maze/thumb.svg` — thumbnail katalog lokal.
+  - `games/pawzle-maze/portal.js` — skrip host-demo lama dihapus dari game surface setelah versi sumber terbaru menegaskan bahwa skrip tersebut hanya untuk contoh portal host dan tidak lagi direferensikan oleh `index.html`.
+  - `js/config.js` dan `src/index.js` — mirror `LOCAL_GAMES` ditambah/diperbarui untuk `local-pawzle-maze`, kategori `Puzzle`, ukuran 960×720, sumber `No Ads`, deskripsi lima kesulitan, serta URL lokal `/games/pawzle-maze/index.html?embed=1&parentOrigin=https%3A%2F%2Fgimboot.com`.
+  - `src/index.test.js` — pengujian canonical static game shell dengan parameter embed/origin, hasilnya `/play/local-pawzle-maze/pawzle-maze`.
+  - `README.md` — roster first-party, struktur folder, dan panduan Pawzle Maze/kontrak embed diperbarui.
+  - `changelog.md`, `knowledge.md` — task dan status teknis katalog diperbarui.
+- **Source sync details:** Salinan runtime dibandingkan dengan sumber berdasarkan SHA-256. URL `parentOrigin` membatasi tujuan event `postMessage` ke origin produksi Gimboot. Contoh integrasi `portal-integration-example.html` tidak disalin karena merupakan halaman host demo, bukan aset game.
+- **Acceptance criteria met:**
+  - [x] Game tersedia sebagai aset same-origin di `/games/pawzle-maze/` dan terdaftar konsisten pada katalog client dan Worker.
+  - [x] Halaman katalog/canonical SEO untuk game mengarah ke `/play/local-pawzle-maze/pawzle-maze`; query embed tidak mengubah URL canonical.
+  - [x] Game terbaru beserta aset relatifnya cocok dengan sumber; thumbnail portal tetap tersedia.
+  - [x] Game embed menggunakan `?embed=1` dan menetapkan `parentOrigin` production yang eksplisit.
+- **Verification:** `npm test` — **197 tes lulus**; `npm run lint` — bersih; `git diff --check` — bersih; hash file sumber/runtime sama dan dependensi relatif (`cat-icon.svg`, `styles.css`, `game.js`) tersedia. Tidak ada build sumber diperlukan karena game HTML/CSS/JavaScript statis tanpa pipeline build.
+- **Notes:** `package-lock.json` sudah berstatus modified sebelum Task #034 dan tidak diubah sebagai bagian integrasi Pawzle Maze.
+- **Knowledge drift:** `knowledge.md` diperbarui dari **v1.6.18 → v1.6.19**: riwayat task, struktur `games/`, jumlah mirror katalog, spesifikasi embed dan aturan domain Pawzle Maze.
 
 ### Task #033 — Ad-hoc: GSC Indexing Remediation v2 — Legacy `/game` Redirects, Canonical `/play` & Server-Rendered Game Pages ✅
 - **Completed:** 2026-11-16

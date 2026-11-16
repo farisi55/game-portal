@@ -233,6 +233,18 @@ const LOCAL_GAMES = [
     height: 720,
     source: 'No Ads',
   },
+  {
+    id: 'local-pawzle-maze',
+    title: 'Pawzle Maze',
+    category: 'Puzzle',
+    description:
+      'Bantu Miko si kucing menemukan ikan di dalam labirin. Jelajahi lima tingkat kesulitan dengan kontrol mouse, keyboard, tombol arah, atau layar sentuh. Selesaikan labirin, catat waktu terbaik, dan lanjutkan ke tantangan berikutnya.',
+    url: '/games/pawzle-maze/index.html?embed=1&parentOrigin=https%3A%2F%2Fgimboot.com',
+    thumb: '/games/pawzle-maze/thumb.svg',
+    width: 960,
+    height: 720,
+    source: 'No Ads',
+  },
 ];
 
 // Maps a first-party game shell folder (/games/<slug>) to the public SEO

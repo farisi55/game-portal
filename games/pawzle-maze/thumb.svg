@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 384">
+  <defs>
+    <linearGradient id="bg" x2="0" y2="1">
+      <stop stop-color="#f8f6ff"/>
+      <stop offset="1" stop-color="#eeeaff"/>
+    </linearGradient>
+    <linearGradient id="maze" x2="1" y2="1">
+      <stop stop-color="#9d91d9"/>
+      <stop offset="1" stop-color="#7468b5"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="384" rx="28" fill="url(#bg)"/>
+  <circle cx="256" cy="188" r="151" fill="#fff" opacity=".8"/>
+  <g fill="none" stroke="url(#maze)" stroke-linecap="round" stroke-linejoin="round" stroke-width="14">
+    <path d="M142 102h228v180H142z"/>
+    <path d="M199 102v52h57v57h57v71M256 154h57v-52M142 211h57v-57M199 211v71h57M370 211h-57"/>
+  </g>
+  <path d="M176 170c-13 0-23 10-23 23v12c0 11 8 18 18 18 7 0 12-3 16-9 4 6 9 9 16 9 10 0 18-7 18-18v-12c0-13-10-23-23-23l-11 7z" fill="#ffc86b" stroke="#514b78" stroke-width="5" stroke-linejoin="round"/>
+  <circle cx="181" cy="192" r="3.5" fill="#514b78"/>
+  <circle cx="198" cy="192" r="3.5" fill="#514b78"/>
+  <path d="M328 250c17-17 42-9 40 7-2 12-23 21-40 27-16-6-38-15-39-27-2-16 22-24 39-7z" fill="#f3a5b4" stroke="#514b78" stroke-width="4"/>
+  <path d="m329 250 12-8-2 15m-10-7-12-8 2 15" fill="#f3a5b4" stroke="#514b78" stroke-width="3" stroke-linejoin="round"/>
+  <text x="256" y="59" fill="#514b78" font-family="Arial,sans-serif" font-size="29" font-weight="900" letter-spacing="3" text-anchor="middle">PAWZLE MAZE</text>
+  <text x="256" y="348" fill="#8178b4" font-family="Arial,sans-serif" font-size="14" font-weight="800" letter-spacing="4" text-anchor="middle">FIND MIKO'S FISH</text>
+</svg>

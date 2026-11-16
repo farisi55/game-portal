@@ -733,6 +733,11 @@ describe('Output Encoding — Share/Play/Game Routes', () => {
       expect(canonicalUrlForStaticPage(makeUrl('/games/moba/'))).toBe(
         'https://gimboot.com/play/local-moba/moba-dota'
       );
+      expect(
+        canonicalUrlForStaticPage(
+          makeUrl('/games/pawzle-maze/index.html?embed=1&parentOrigin=https%3A%2F%2Fgimboot.com')
+        )
+      ).toBe('https://gimboot.com/play/local-pawzle-maze/pawzle-maze');
       expect(canonicalUrlForStaticPage(makeUrl('/games/ayo-kopdes/'))).toBe(
         'https://gimboot.com/play/local-ayo-kopdes/ayo-ke-kopdes'
       );

@@ -6,7 +6,7 @@ The game catalog is a live server-side merge of three sources:
 
 - **GameMonetize** — fetched server-side from their game feed
 - **GamePix** — fetched server-side from their JSON feed
-- **First-party** — six games hosted directly in this repo: Ayo ke Kopdes, Kejar Koruptor, Mobil MBG, Kicau Mania, Solitaire, and Moba DOTA. They are registered in both `js/config.js` and the Worker’s `src/index.js` `LOCAL_GAMES`.
+- **First-party** — games built and hosted directly in this repo: Ayo Kopdes, Kejar Koruptor, Mobil MBG, Kicau Mania, Solitaire, Moba DOTA (a fantasy MOBA), and Pawzle Maze (a cat-themed maze puzzle). `src/index.js` (the Worker) recognizes all seven in its `LOCAL_GAMES`.
 
 > **Related docs:** this README is the getting-started/architecture guide for contributors. Product scope lives in [`prd.md`](./prd.md), the full technical reference in [`knowledge.md`](./knowledge.md), and task history in [`changelog.md`](./changelog.md). Operational procedures are in [`docs/deployment-runbook.md`](./docs/deployment-runbook.md); the public API is specced in [`docs/api.yaml`](./docs/api.yaml) (OpenAPI 3.1).
 
@@ -155,6 +155,7 @@ gimboot/
 │   ├── mobil-mbg/                 First-party game
 │   ├── solitaire/                 First-party Klondike game
 │   ├── moba/                      First-party Moba DOTA (React/Three.js build)
+│   ├── pawzle-maze/               First-party game, active (Pawzle Maze cat-themed maze puzzle)
 │   └── shared/                    ui-share.js/css — confetti + share-prompt module
 ├── emulator/
 │   ├── index.html                 Shell — 35-system dropdown (7 optgroups), ROM/BIOS pickers, how-to + legal disclaimer
@@ -197,6 +198,10 @@ npm run build -- --base=/games/moba/ --outDir <path-to-game-portal>/games/moba -
 
 Keep `thumb.svg` in the target folder (the `--emptyOutDir false` option preserves it), and keep the matching `local-moba` records in `js/config.js` and `src/index.js` if the game's URL, title, category, or dimensions change.
 
+### Pawzle Maze
+
+Pawzle Maze is a first-party, static HTML5 maze puzzle hosted in `games/pawzle-maze/`. Its HTML, CSS, game logic, and cat icon are copied from the standalone `paws-maze-game` project; no build step or external runtime assets are required. The catalog loads it with `?embed=1` and sets `parentOrigin` to the portal origin for its `postMessage` game events. The game now includes five difficulty levels. It is registered as `local-pawzle-maze` in both portal `LOCAL_GAMES` lists.
+
 ## Security notes
 
 - **Embed allowlist** — `isAllowedEmbedUrl()` in `js/utils.js` only allows (a) absolute `https://` URLs on the GameMonetize/GamePix allowlist, or (b) a same-origin path under `/games/`.
@@ -219,7 +224,7 @@ Keep `thumb.svg` in the target folder (the `--emptyOutDir false` option preserve
 
 The planned roadmap is complete; implementation follow-ups are tracked in `changelog.md`. Previously listed implementation issues have been resolved:
 
-- **`src/index.js` `LOCAL_GAMES` sync** — resolved for all six first-party games, including Moba DOTA (`local-moba`); keep it in sync with `js/config.js` when adding or changing a local title (see `changelog.md` Tasks #002 and #031).
+- **`src/index.js` `LOCAL_GAMES` sync** — resolved for all seven first-party games, including Moba DOTA (`local-moba`) and Pawzle Maze (`local-pawzle-maze`); keep it in sync with `js/config.js` when adding or changing a local title (see `changelog.md` Tasks #002 and #031).
 - **Delete `functions/api/*`, `functions/share/[id].js`** — confirmed not invoked under the current deploy model; decided to remove them for clean code. **Files deleted** as part of `changelog.md` Task #002.
 - **Verify and wire up `favicon.svg`** — confirmed as the official favicon, wired into `index.html`/`game.html` via `<link rel="icon">`, and referenced in `manifest.json`. **`.avicon.svg` removed** after verification (`changelog.md` Task #002).
 - **`manifest.json` screenshots** — `screenshot-desktop.png` and `screenshot-mobile.png` were identical images. The "narrow" entry removed from `manifest.json`, keeping only "wide" (`changelog.md` Task #002).

@@ -95,6 +95,16 @@ export const CONFIG = {
       height: 720,
       source: 'No Ads',
     },
+    {
+      id: 'local-pawzle-maze',
+      title: 'Pawzle Maze',
+      category: 'Puzzle',
+      url: '/games/pawzle-maze/index.html?embed=1&parentOrigin=https%3A%2F%2Fgimboot.com',
+      thumb: '/games/pawzle-maze/thumb.svg',
+      width: 960,
+      height: 720,
+      source: 'No Ads',
+    },
   ],
 
   // Aspect ratio used when a game doesn't report its own width/height.
