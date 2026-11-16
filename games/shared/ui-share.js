@@ -24,6 +24,7 @@
     'kejar-koruptor': { id: 'local-kejar-koruptor', slug: 'kejar-koruptor' },
     'solitaire': { id: 'local-solitaire', slug: 'solitaire' },
     'moba': { id: 'local-moba', slug: 'moba-dota' },
+    'pawzle-maze': { id: 'local-pawzle-maze', slug: 'pawzle-maze' },
   };
 
   function resolveCanonicalGame (slug) {
@@ -58,6 +59,10 @@
       '\u2694\uFE0F Baru saja menaklukkan medan Moba DOTA dengan skor {SKOR}! ' +
       'Pilih hero, kuasai arena, dan buktikan kamu yang terkuat. ' +
       '#MobaDOTA #Gimboot \u2192 ',
+    'pawzle-maze':
+      '\u{1F431}\u{1F389} Aku memecahkan rekor Pawzle Maze dengan waktu {SKOR}! ' +
+      'Bantu Miko menemukan ikan lebih cepat dan pecahkan rekor waktuku. ' +
+      '#PawzleMaze #Gimboot \u2192 ',
   };
 
   var BASE_URL = 'https://gimboot.com/play/';
