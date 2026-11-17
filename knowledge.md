@@ -1,12 +1,13 @@
 ---
 project: Gimboot
-version: 1.6.22
+version: 1.6.23
 source: prd
 last_updated: 2026-11-16
 project_shape: fullstack
 simple_mode: false
 ---
 # simple_mode: false — PRD §6.1 6-month target adalah 10.000+ pengguna serentak (di atas ambang ≤100), sehingga syarat pertama tidak terpenuhi meski §6.4 Compliance = none
+# v1.6.23 — Task #038 (2026-11-17, sinkronisasi ad-hoc): source Pawzle Maze v7 mengubah semua level menjadi perfect maze satu jalur unik. Braiding/loop dimatikan (`braid: 0`), semua level menetapkan `uniqueRoute: true`, generator menghitung siklus dan melempar error jika invariant perfect-maze dilanggar; event `finish` tetap mengirim metrik jalur. Petunjuk game diperbarui untuk mengajarkan pemain mundur dari jalan buntu. Integrasi share/portal tetap ada. §3/§7 diperbarui. changelog → v1.0.45.
 # v1.6.22 — Task #037 (2026-11-17, sinkronisasi ad-hoc): update game Pawzle Maze dari repo sumber diterapkan pada game runtime portal: label dan instruksi touch, swipe/target sentuh yang diperbesar, animasi easing karakter, dan badge kontras untuk karakter/ikan. Integrasi portal dan share record Gimboot tetap dipertahankan; thumbnail portal tidak berubah. §3/§7 diperbarui. changelog → v1.0.44.
 # v1.6.21 — Task #036 (2026-11-16, perbaikan ad-hoc): dialog hasil Pawzle Maze kini memiliki tombol "Bagikan rekor" yang hanya tampil pada rekor baru dan membuka modal `ViralShare` saat diklik. Overlay tidak lagi dipanggil otomatis saat finish, sehingga tombol tetap menjadi affordance share yang terlihat di dialog hasil. §3/§7 diperbarui. changelog → v1.0.43.
 # v1.6.20 — Task #035 (2026-11-16, perbaikan ad-hoc): Pawzle Maze kini memakai `games/shared/ui-share.js` dan modal share/confetti hanya dipanggil saat `finishGame()` mendeteksi rekor baru; waktu `mm:ss` diteruskan ke copy Pawzle dan link canonical `/play/local-pawzle-maze/pawzle-maze`. Entry map dan copy Pawzle ditambahkan ke shared module, yang memuat stylesheet `ui-share.css` saat modal pertama kali tampil. §3/§7 diperbarui. changelog → v1.0.42.
@@ -79,7 +80,7 @@ game-portal/
 │   ├── mobil-mbg/{...}           # struktur sama; status "live" perlu konfirmasi ulang — lihat §7
 │   ├── solitaire/{game.js,index.html,style.css,thumb.svg,sound.js,win.js}   # game first-party ke-5 (Task #027, implemented 2026-10-13; engine DIGANTI salinan setia repo sumber Task #028, 2026-10-14); sound.js = efek suara Web Audio API, win.js = cascade kemenangan canvas; render kartu = DOM flip-3D diposisikan via CSSOM transform — lihat §7
 │   ├── moba/{index.html,thumb.svg,assets/*.js,assets/*.css,draco/*} # game first-party ke-6: Moba DOTA, build Vite React/Three.js dari repo realm-siege-3d; base /games/moba/ (Task #031)
-│   ├── pawzle-maze/{index.html,styles.css,game.js,cat-icon.svg,thumb.svg} # game first-party ke-7: puzzle labirin HTML/CSS/Canvas, lima level, kontrol sentuh/animasi terbaru; tombol share rekor membuka ViralShare (Task #037)
+│   ├── pawzle-maze/{index.html,styles.css,game.js,cat-icon.svg,thumb.svg} # game first-party ke-7: perfect maze satu jalur, lima level, kontrol sentuh/animasi; tombol share rekor membuka ViralShare (Task #038)
 │   └── shared/{ui-share.css,ui-share.js}   # modul share/confetti + canonical/copy per game (termasuk Pawzle); TIDAK menyimpan skor — lihat §3 "State management"
 ├── js/
 │   ├── ad-loader.js              # ad script loader with timeout fallback (GameMonetize/GamePix)
@@ -184,6 +185,7 @@ game-portal/
 - [DIIMPLEMENTASIKAN Task #035 — 2026-11-16] **Pawzle Maze ViralShare:** `index.html` memuat `../shared/ui-share.js` sebelum `game.js`. `finishGame()` memanggil `ViralShare.show('pawzle-maze', formatTime(state.elapsed))` hanya jika waktu selesai menjadi rekor baru (termasuk catatan pertama); hasil non-rekor tidak membuka share. `ui-share.js` memetakan folder `pawzle-maze` ke id `local-pawzle-maze` dan canonical slug `pawzle-maze`, serta memakai copy Pawzle dengan waktu selesai; modal/confetti dan tombol Web Share/clipboard memakai implementasi bersama, dengan CSS `/games/shared/ui-share.css`.
 - [DIIMPLEMENTASIKAN Task #036 — 2026-11-16] **Tombol share persistent Pawzle Maze:** dialog hasil punya tombol `#share-record-button`, ditampilkan hanya bila `isNewRecord`; klik tombol membuka `window.ViralShare.show('pawzle-maze', formatTime(state.elapsed))`. Share tidak lagi dipanggil otomatis saat finish, jadi pemain tetap melihat tombol pada dialog hasil dan dapat memilih kapan membuka modal share. Task #036 menyempurnakan UX overlay otomatis Task #035.
 - [DIIMPLEMENTASIKAN Task #037 — 2026-11-17] **Sinkronisasi update Pawzle Maze:** versi dari repo sumber memperbarui label/petunjuk untuk touchscreen, dukungan swipe pada perangkat sentuh, area sentuh Miko yang diperbesar, animasi easing pergerakan, serta badge kontras karakter/ikan untuk maze padat. `index.html`, `styles.css`, `game.js`, dan `cat-icon.svg` diselaraskan; integrasi `ui-share.js` dan tombol share Gimboot dipertahankan, demikian juga `thumb.svg` portal.
+- [DIIMPLEMENTASIKAN Task #038 — 2026-11-17] **Pawzle Maze v7, perfect maze:** semua level memakai `braid: 0` dan `uniqueRoute: true`, sehingga setiap level memiliki satu jalur unik dari start ke tujuan dan jalan buntu perlu ditelusuri balik. Generator menghitung `passageEdges`, `cycleCount`, `uniquePath`, dan `routeCount`, lalu melempar error jika invariant satu jalur dilanggar. Metrik tersebut diteruskan melalui event `finish`; tampilan menjelaskan aturan maze satu jalur. Tombol `#share-record-button`, handler shared `ViralShare`, dan pesan portal tetap dipertahankan.
 - [DIJAWAB 2026-08-30] Jumlah & status game first-party sempat TIDAK konsisten antar tiga sumber dalam repo yang sama:
   - `js/config.js` (client-side, menentukan apa yang tampil di grid katalog `index.html`) mendaftarkan 4 game sebagai "Buatan Sendiri": Ayo Kopdes, Kejar Koruptor, Mobil MBG, Kicau Mania.
   - `src/index.js` (server-side, konstanta `LOCAL_GAMES`, menentukan hasil `/share/:id`, `/play/:id/:slug`, dan isi `/sitemap.xml`) HANYA mengenali 1 game: Kicau Mania. Komentar di dalam kode ini sendiri menyatakan konstanta ini seharusnya "mirror `js/config.js`'s LOCAL_GAMES exactly" — tapi saat ini tidak.
