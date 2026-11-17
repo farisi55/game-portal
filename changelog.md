@@ -1,7 +1,7 @@
 ---
 project: Gimboot
-knowledge_version: 1.6.21
-changelog_version: 1.0.43
+knowledge_version: 1.6.22
+changelog_version: 1.0.44
 created: 2026-08-28
 status: in_progress
 milestone: 1 of 1
@@ -45,7 +45,7 @@ simple_mode: false
 > `prd.md` diperbarui ke v1.6.0 (§3.1, §3.2, §4.1, §4.2, §5 baru, §8, §9, §10), lalu v1.6.1 setelah poin 9 dikonfirmasi final; `knowledge.md` ke v1.6.0 lalu v1.6.1 (§2, §3, §7, §9).
 
 ## [NEXT TASKS]
-(none — roadmap asli 26 task selesai; Task #027 (2026-10-13, permintaan developer), Task #028 (2026-10-14, rework Solitaire + `npm run dev`), Task #029 (2026-10-14, badge "No Ads" + tab "No Ads Game"), Task #030 (2026-10-15, fix wrangler dev), Task #031 (2026-10-17, integrasi + rename Moba DOTA), Task #032 (2026-11-12, fix GSC indexing/canonical), Task #033 (2026-11-16, GSC remediation v2), Task #034 (2026-11-16, integrasi + sinkronisasi Pawzle Maze), Task #035 (2026-11-16, integrasi awal ViralShare Pawzle Maze), dan Task #036 (2026-11-16, tombol share permanen pada dialog rekor Pawzle Maze) dieksekusi & pindah ke [COMPLETED])
+(none — roadmap asli 26 task selesai; Task #027 (2026-10-13, permintaan developer), Task #028 (2026-10-14, rework Solitaire + `npm run dev`), Task #029 (2026-10-14, badge "No Ads" + tab "No Ads Game"), Task #030 (2026-10-15, fix wrangler dev), Task #031 (2026-10-17, integrasi + rename Moba DOTA), Task #032 (2026-11-12, fix GSC indexing/canonical), Task #033 (2026-11-16, GSC remediation v2), Task #034 (2026-11-16, integrasi + sinkronisasi Pawzle Maze), Task #035 (2026-11-16, integrasi awal ViralShare Pawzle Maze), Task #036 (2026-11-16, tombol share permanen pada dialog rekor Pawzle Maze), dan Task #037 (2026-11-17, sinkronisasi update touch/animasi dari repo Pawzle Maze) dieksekusi & pindah ke [COMPLETED])
 
 
 ## [IN PROGRESS]
@@ -103,6 +103,20 @@ Satu Cloudflare Worker dengan static assets (`src/index.js`) menangani seluruh r
   - [x] Klik tombol membuka modal share bersama dengan waktu rekor dan canonical link Pawzle.
 - **Verification:** Inspeksi source mengonfirmasi tombol disembunyikan saat hasil bukan rekor dan kliknya memanggil shared ViralShare. Test/runtime browser belum dapat dijalankan: tidak ada test controller, dan browser MCP gagal start dalam sandbox.
 - **Knowledge drift:** `knowledge.md` diperbarui dari **v1.6.20 → v1.6.21** untuk menjelaskan tombol persistent dan perilaku klik.
+
+### Task #037 — Ad-hoc: Sinkronkan Update Pawzle Maze ✅
+- **Completed:** 2026-11-17
+- **Phase:** Ad-hoc (permintaan developer untuk menyelaraskan update dari repo `paws-maze-game`)
+- **Status:** OK
+- **Branch:** `dev` (perubahan belum di-commit)
+- **Files synchronized:** `games/pawzle-maze/index.html`, `styles.css`, `game.js`, dan `cat-icon.svg` diselaraskan dengan file runtime repo sumber; integrasi portal (script `../shared/ui-share.js`, tombol share hasil, handler `ViralShare`) dipertahankan/dipasang kembali setelah sinkronisasi.
+- **Updates included:** instruksi/label kontrol touchscreen; dukungan swipe pada perangkat sentuh dan target sentuh Miko lebih besar; animasi easing perpindahan karakter; badge kontras untuk karakter/ikan pada maze padat. `thumb.svg` portal tidak disentuh. File contoh host `portal.js` dan `portal-integration-example.html` tidak disalin karena khusus demo host, bukan dependensi game runtime.
+- **Acceptance criteria:**
+  - [x] Perilaku dan aset runtime mengikuti source terbaru.
+  - [x] Fitur share dan integrasi iframe Gimboot tetap tersedia.
+  - [x] Aset portal seperti thumbnail tidak tertimpa.
+- **Verification:** perbandingan source dengan portal menunjukkan hanya penambahan script/tombol/handler share portal di atas runtime sumber; `cat-icon.svg` tidak memiliki perbedaan konten. `npm run lint` dan `npm test` lulus (197 tes).
+- **Knowledge drift:** `knowledge.md` diperbarui dari **v1.6.21 → v1.6.22** dengan detail interaksi sentuh dan animasi.
 
 ### Task #034 — Ad-hoc: Integrasi & Sinkronisasi Pawzle Maze ✅
 - **Completed:** 2026-11-16
