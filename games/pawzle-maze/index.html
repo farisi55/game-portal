@@ -41,12 +41,12 @@
     <section class="maze-layout">
       <div class="maze-top-labels">
         <span><i class="legend-dot start-dot"></i> START</span>
-        <span class="maze-tip">Drag Miko through the maze · Arrow Keys / WASD</span>
+        <span class="maze-tip">Touch Miko and drag · Arrow Keys / WASD</span>
         <span><i class="legend-dot goal-dot"></i> FISH</span>
       </div>
 
       <div class="canvas-wrap">
-        <canvas id="maze-canvas" width="640" height="640" role="img" aria-label="Labirin. Klik dan tarik Miko mengikuti lorong, atau gunakan tombol panah dan WASD."></canvas>
+        <canvas id="maze-canvas" width="640" height="640" role="img" aria-label="Labirin. Sentuh Miko lalu geser jari mengikuti lorong, atau gunakan tombol panah dan WASD."></canvas>
       </div>
 
       <div class="maze-footer">
@@ -55,7 +55,7 @@
       </div>
 
       <div class="board-controls-row">
-        <div class="board-hint"><span class="hint-key">↔</span> Drag Miko <i></i><span class="hint-key">⌨</span> Arrow Keys / WASD</div>
+        <div class="board-hint"><span class="hint-key">↔</span> Touch & drag Miko <i></i><span class="hint-key">⌨</span> Arrow Keys / WASD</div>
         <div class="dpad" aria-label="Tombol arah">
           <span></span><button type="button" class="dpad-button" data-direction="up" aria-label="Atas">↑</button><span></span>
           <button type="button" class="dpad-button" data-direction="left" aria-label="Kiri">←</button><span class="dpad-center" aria-hidden="true">🐾</span><button type="button" class="dpad-button" data-direction="right" aria-label="Kanan">→</button>
@@ -88,7 +88,7 @@
       <button class="menu-action" id="menu-new-maze-button" type="button"><span>⟳</span><span><b>New maze</b><small>Buat susunan labirin acak yang baru</small></span></button>
       <button class="menu-action" id="menu-music-button" type="button"><span>♫</span><span><b id="menu-music-label">Matikan musik</b><small>Musik latar selama bermain</small></span><span class="switch-indicator" id="music-switch">ON</span></button>
     </div>
-    <p class="menu-footnote">Petunjuk: klik dan tahan Miko, lalu tarik mengikuti lorong. D-pad dan keyboard juga tersedia.</p>
+    <p class="menu-footnote">Petunjuk: sentuh Miko (area sentuh diperbesar), tahan, lalu geser jari mengikuti lorong. D-pad dan keyboard juga tersedia.</p>
   </section>
 
   <div class="modal-backdrop" id="win-modal" hidden>

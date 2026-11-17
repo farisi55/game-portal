@@ -42,7 +42,7 @@
     level: 'easy', maze: [], rows: 0, cols: 0,
     player: { x: 1, y: 1 }, goal: { x: 0, y: 0 },
     steps: 0, startedAt: null, elapsed: 0, won: false,
-    menuOpen: false, bestTimes: loadBestTimes()
+    menuOpen: false, animation: null, bestTimes: loadBestTimes()
   };
 
   function loadBestTimes() {
@@ -350,6 +350,7 @@
 
   function resetRun() {
     state.player = { x: 1, y: 1 };
+    state.animation = null;
     state.steps = 0;
     state.startedAt = null;
     state.elapsed = 0;
@@ -407,8 +408,10 @@
     if (state.maze[nextY][nextX] !== 0) return;
 
     if (state.startedAt === null) state.startedAt = Date.now();
+    const visual = getVisualPlayer();
     state.player.x = nextX;
     state.player.y = nextY;
+    state.animation = { from: visual, to: { x: nextX, y: nextY }, start: performance.now(), duration: 92 };
     state.steps += 1;
     audio.startMusic();
 
@@ -416,6 +419,7 @@
     else els.gameStatus.textContent = 'Terus jalan, Miko!';
     updateStats();
     drawMaze();
+    animateSprite();
   }
 
   function finishGame() {
@@ -531,6 +535,33 @@
     context.restore();
   }
 
+  function getVisualPlayer() {
+    const animation = state.animation;
+    if (!animation) return { x: state.player.x, y: state.player.y };
+    const progress = Math.min(1, Math.max(0, (performance.now() - animation.start) / animation.duration));
+    const eased = 1 - Math.pow(1 - progress, 3);
+    return {
+      x: animation.from.x + (animation.to.x - animation.from.x) * eased,
+      y: animation.from.y + (animation.to.y - animation.from.y) * eased
+    };
+  }
+
+  let spriteFrame = 0;
+  function animateSprite() {
+    if (spriteFrame) return;
+    const tick = () => {
+      drawMaze();
+      if (state.animation && performance.now() - state.animation.start < state.animation.duration) {
+        spriteFrame = requestAnimationFrame(tick);
+      } else {
+        state.animation = null;
+        spriteFrame = 0;
+        drawMaze();
+      }
+    };
+    spriteFrame = requestAnimationFrame(tick);
+  }
+
   function drawMaze() {
     if (!state.maze.length) return;
     const rect = canvas.getBoundingClientRect();
@@ -573,8 +604,18 @@
     roundedRect(ctx, unit*1.08, unit*1.08, unit*.84, unit*.84, unit*.2); ctx.fill();
     ctx.fillStyle = 'rgba(255,204,83,.4)';
     roundedRect(ctx, state.goal.x*unit + unit*.08, state.goal.y*unit + unit*.08, unit*.84, unit*.84, unit*.2); ctx.fill();
-    drawFish(ctx, (state.goal.x + .5)*unit, (state.goal.y + .5)*unit, unit*.92);
-    drawCat(ctx, (state.player.x + .5)*unit, (state.player.y + .5)*unit, unit*1.18);
+    // High-contrast badges keep both objectives readable on dense mobile mazes.
+    ctx.save();
+    ctx.fillStyle = 'rgba(255,205,91,.96)'; ctx.strokeStyle = 'rgba(255,255,255,.95)'; ctx.lineWidth = Math.max(1, unit*.10);
+    ctx.beginPath(); ctx.arc((state.goal.x+.5)*unit,(state.goal.y+.5)*unit,unit*.88,0,Math.PI*2); ctx.fill(); ctx.stroke();
+    ctx.restore();
+    const visualPlayer = getVisualPlayer();
+    ctx.save();
+    ctx.fillStyle = 'rgba(255,155,179,.98)'; ctx.strokeStyle = 'rgba(255,255,255,.98)'; ctx.lineWidth = Math.max(1, unit*.10);
+    ctx.beginPath(); ctx.arc((visualPlayer.x+.5)*unit,(visualPlayer.y+.5)*unit,unit*.88,0,Math.PI*2); ctx.fill(); ctx.stroke();
+    ctx.restore();
+    drawFish(ctx, (state.goal.x + .5)*unit, (state.goal.y + .5)*unit, unit*2.5);
+    drawCat(ctx, (visualPlayer.x + .5)*unit, (visualPlayer.y + .5)*unit, unit*2.5);
     ctx.strokeStyle = 'rgba(220,255,231,.22)'; ctx.lineWidth = 1;
     ctx.strokeRect(.5,.5,logicalSize-1,logicalSize-1);
   }
@@ -596,14 +637,13 @@
   }
 
   function bindPointerControls() {
-    let swipeStart = null;
-    const drag = { active: false, pointerId: null, lastCell: null };
+    const drag = { active: false, pointerId: null, lastCell: null, grabOffsetX: 0, grabOffsetY: 0 };
 
-    function getGridCell(event) {
+    function getGridCell(clientX, clientY) {
       const rect = canvas.getBoundingClientRect();
       if (!rect.width || !rect.height) return null;
-      const x = Math.floor(((event.clientX - rect.left) / rect.width) * state.maze[0].length);
-      const y = Math.floor(((event.clientY - rect.top) / rect.height) * state.maze.length);
+      const x = Math.floor(((clientX - rect.left) / rect.width) * state.maze[0].length);
+      const y = Math.floor(((clientY - rect.top) / rect.height) * state.maze.length);
       if (x < 0 || y < 0 || y >= state.maze.length || x >= state.maze[0].length) return null;
       return { x, y };
     }
@@ -613,104 +653,68 @@
       let x = drag.lastCell.x;
       let y = drag.lastCell.y;
       let guard = state.maze.length + state.maze[0].length + 8;
-
-      // A fast mouse can skip cells between pointermove events. Walk toward the
-      // target one cardinal tile at a time, preferring the axis closest to it,
-      // and only step into an open tile directly connected to Miko.
       while ((x !== targetCell.x || y !== targetCell.y) && guard-- > 0) {
         const dx = targetCell.x - x;
         const dy = targetCell.y - y;
         const candidates = [];
-        if (dx !== 0) candidates.push({ x: x + Math.sign(dx), y, axis: 'x', priority: Math.abs(dx) >= Math.abs(dy) ? 0 : 1 });
-        if (dy !== 0) candidates.push({ x, y: y + Math.sign(dy), axis: 'y', priority: Math.abs(dy) > Math.abs(dx) ? 0 : 1 });
+        if (dx !== 0) candidates.push({ x: x + Math.sign(dx), y, priority: Math.abs(dx) >= Math.abs(dy) ? 0 : 1 });
+        if (dy !== 0) candidates.push({ x, y: y + Math.sign(dy), priority: Math.abs(dy) > Math.abs(dx) ? 0 : 1 });
         candidates.sort((a, b) => a.priority - b.priority);
-
-        const next = candidates.find((candidate) => {
-          if (candidate.y < 0 || candidate.y >= state.maze.length || candidate.x < 0 || candidate.x >= state.maze[0].length) return false;
-          if (state.maze[candidate.y][candidate.x] !== 0) return false;
-          return Math.abs(candidate.x - state.player.x) + Math.abs(candidate.y - state.player.y) === 1;
-        });
+        const next = candidates.find((candidate) => candidate.y >= 0 && candidate.y < state.maze.length && candidate.x >= 0 && candidate.x < state.maze[0].length && state.maze[candidate.y][candidate.x] === 0 && Math.abs(candidate.x - state.player.x) + Math.abs(candidate.y - state.player.y) === 1);
         if (!next) break;
-
         const stepX = next.x - state.player.x;
         const stepY = next.y - state.player.y;
-        const direction = stepX === 1 ? 'right' : stepX === -1 ? 'left' : stepY === 1 ? 'down' : 'up';
-        move(direction);
+        move(stepX === 1 ? 'right' : stepX === -1 ? 'left' : stepY === 1 ? 'down' : 'up');
         if (state.won) break;
-        x = next.x;
-        y = next.y;
+        x = next.x; y = next.y;
       }
-      // Keep the anchor at Miko's real position. If the pointer crosses a wall,
-      // the next pointer event can continue from the actual character position.
       drag.lastCell = { x: state.player.x, y: state.player.y };
     }
 
     canvas.addEventListener('pointerdown', (event) => {
-      if (event.pointerType === 'mouse') {
-        if (state.won || state.menuOpen) return;
-        const cell = getGridCell(event);
-        // Begin dragging only when the user grabs Miko, not an arbitrary wall.
-        if (!cell || cell.x !== state.player.x || cell.y !== state.player.y) return;
-        drag.active = true;
-        drag.pointerId = event.pointerId;
-        drag.lastCell = cell;
-        canvas.classList.add('is-dragging');
-        try { canvas.setPointerCapture(event.pointerId); } catch (_) { /* Optional. */ }
-        event.preventDefault();
-        return;
-      }
-      swipeStart = { x: event.clientX, y: event.clientY, id: event.pointerId };
-      try { canvas.setPointerCapture(event.pointerId); } catch (_) { /* Optional. */ }
-    });
+      if (state.won || state.menuOpen || !state.maze.length) return;
+      const rect = canvas.getBoundingClientRect();
+      const cellW = rect.width / state.maze[0].length;
+      const cellH = rect.height / state.maze.length;
+      const centerX = rect.left + (state.player.x + .5) * cellW;
+      const centerY = rect.top + (state.player.y + .5) * cellH;
+      const hitRadius = Math.max(27, Math.min(cellW, cellH) * 1.65);
+      // A generous touch target makes the small sprite easy to grab on phones.
+      if (Math.hypot(event.clientX - centerX, event.clientY - centerY) > hitRadius) return;
+      drag.active = true;
+      drag.pointerId = event.pointerId;
+      drag.lastCell = { x: state.player.x, y: state.player.y };
+      drag.grabOffsetX = event.clientX - centerX;
+      drag.grabOffsetY = event.clientY - centerY;
+      canvas.classList.add('is-dragging');
+      try { canvas.setPointerCapture(event.pointerId); } catch (_) { /* Pointer capture is optional. */ }
+      event.preventDefault();
+    }, { passive: false });
 
     canvas.addEventListener('pointermove', (event) => {
       if (!drag.active || drag.pointerId !== event.pointerId) return;
-      const cell = getGridCell(event);
-      if (cell && (cell.x !== drag.lastCell.x || cell.y !== drag.lastCell.y)) {
-        dragThroughCell(cell);
-      }
+      const cell = getGridCell(event.clientX - drag.grabOffsetX, event.clientY - drag.grabOffsetY);
+      if (cell && (cell.x !== drag.lastCell.x || cell.y !== drag.lastCell.y)) dragThroughCell(cell);
       event.preventDefault();
-    });
+    }, { passive: false });
 
-    function finishPointer(event) {
-      if (drag.active && drag.pointerId === event.pointerId) {
-        const finalCell = getGridCell(event);
-        if (finalCell) dragThroughCell(finalCell);
-        drag.active = false;
-        drag.pointerId = null;
-        drag.lastCell = null;
-        canvas.classList.remove('is-dragging');
-        return;
-      }
-      if (!swipeStart || swipeStart.id !== event.pointerId) return;
-      const dx = event.clientX - swipeStart.x;
-      const dy = event.clientY - swipeStart.y;
-      if (Math.max(Math.abs(dx), Math.abs(dy)) >= 18) {
-        if (Math.abs(dx) > Math.abs(dy)) move(dx > 0 ? 'right' : 'left');
-        else move(dy > 0 ? 'down' : 'up');
-      }
-      swipeStart = null;
-    }
-
-    canvas.addEventListener('pointerup', finishPointer);
-    canvas.addEventListener('pointercancel', (event) => {
-      if (drag.pointerId === event.pointerId) {
-        drag.active = false;
-        drag.pointerId = null;
-        drag.lastCell = null;
-        canvas.classList.remove('is-dragging');
-      }
-      if (swipeStart && swipeStart.id === event.pointerId) swipeStart = null;
-    });
-    canvas.addEventListener('lostpointercapture', () => {
+    function endDrag(event) {
+      if (!drag.active || drag.pointerId !== event.pointerId) return;
+      const cell = getGridCell(event.clientX - drag.grabOffsetX, event.clientY - drag.grabOffsetY);
+      if (cell) dragThroughCell(cell);
       drag.active = false;
       drag.pointerId = null;
       drag.lastCell = null;
       canvas.classList.remove('is-dragging');
+    }
+    canvas.addEventListener('pointerup', endDrag);
+    canvas.addEventListener('pointercancel', endDrag);
+    canvas.addEventListener('lostpointercapture', () => {
+      drag.active = false; drag.pointerId = null; drag.lastCell = null;
+      canvas.classList.remove('is-dragging');
     });
   }
 
-  // A real user gesture unlocks browser audio. Browsers intentionally block autoplay.
   window.addEventListener('pointerdown', () => {
     if (audio.enabled && !state.won) audio.startMusic();
   }, { once: true, capture: true });
