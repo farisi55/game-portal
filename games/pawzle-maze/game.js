@@ -2,11 +2,11 @@
   'use strict';
 
   const LEVELS = {
-    easy: { label: 'EASY', title: 'Labirin pemanasan', size: 7, algorithm: 'dfs', braid: 0.02, goalFraction: 0.65, color: '#78bf9b' },
-    medium: { label: 'MEDIUM', title: 'Labirin penuh cabang', size: 14, algorithm: 'prim', braid: 0.10, color: '#e9b65e' },
-    hard: { label: 'HARD', title: 'Labirin berliku', size: 18, algorithm: 'prim', braid: 0.19, color: '#ed9b71' },
-    veryhard: { label: 'VERY HARD', title: 'Labirin kompleks', size: 24, algorithm: 'prim', braid: 0.28, color: '#e8899b' },
-    nightmare: { label: 'NIGHTMARE', title: 'Labirin ekstrem tanpa ampun', size: 34, algorithm: 'prim', braid: 0.44, color: '#cf5572' }
+    easy: { label: 'EASY', title: 'Labirin pemanasan', size: 7, algorithm: 'dfs', braid: 0, uniqueRoute: true, goalFraction: 0.65, color: '#78bf9b' },
+    medium: { label: 'MEDIUM', title: 'Labirin satu jalur', size: 14, algorithm: 'prim', braid: 0, uniqueRoute: true, color: '#e9b65e' },
+    hard: { label: 'HARD', title: 'Labirin buntu dan berliku', size: 18, algorithm: 'prim', braid: 0, uniqueRoute: true, color: '#ed9b71' },
+    veryhard: { label: 'VERY HARD', title: 'Labirin kompleks satu jalur', size: 24, algorithm: 'prim', braid: 0, uniqueRoute: true, color: '#e8899b' },
+    nightmare: { label: 'NIGHTMARE', title: 'Labirin ekstrem tanpa jalan pintas', size: 34, algorithm: 'prim', braid: 0, uniqueRoute: true, color: '#cf5572' }
   };
 
   const LEVEL_ORDER = Object.keys(LEVELS);
@@ -91,8 +91,9 @@
     }
   }
 
-  // Generate either a long-corridor DFS maze or a branch-heavy randomized Prim maze.
-  // Higher levels add carefully selected loops and place the fish at the farthest cell.
+  // Generate a perfect maze: every cell is connected, but the passage graph is a tree.
+  // A tree has exactly one possible route between START and FISH. Dead ends remain
+  // intentional, so players must retrace their steps instead of taking shortcuts.
   function generateMaze(cellRows, cellCols, options = {}) {
     const height = cellRows * 2 + 1;
     const width = cellCols * 2 + 1;
@@ -155,8 +156,9 @@
       .filter((n) => inBounds(n.x, n.y));
     const connected = (x, y, neighbor) => grid[y * 2 + 1 + neighbor.d.y][x * 2 + 1 + neighbor.d.x] === 0;
 
-    // Braid a percentage of dead ends. This creates loops, cross-connections and
-    // misleading junctions instead of a predictable tree with obvious branches.
+    // Multiple routes are deliberately disabled for normal gameplay. A perfect
+    // maze must not receive braid links: every extra link would create a cycle
+    // and therefore introduce an alternative route / shortcut.
     const deadEnds = [];
     for (let y = 0; y < cellRows; y += 1) {
       for (let x = 0; x < cellCols; x += 1) {
@@ -165,10 +167,12 @@
       }
     }
     shuffle(deadEnds);
-    const braidRatio = Math.max(0, Math.min(0.6, Number(options.braid) || 0));
+    const braidRatio = options.allowMultipleRoutes === true
+      ? Math.max(0, Math.min(0.6, Number(options.braid) || 0))
+      : 0;
     let addedLoops = 0;
     for (const cell of deadEnds) {
-      if (Math.random() > braidRatio) continue;
+      if (braidRatio <= 0 || Math.random() >= braidRatio) continue;
       const possibleLinks = cellNeighbors(cell.x, cell.y).filter((n) => !connected(cell.x, cell.y, n));
       if (!possibleLinks.length) continue;
       const link = randomItem(possibleLinks);
@@ -176,7 +180,7 @@
       addedLoops += 1;
     }
 
-    // Measure all routes after braiding. Higher levels use a farthest-cell target;
+    // Measure the unique tree path. Higher levels place the fish at a farthest cell;
     // Easy selects a nearer cell from a controlled distance band.
     const distance = Array.from({ length: cellRows }, () => Array(cellCols).fill(-1));
     const queue = [{ x: 0, y: 0 }];
@@ -219,11 +223,23 @@
     }
     const junctions = cellDegrees.filter((degree) => degree >= 3).length;
     const remainingDeadEnds = cellDegrees.filter((degree) => degree === 1).length;
+    const passageEdges = cellDegrees.reduce((sum, degree) => sum + degree, 0) / 2;
+    const cycleCount = passageEdges - (cellRows * cellCols - 1);
+    const uniquePath = cycleCount === 0;
+
+    // Fail early during development if a supposedly strict maze ever gains a loop.
+    if (options.uniqueRoute !== false && !uniquePath) {
+      throw new Error(`Perfect maze invariant failed: expected 0 cycles, found ${cycleCount}`);
+    }
 
     return {
       grid,
       goal: { x: goalCell.x * 2 + 1, y: goalCell.y * 2 + 1 },
-      metrics: { shortestPathCells: goalDistance, maxDistanceCells: farthestDistance, junctions, deadEnds: remainingDeadEnds, addedLoops }
+      metrics: {
+        shortestPathCells: goalDistance, maxDistanceCells: farthestDistance,
+        junctions, deadEnds: remainingDeadEnds, addedLoops, passageEdges, cycleCount,
+        uniquePath, routeCount: uniquePath ? 1 : null
+      }
     };
   }
 
@@ -356,7 +372,7 @@
     state.elapsed = 0;
     state.won = false;
     els.winModal.hidden = true;
-    els.gameStatus.textContent = 'Miko siap berangkat!';
+    els.gameStatus.textContent = 'Satu jalur benar · jalan buntu harus ditelusuri kembali.';
     updateStats();
     drawMaze();
     if (audio.enabled && audio.context && audio.unlocked) audio.startMusic();
